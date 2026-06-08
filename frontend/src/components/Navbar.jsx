@@ -64,12 +64,6 @@ export default function Navbar() {
             News
           </NavLink>
 
-          <NavLink
-            to="/contact"
-            className={navClass}
-          >
-            Contact
-          </NavLink>
 
         </div>
 
@@ -88,7 +82,7 @@ export default function Navbar() {
             hover:scale-105
           "
         >
-          Join Community
+          Get in Touch
         </Link>
 
       </div>

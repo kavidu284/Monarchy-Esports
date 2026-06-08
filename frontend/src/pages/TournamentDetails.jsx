@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import api from "../services/api";
 
@@ -87,9 +88,13 @@ export default function TournamentDetails() {
       <div className="mt-10 flex flex-wrap gap-4">
 
         {tournament.show_registration && (
-          <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-semibold">
+          <Link
+            to={`/register/${tournament.id}`}
+            className="bg-blue-600 px-6 py-3 rounded-xl"
+          >
             Register Team
-          </button>
+          </Link>
+          
         )}
 
         {tournament.show_schedule && (

@@ -26,11 +26,7 @@ def get_tournament(tournament_id: int):
     cursor = connection.cursor(dictionary=True)
 
     cursor.execute(
-        """
-        SELECT *
-        FROM tournaments
-        WHERE id=%s
-        """,
+        "SELECT * FROM tournaments WHERE id = %s",
         (tournament_id,)
     )
 

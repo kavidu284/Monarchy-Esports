@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.database import get_connection
 
-router = APIRouter()
+router = APIRouter(prefix="/register")
 
 @router.post("/register")
 def register_team(data: dict):
@@ -51,7 +51,7 @@ def register_team(data: dict):
         "registration_id": registration_id
     }
     
-@router.get("/registrations")
+@router.get("")
 def get_registrations():
 
     connection = get_connection()
@@ -70,7 +70,7 @@ def get_registrations():
 
     return registrations
 
-@router.get("/registrations/{registration_id}")
+@router.get("/{registration_id}")
 def get_registration(
     registration_id: int
 ):
@@ -94,9 +94,7 @@ def get_registration(
 
     return registration
 
-@router.put(
-    "/registrations/{registration_id}/approve"
-)
+@router.put("/{registration_id}/approve")
 def approve_registration(
     registration_id: int
 ):
@@ -122,9 +120,7 @@ def approve_registration(
         "message": "Team Approved"
     }
     
-@router.put(
-    "/registrations/{registration_id}/reject"
-)
+@router.put("/{registration_id}/reject")
 def reject_registration(
     registration_id: int
 ):
