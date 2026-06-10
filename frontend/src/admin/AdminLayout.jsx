@@ -35,13 +35,6 @@ export default function AdminLayout() {
           </Link>
 
           <Link
-            to="/admin/announcements"
-            className="block p-3 rounded-lg hover:bg-zinc-800"
-          >
-            Announcements
-          </Link>
-
-          <Link
             to="/admin/news"
             className="block p-3 rounded-lg hover:bg-zinc-800"
           >

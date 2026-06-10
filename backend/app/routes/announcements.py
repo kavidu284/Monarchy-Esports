@@ -45,3 +45,97 @@ def get_announcement(announcement_id: int):
     connection.close()
 
     return announcement
+
+# CREATE ANNOUNCEMENT
+@router.post("/announcements")
+def create_announcement(data: dict):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO announcements
+        (
+            title,
+            message
+        )
+        VALUES
+        (%s,%s)
+        """,
+        (
+            data["title"],
+            data["message"]
+        )
+    )
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return {
+        "message": "Announcement Created"
+    }
+
+
+# UPDATE ANNOUNCEMENT
+@router.put("/announcements/{announcement_id}")
+def update_announcement(
+    announcement_id: int,
+    data: dict
+):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        UPDATE announcements
+        SET
+            title=%s,
+            message=%s
+        WHERE id=%s
+        """,
+        (
+            data["title"],
+            data["message"],
+            announcement_id
+        )
+    )
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return {
+        "message": "Announcement Updated"
+    }
+
+
+# DELETE ANNOUNCEMENT
+@router.delete("/announcements/{announcement_id}")
+def delete_announcement(
+    announcement_id: int
+):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM announcements
+        WHERE id=%s
+        """,
+        (announcement_id,)
+    )
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return {
+        "message": "Announcement Deleted"
+    }
