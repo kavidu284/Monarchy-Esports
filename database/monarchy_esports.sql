@@ -162,7 +162,29 @@ CREATE TABLE contact_messages (
     message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- =====================================
+-- MATCHES
+-- =====================================
+CREATE TABLE matches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
 
+    tournament_id INT NOT NULL,
+
+    team_a VARCHAR(255) NOT NULL,
+    team_b VARCHAR(255) NOT NULL,
+
+    winner VARCHAR(255),
+
+    match_date DATETIME,
+
+    status ENUM(
+        'Upcoming',
+        'Live',
+        'Completed'
+    ) DEFAULT 'Upcoming',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 -- =====================================
 -- DUMMY ADMIN
 -- =====================================

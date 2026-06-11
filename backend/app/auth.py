@@ -24,10 +24,7 @@ def verify_token(token: str):
             algorithms=[ALGORITHM]
         )
 
-        print("JWT PAYLOAD:", payload)
-
         return payload
 
     except Exception as e:
-        print("JWT ERROR:", e)
         return None

@@ -19,14 +19,15 @@ import Layout from "./admin/AdminLayout";
 import AdminTournaments from "./admin/TournamentsAdmin";
 import CreateTournament from "./admin/CreateTournament";
 import EditTournament from "./admin/EditTournament";
-import RegistrationsAdmin from "./admin/registrationAdmin.jsx";
-import RegistrationDetails from "./admin/registationDetails.jsx";
+import Registrationsteam from  "./admin/TournamentRegistrations.jsx";
+import RegistrationDetails from "./admin/RegistationDetails.jsx";
 import NewsAdmin from "./admin/NewsAdmin";
 import CreateNews from "./admin/CreateNews";
 import Editnews from "./admin/editNews";
 import MessagesAdmin from "./admin/MessageAdmin";
 import GalleryAdmin from "./admin/GalleryAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RegistrationAdmin from "./admin/RegistationAdmin.jsx";
 
 
 
@@ -58,13 +59,14 @@ function App() {
           <Route path="tournaments" element={<ProtectedRoute><AdminTournaments /></ProtectedRoute>} />
           <Route path="tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
           <Route path="tournaments/edit/:id" element={<ProtectedRoute><EditTournament /></ProtectedRoute>} />
-          <Route path="registrations" element={<ProtectedRoute><RegistrationsAdmin /></ProtectedRoute>} />
+          <Route path="registrations" element={<ProtectedRoute><RegistrationAdmin /></ProtectedRoute>} />
           <Route path="registrations/:id" element={<ProtectedRoute><RegistrationDetails /></ProtectedRoute>} />
           <Route path="news" element={<ProtectedRoute><NewsAdmin /></ProtectedRoute>} />
           <Route path="news/create" element={<ProtectedRoute><CreateNews /></ProtectedRoute>} />
           <Route path="news/edit/:id" element={<ProtectedRoute><Editnews /></ProtectedRoute>} />
           <Route path="messages" element={<ProtectedRoute><MessagesAdmin /></ProtectedRoute>} />
           <Route path="gallery" element={<ProtectedRoute><GalleryAdmin /></ProtectedRoute>} />
+          <Route path="registrationsteam/:tournamentId" element={<ProtectedRoute><Registrationsteam /></ProtectedRoute>} />
         </Route>
       </Routes>
        {!isAdmin && <Footer />}

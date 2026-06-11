@@ -4,7 +4,6 @@ from app.auth import verify_token
 def get_current_admin(
     authorization: str = Header(None)
 ):
-    print("AUTH HEADER:", authorization)
 
     if not authorization:
         raise HTTPException(
@@ -16,7 +15,6 @@ def get_current_admin(
 
     payload = verify_token(token)
 
-    print("PAYLOAD:", payload)
 
     if not payload:
         raise HTTPException(

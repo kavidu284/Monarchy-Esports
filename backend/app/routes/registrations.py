@@ -365,3 +365,25 @@ def get_registration_full(registration_id: int, current_admin: dict = Depends(ge
         "registration": registration,
         "players": players
     }
+    
+@router.get("/registrations/tournament/{tournament_id}")
+def get_tournament_registrations(tournament_id: int, current_admin: dict = Depends(get_current_admin)):
+
+    connection = get_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM registrations
+        WHERE tournament_id = %s
+        """,
+        (tournament_id,)
+    )
+
+    registrations = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return registrations
