@@ -40,37 +40,58 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <h1 className="text-5xl font-bold text-center mb-4">
-          Contact Us
-        </h1>
+      <div className="mx-auto max-w-5xl px-6 py-16">
+        <div className="mb-12 text-center">
+          <p className="text-sm font-bold uppercase tracking-[0.35em] text-blue-400">
+            Monarchy Esports
+          </p>
 
-        <p className="text-center text-gray-400 mb-10">
-          Get in touch with Monarchy Esports
-        </p>
+          <h1 className="mt-4 text-5xl font-black md:text-6xl">
+            Contact Us
+          </h1>
+
+          <p className="mt-4 text-gray-400">
+            Get in touch with Monarchy Esports
+          </p>
+        </div>
 
         {success && (
-          <div className="bg-green-500/20 border border-green-500 text-green-400 p-4 rounded-xl mb-6">
+          <div className="mb-8 rounded-2xl border border-green-500/40 bg-green-500/10 p-4 text-center font-semibold text-green-400">
             Message sent successfully.
           </div>
         )}
-        <div className="grid lg:grid-cols-2 gap-10">
-          <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
-            <h2 className="text-3xl font-bold text-blue-500 mb-6">
+
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+            <h2 className="mb-6 text-3xl font-black text-blue-500">
               Contact Information
             </h2>
 
-            <div className="space-y-4">
-              <p>📧 Email: monarchyesports@gmail.com</p>
-              <p>🎮 Discord: Monarchy™</p>
-              <p>📘 Facebook: Monarchy Esports</p>
-              <p>📷 TikTok: monarchyesports</p>
-              <p>📸 YouTube: monarhyesports</p>
+            <div className="space-y-4 text-gray-300">
+              <p className="rounded-xl border border-zinc-800 bg-black p-4">
+                📧 Email: monarchyesports@gmail.com
+              </p>
+
+              <p className="rounded-xl border border-zinc-800 bg-black p-4">
+                🎮 Discord: Monarchy™
+              </p>
+
+              <p className="rounded-xl border border-zinc-800 bg-black p-4">
+                📘 Facebook: Monarchy Esports
+              </p>
+
+              <p className="rounded-xl border border-zinc-800 bg-black p-4">
+                📷 TikTok: monarchyesports
+              </p>
+
+              <p className="rounded-xl border border-zinc-800 bg-black p-4">
+                📸 YouTube: monarhyesports
+              </p>
             </div>
           </div>
 
-          <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
-            <h2 className="text-3xl font-bold text-blue-500 mb-6">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+            <h2 className="mb-6 text-3xl font-black text-blue-500">
               Send Message
             </h2>
 
@@ -82,7 +103,7 @@ export default function Contact() {
                 onChange={handleChange}
                 placeholder="Your Name"
                 required
-                className="w-full bg-zinc-800 p-3 rounded-lg"
+                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
 
               <input
@@ -92,7 +113,7 @@ export default function Contact() {
                 onChange={handleChange}
                 placeholder="Email Address"
                 required
-                className="w-full bg-zinc-800 p-3 rounded-lg"
+                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
 
               <input
@@ -102,7 +123,7 @@ export default function Contact() {
                 onChange={handleChange}
                 placeholder="Subject"
                 required
-                className="w-full bg-zinc-800 p-3 rounded-lg"
+                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
 
               <textarea
@@ -112,12 +133,12 @@ export default function Contact() {
                 onChange={handleChange}
                 placeholder="Message"
                 required
-                className="w-full bg-zinc-800 p-3 rounded-lg"
+                className="w-full resize-none rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
 
               <button
                 type="submit"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/40 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-6 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-600/40"
               >
                 Send Message
               </button>

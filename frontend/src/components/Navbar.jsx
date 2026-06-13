@@ -3,92 +3,71 @@ import logo from "../assets/Monarchy.png";
 
 export default function Navbar() {
   const navClass = ({ isActive }) =>
-    `relative font-medium transition duration-300 ${
+    `relative px-1 py-2 text-sm font-bold uppercase tracking-wide transition duration-300 ${
       isActive
-        ? "text-blue-500"
-        : "text-white hover:text-blue-400"
+        ? "text-blue-400 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-blue-500"
+        : "text-gray-300 hover:text-white"
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 h-24 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 border-b border-zinc-800 bg-black/90 text-white backdrop-blur-xl">
+      <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6 lg:px-10">
+        {/* LOGO */}
+        <Link
+          to="/"
+          className="group flex items-center gap-4"
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 shadow-lg shadow-blue-600/10 transition group-hover:border-blue-400/60 group-hover:shadow-blue-600/20">
+            <img
+              src={logo}
+              alt="Monarchy Esports"
+              className="h-12 w-12 object-contain"
+            />
+          </div>
 
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-4">
-
-          <img
-            src={logo}
-            alt="Monarchy Esports"
-            className="w-14 h-14 object-contain"
-          />
-          </Link>
-          <Link to="/">
           <div>
-            <h1 className="text-3xl font-black">
+            <h1 className="text-2xl font-black leading-none tracking-wide md:text-3xl">
               <span className="text-blue-500">
                 MONARCHY
               </span>
             </h1>
 
-            <p className="text-sm tracking-[0.4em] text-white">
+            <p className="mt-1 text-xs font-semibold tracking-[0.42em] text-gray-300">
               ESPORTS
             </p>
           </div>
-
         </Link>
 
-        {/* Navigation */}
-        <div className="hidden md:flex items-center gap-8">
-
-          <NavLink
-           to="/" 
-           className={navClass}
-           >
+        {/* NAVIGATION */}
+        <div className="hidden items-center gap-8 md:flex">
+          <NavLink to="/" className={navClass}>
             Home
           </NavLink>
-          
-          <NavLink
-            to="/about"
-            className={navClass}
->
+
+          <NavLink to="/about" className={navClass}>
             About
           </NavLink>
 
-          <NavLink
-            to="/tournaments"
-            className={navClass}
-          >
+          <NavLink to="/tournaments" className={navClass}>
             Tournaments
           </NavLink>
 
-          <NavLink
-            to="/gallery"
-            className={navClass}
-          >
+          <NavLink to="/gallery" className={navClass}>
             Gallery
           </NavLink>
 
-          <NavLink
-            to="/news"
-            className={navClass}
-          >
+          <NavLink to="/news" className={navClass}>
             News
           </NavLink>
-
-
-          
-
-
         </div>
 
         {/* CTA */}
         <Link
           to="/contact"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/40 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60"
+          className="hidden rounded-full border border-blue-500/40 bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-600/40 sm:inline-flex"
         >
           Get in Touch
         </Link>
-
       </div>
     </nav>
   );

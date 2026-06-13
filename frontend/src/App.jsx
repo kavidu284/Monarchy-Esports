@@ -29,7 +29,6 @@ import GalleryAdmin from "./admin/GalleryAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationAdmin from "./admin/RegistationAdmin.jsx";
 import TournamentView from "./pages/TournamentView";
-import MatchAdmin from "./admin/MatchesAdmin.jsx";
 import TournamentMatchesAdmin from "./admin/TournamentMatchesAdmin.jsx";
 import RoundRobinAdmin from "./admin/RoundRobinAdmin.jsx";
 
@@ -73,7 +72,6 @@ function App() {
           <Route path="messages" element={<ProtectedRoute><MessagesAdmin /></ProtectedRoute>} />
           <Route path="gallery" element={<ProtectedRoute><GalleryAdmin /></ProtectedRoute>} />
           <Route path="registrationsteam/:tournamentId" element={<ProtectedRoute><Registrationsteam /></ProtectedRoute>} />
-          <Route path="matches/:tournamentId" element={<ProtectedRoute><MatchAdmin /></ProtectedRoute>} />
           <Route path="tournament/:tournamentId/matches" element={<ProtectedRoute><TournamentMatchesAdmin /></ProtectedRoute>} />
           <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute><RoundRobinAdmin /></ProtectedRoute>} />
         </Route>

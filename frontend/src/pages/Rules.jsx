@@ -2,30 +2,46 @@ import RulebookPDF from '../assets/monarchy_Rules_260609_141738.pdf';
 
 export default function Rules() {
   return (
-    <div className="bg-black text-white min-h-screen">
+    <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.22),transparent_35%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.08),transparent_35%)]" />
+      <div className="absolute left-10 top-28 h-52 w-52 rounded-full bg-blue-600/10 blur-3xl" />
+      <div className="absolute bottom-20 right-10 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
 
       {/* Hero Section */}
-      <section className="py-20 text-center">
-        <div className="max-w-5xl mx-auto px-6">
+      <section className="relative py-24 text-center">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-blue-500/30 bg-blue-500/10 text-4xl shadow-xl shadow-blue-600/20">
+            📘
+          </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold">
-            Tournament Rules
+          <p className="text-sm font-bold uppercase tracking-[0.35em] text-blue-400">
+            Monarchy Esports
+          </p>
+
+          <h1 className="mt-4 text-5xl font-black leading-tight md:text-7xl">
+            Tournament{" "}
+            <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+              Rules
+            </span>
           </h1>
 
-          <p className="text-gray-400 text-xl mt-6">
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-400 md:text-xl">
             Official Rules and Regulations for all
             Monarchy Esports tournaments.
           </p>
 
+          <div className="mx-auto mt-8 h-[2px] w-40 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
         </div>
       </section>
 
       {/* Rules Content */}
-      <section className="max-w-6xl mx-auto px-6 pb-20 space-y-8">
-
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">1. Eligibility</h2>
-          <ul className="space-y-2 text-gray-300">
+      <section className="relative mx-auto max-w-6xl space-y-8 px-6 pb-20">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            1. Eligibility
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• All players must provide accurate registration information.</li>
             <li>• Players may only participate for one team per tournament.</li>
             <li>• Multiple registrations may result in disqualification.</li>
@@ -33,9 +49,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">2. Team Composition</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            2. Team Composition
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• 5 Main Players are required.</li>
             <li>• Up to 2 Substitute Players are allowed.</li>
             <li>• Maximum 7 registered players per team.</li>
@@ -43,9 +61,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">3. Registration Rules</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            3. Registration Rules
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Teams must complete registration before the deadline.</li>
             <li>• Incomplete registrations may be rejected.</li>
             <li>• Tournament officials may verify player information.</li>
@@ -53,9 +73,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">4. Tournament Format</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            4. Tournament Format
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Tournament formats vary depending on the event.</li>
             <li>• Matches may be BO1, BO3, BO5, or BO7.</li>
             <li>• Format details will be announced before the event.</li>
@@ -63,9 +85,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">5. Match Scheduling</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            5. Match Scheduling
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Teams are responsible for checking schedules.</li>
             <li>• Match times announced by officials are final.</li>
             <li>• Teams must be available at scheduled times.</li>
@@ -73,9 +97,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">6. Match Procedures</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            6. Match Procedures
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Teams must be ready before match start.</li>
             <li>• A grace period may be provided.</li>
             <li>• Failure to appear may result in a walkover loss.</li>
@@ -83,9 +109,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">7. Technical Issues & Pauses</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            7. Technical Issues & Pauses
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Players are responsible for stable internet connections.</li>
             <li>• Technical pauses may only be used for genuine issues.</li>
             <li>• Abuse of pauses may result in penalties.</li>
@@ -93,9 +121,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">8. Communication Rules</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            8. Communication Rules
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Respect all players, officials, and staff.</li>
             <li>• No toxic or abusive behavior.</li>
             <li>• Follow tournament staff instructions.</li>
@@ -103,9 +133,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">9. Fair Play & Competitive Integrity</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            9. Fair Play & Competitive Integrity
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• No cheating or hacking.</li>
             <li>• No account sharing.</li>
             <li>• No exploiting bugs or glitches.</li>
@@ -114,9 +146,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">10. Player Verification</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            10. Player Verification
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Officials may request player verification.</li>
             <li>• Hand-cam verification may be required.</li>
             <li>• Players may be asked for screenshots or account details.</li>
@@ -124,18 +158,22 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">11. Substitute Players</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            11. Substitute Players
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Registered substitutes may replace main players.</li>
             <li>• Substitute players must meet all eligibility requirements.</li>
             <li>• Unregistered players are not permitted.</li>
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">12. Prohibited Conduct</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            12. Prohibited Conduct
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Toxic behavior.</li>
             <li>• Hate speech.</li>
             <li>• Personal attacks.</li>
@@ -145,9 +183,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">13. Dispute Resolution</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            13. Dispute Resolution
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Report disputes immediately.</li>
             <li>• Evidence must be submitted when requested.</li>
             <li>• Officials will review all available information.</li>
@@ -155,9 +195,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">14. Penalties</h2>
-          <ul className="space-y-2 text-gray-300">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            14. Penalties
+          </h2>
+          <ul className="space-y-3 text-gray-300">
             <li>• Warning</li>
             <li>• Point Deduction</li>
             <li>• Match Loss</li>
@@ -167,9 +209,11 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">15. Organizer Authority</h2>
-          <p className="text-gray-300 leading-8">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            15. Organizer Authority
+          </h2>
+          <p className="leading-8 text-gray-300">
             Monarchy Esports reserves the right to interpret,
             modify, and enforce tournament rules. All decisions
             made by tournament officials regarding disputes,
@@ -178,22 +222,25 @@ export default function Rules() {
           </p>
         </div>
 
-        <div className="bg-zinc-900 p-8 rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">16. Acceptance of Rules</h2>
-          <p className="text-gray-300 leading-8">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-blue-600/10">
+          <h2 className="mb-4 text-3xl font-black text-blue-400">
+            16. Acceptance of Rules
+          </h2>
+          <p className="leading-8 text-gray-300">
             By participating in any Monarchy Esports tournament,
             all players and teams acknowledge that they have read,
             understood, and agreed to follow these rules and
             regulations.
           </p>
         </div>
-        <div className="pt-4 flex justify-center">
+
+        <div className="flex justify-center pt-6">
           <a
             href={RulebookPDF}
             download="MonarchyEsports_Rulebook.pdf"
             target="_blank"
             rel="noreferrer"
-            className="group inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/40 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="group inline-flex items-center justify-center gap-3 rounded-full bg-blue-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/40 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span>Download Rulebook</span>
             <svg
@@ -212,9 +259,7 @@ export default function Rules() {
             </svg>
           </a>
         </div>
-
       </section>
-
     </div>
   );
 }

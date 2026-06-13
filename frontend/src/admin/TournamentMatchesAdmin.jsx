@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams , Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import api from "../services/api";
 
 export default function MatchAdmin() {
@@ -18,7 +18,6 @@ export default function MatchAdmin() {
 
   const [matchDate, setMatchDate] = useState("");
   const [matchTime, setMatchTime] = useState("");
-
 
   const bracketRoundOptions = [
     "Round 1",
@@ -52,24 +51,26 @@ export default function MatchAdmin() {
       console.error(error);
     }
   };
-const handleDeleteMatch = async (matchId) => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this match?"
-  );
 
-  if (!confirmDelete) return;
+  const handleDeleteMatch = async (matchId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this match?"
+    );
 
-  try {
-    await api.delete(`/matches/${matchId}`);
+    if (!confirmDelete) return;
 
-    alert("Match Deleted Successfully");
+    try {
+      await api.delete(`/matches/${matchId}`);
 
-    fetchMatches();
-  } catch (error) {
-    console.error(error);
-    alert("Failed to delete match");
-  }
-};
+      alert("Match Deleted Successfully");
+
+      fetchMatches();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete match");
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -153,16 +154,8 @@ const handleDeleteMatch = async (matchId) => {
     return resolveParticipant(match.team2);
   };
 
-
-
   const handleCreateMatch = async () => {
-    if (
-      !matchNo ||
-      !team1 ||
-      !team2 ||
-      !matchDate ||
-      !matchTime
-    ) {
+    if (!matchNo || !team1 || !team2 || !matchDate || !matchTime) {
       alert("Please fill all fields");
       return;
     }
@@ -173,19 +166,16 @@ const handleDeleteMatch = async (matchId) => {
     }
 
     try {
-      await api.post(
-        `/tournaments/${tournamentId}/matches`,
-        {
-          match_no: Number(matchNo),
-          stage: stage,
-          bracket_round:
-            stage === "Bracket" ? bracketRound : "Round Robin",
-          team1: team1,
-          team2: team2,
-          match_date: matchDate,
-          match_time: matchTime,
-        }
-      );
+      await api.post(`/tournaments/${tournamentId}/matches`, {
+        match_no: Number(matchNo),
+        stage: stage,
+        bracket_round:
+          stage === "Bracket" ? bracketRound : "Round Robin",
+        team1: team1,
+        team2: team2,
+        match_date: matchDate,
+        match_time: matchTime,
+      });
 
       alert("Match Created Successfully");
 
@@ -208,12 +198,9 @@ const handleDeleteMatch = async (matchId) => {
     if (!winner) return;
 
     try {
-      await api.put(
-        `/matches/${matchId}/winner`,
-        {
-          winner: winner,
-        }
-      );
+      await api.put(`/matches/${matchId}/winner`, {
+        winner: winner,
+      });
 
       fetchMatches();
     } catch (error) {
@@ -227,228 +214,247 @@ const handleDeleteMatch = async (matchId) => {
     return String(date).slice(0, 10);
   };
 
-const formatTime = (time) => {
-  if (!time) return "-";
+  const formatTime = (time) => {
+    if (!time) return "-";
 
-  const value = String(time);
+    const value = String(time);
 
-  // If backend sends MySQL TIME as seconds: 85020
-  if (/^\d+$/.test(value)) {
-    const totalSeconds = Number(value);
+    if (/^\d+$/.test(value)) {
+      const totalSeconds = Number(value);
 
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
 
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  }
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+        2,
+        "0"
+      )}`;
+    }
 
-  // If backend sends full datetime
-  if (value.includes("T")) {
-    return value.slice(11, 16);
-  }
+    if (value.includes("T")) {
+      return value.slice(11, 16);
+    }
 
-  // If backend sends normal time: 20:30:00
-  return value.slice(0, 5);
-};
-const isFutureParticipant = (participant) => {
-  if (!participant) return false;
+    return value.slice(0, 5);
+  };
 
-  return /^(Winner|Loser)\s+of\s+Match\s+(\d+)$/i.test(
-    String(participant).trim()
-  );
-};
+  const isFutureParticipant = (participant) => {
+    if (!participant) return false;
 
-const isParticipantReady = (participant) => {
-  const resolved = resolveParticipant(participant);
+    return /^(Winner|Loser)\s+of\s+Match\s+(\d+)$/i.test(
+      String(participant).trim()
+    );
+  };
 
-  if (!isFutureParticipant(participant)) {
-    return true;
-  }
+  const isParticipantReady = (participant) => {
+    const resolved = resolveParticipant(participant);
 
-  return resolved !== participant;
-};
+    if (!isFutureParticipant(participant)) {
+      return true;
+    }
 
-const canUpdateWinner = (match) => {
+    return resolved !== participant;
+  };
+
+  const canUpdateWinner = (match) => {
+    return (
+      isParticipantReady(match.team1) &&
+      isParticipantReady(match.team2)
+    );
+  };
+
+  const inputClass =
+    "w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50";
+
+  const tableHeadClass =
+    "whitespace-nowrap px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400";
+
+  const tableCellClass =
+    "whitespace-nowrap px-4 py-4 text-sm text-gray-300";
+
   return (
-    isParticipantReady(match.team1) &&
-    isParticipantReady(match.team2)
-  );
-};
+    <div className="min-h-screen bg-black text-white">
+      {/* HEADER */}
+      <div className="mb-10 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Admin Panel
+            </p>
 
-  return (
-    <div>
-      <h1 className="text-4xl font-bold mb-8">
-        Manage Matches
-      </h1>
+            <h1 className="mt-2 text-4xl font-black">
+              Manage Matches
+            </h1>
 
-      <p className="text-gray-400 mb-6">
-        Create and manage matches for the tournament.
-      </p>
+            <p className="mt-2 max-w-2xl text-gray-400">
+              Create matches, manage match schedule, and update winners
+              for this tournament.
+            </p>
 
-      <h1 className="text-4xl font-bold mb-2">
-        {tournament?.title || tournament?.tournament_name}
-      </h1>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
+                {tournament?.tournament_format || "Bracket Only"}
+              </span>
 
-      <div className="flex items-center justify-between mb-8">
+              <span className="rounded-full border border-zinc-700 bg-black px-3 py-1 text-xs font-bold text-gray-300">
+                Tournament #{tournamentId}
+              </span>
 
-  <p className="text-blue-400">
-    Format: {tournament?.tournament_format || "Bracket Only"}
-  </p>
+              <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
+                {matches.length} Matches
+              </span>
+            </div>
+          </div>
 
-  {tournament?.tournament_format === "Round Robin + Bracket" && (
-    <Link
-      to={`/admin/tournament/${tournamentId}/matches/round-robin`}
-      className="bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-lg font-semibold"
-    >
-      Manage Round Robin Groups
-    </Link>
-  )}
+          {tournament?.tournament_format === "Round Robin + Bracket" && (
+            <Link
+              to={`/admin/tournament/${tournamentId}/matches/round-robin`}
+              className="rounded-xl bg-blue-600 px-6 py-3 text-center font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-blue-700"
+            >
+              Manage Round Robin Groups
+            </Link>
+          )}
+        </div>
+      </div>
 
-</div>
+      {/* TOURNAMENT TITLE */}
+      <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-xl shadow-black/30">
+        <p className="text-sm text-gray-500">Tournament</p>
 
-      <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 mb-8">
-        <h2 className="text-2xl font-bold mb-6">
-          Create Match
+        <h2 className="mt-2 text-3xl font-black text-white">
+          {tournament?.title || tournament?.tournament_name || "Loading..."}
         </h2>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px]">
-            <thead>
-              <tr className="border-b border-zinc-700">
-                <th className="text-left py-3 px-2">
-                  Match No
-                </th>
+      {/* CREATE MATCH */}
+      <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+        <div className="mb-6">
+          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+            Match Setup
+          </p>
 
-                <th className="text-left py-3 px-2">
-                  Stage
-                </th>
+          <h2 className="mt-2 text-2xl font-bold">
+            Create Match
+          </h2>
 
-                <th className="text-left py-3 px-2">
-                  Bracket Round
-                </th>
+          <p className="mt-2 text-gray-400">
+            Use team names or future match references like Winner of Match 1.
+          </p>
+        </div>
 
-                <th className="text-left py-3 px-2">
-                  Team 1
-                </th>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Match No
+            </label>
 
-                <th className="text-left py-3 px-2">
-                  Team 2
-                </th>
+            <input
+              type="number"
+              min="1"
+              value={matchNo}
+              onChange={(e) => setMatchNo(e.target.value)}
+              className={inputClass}
+              placeholder={`${matches.length + 1}`}
+            />
+          </div>
 
-                <th className="text-left py-3 px-2">
-                  Date
-                </th>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Stage
+            </label>
 
-                <th className="text-left py-3 px-2">
-                  Time
-                </th>
+            <select
+              value={stage}
+              onChange={(e) => setStage(e.target.value)}
+              className={inputClass}
+            >
+              <option value="Bracket">Bracket</option>
+              <option value="Round Robin">Round Robin</option>
+            </select>
+          </div>
 
-                <th className="text-left py-3 px-2">
-                  Action
-                </th>
-              </tr>
-            </thead>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Bracket Round
+            </label>
 
-            <tbody>
-              <tr>
-                <td className="py-3 px-2">
-                  <input
-                    type="number"
-                    min="1"
-                    value={matchNo}
-                    onChange={(e) => setMatchNo(e.target.value)}
-                    className="bg-zinc-800 p-2 rounded-lg w-full"
-                    placeholder={`${matches.length + 1}`}
-                  />
-                </td>
+            <select
+              value={bracketRound}
+              onChange={(e) => setBracketRound(e.target.value)}
+              disabled={stage === "Round Robin"}
+              className={inputClass}
+            >
+              {bracketRoundOptions.map((round) => (
+                <option key={round} value={round}>
+                  {round}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <td className="py-3 px-2">
-                  <select
-                    value={stage}
-                    onChange={(e) => setStage(e.target.value)}
-                    className="bg-zinc-800 p-2 rounded-lg w-full"
-                  >
-                    <option value="Bracket">
-                      Bracket
-                    </option>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Date
+            </label>
 
-                    <option value="Round Robin">
-                      Round Robin
-                    </option>
-                  </select>
-                </td>
+            <input
+              type="date"
+              value={matchDate}
+              onChange={(e) => setMatchDate(e.target.value)}
+              className={inputClass}
+            />
+          </div>
 
-                <td className="py-3 px-2">
-                  <select
-                    value={bracketRound}
-                    onChange={(e) =>
-                      setBracketRound(e.target.value)
-                    }
-                    disabled={stage === "Round Robin"}
-                    className="bg-zinc-800 p-2 rounded-lg w-full disabled:opacity-50"
-                  >
-                    {bracketRoundOptions.map((round) => (
-                      <option key={round} value={round}>
-                        {round}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Team 1
+            </label>
 
-                <td className="py-3 px-2">
-                  <input
-                    list="teamOptions"
-                    value={team1}
-                    onChange={(e) => setTeam1(e.target.value)}
-                    className="bg-zinc-800 p-2 rounded-lg w-full"
-                    placeholder="Team name / Winner of Match 1"
-                  />
-                </td>
+            <input
+              list="teamOptions"
+              value={team1}
+              onChange={(e) => setTeam1(e.target.value)}
+              className={inputClass}
+              placeholder="Team name / Winner of Match 1"
+            />
+          </div>
 
-                <td className="py-3 px-2">
-                  <input
-                    list="teamOptions"
-                    value={team2}
-                    onChange={(e) => setTeam2(e.target.value)}
-                    className="bg-zinc-800 p-2 rounded-lg w-full"
-                    placeholder="Team name / Loser of Match 3"
-                  />
-                </td>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Team 2
+            </label>
 
-                <td className="py-3 px-2">
-                  <input
-                    type="date"
-                    value={matchDate}
-                    onChange={(e) =>
-                      setMatchDate(e.target.value)
-                    }
-                    className="bg-zinc-800 p-2 rounded-lg w-full"
-                  />
-                </td>
+            <input
+              list="teamOptions"
+              value={team2}
+              onChange={(e) => setTeam2(e.target.value)}
+              className={inputClass}
+              placeholder="Team name / Loser of Match 3"
+            />
+          </div>
 
-                <td className="py-3 px-2">
-                  <input
-                    type="time"
-                    value={matchTime}
-                    onChange={(e) =>
-                      setMatchTime(e.target.value)
-                    }
-                    className="bg-zinc-800 p-2 rounded-lg w-full"
-                  />
-                </td>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Time
+            </label>
 
-                <td className="py-3 px-2">
-                  <button
-                    type="button"
-                    onClick={handleCreateMatch}
-                    className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg"
-                  >
-                    Create
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            <input
+              type="time"
+              value={matchTime}
+              onChange={(e) => setMatchTime(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={handleCreateMatch}
+              className="w-full rounded-xl bg-green-600 px-6 py-3 font-bold text-white shadow-lg shadow-green-600/20 transition hover:bg-green-700"
+            >
+              Create Match
+            </button>
+          </div>
         </div>
 
         <datalist id="teamOptions">
@@ -476,58 +482,55 @@ const canUpdateWinner = (match) => {
         </datalist>
       </div>
 
-      <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-        <h2 className="text-2xl font-bold mb-6">
-          Match Schedule
-        </h2>
+      {/* MATCH SCHEDULE */}
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Schedule
+            </p>
+
+            <h2 className="mt-2 text-2xl font-bold">
+              Match Schedule
+            </h2>
+          </div>
+
+          <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 px-5 py-3">
+            <p className="text-sm font-bold text-blue-400">
+              {matches.length} Total Matches
+            </p>
+          </div>
+        </div>
 
         {matches.length === 0 ? (
-          <p className="text-gray-400">
-            No matches created yet.
-          </p>
+          <div className="rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-4xl">
+              ⚔️
+            </div>
+
+            <h3 className="text-2xl font-bold text-white">
+              No Matches Created
+            </h3>
+
+            <p className="mt-3 text-gray-400">
+              Create your first match using the form above.
+            </p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px]">
-              <thead>
-                <tr className="border-b border-zinc-700">
-                  <th className="text-left py-3 px-2">
-                    Match No
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Stage
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Bracket Round
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Team 1
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Team 2
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Date
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Time
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Result
-                  </th>
-
-                  <th className="text-left py-3 px-2">
-                    Select Winner
-                  </th>
-                  <th className="text-left py-3 px-2">
-                Action
-                </th>
+          <div className="overflow-x-auto rounded-2xl border border-zinc-800">
+            <table className="w-full min-w-[1200px] bg-black">
+              <thead className="bg-zinc-950">
+                <tr className="border-b border-zinc-800">
+                  <th className={tableHeadClass}>Match No</th>
+                  <th className={tableHeadClass}>Stage</th>
+                  <th className={tableHeadClass}>Bracket Round</th>
+                  <th className={tableHeadClass}>Team 1</th>
+                  <th className={tableHeadClass}>Team 2</th>
+                  <th className={tableHeadClass}>Date</th>
+                  <th className={tableHeadClass}>Time</th>
+                  <th className={tableHeadClass}>Result</th>
+                  <th className={tableHeadClass}>Select Winner</th>
+                  <th className={tableHeadClass}>Action</th>
                 </tr>
               </thead>
 
@@ -535,84 +538,86 @@ const canUpdateWinner = (match) => {
                 {matches.map((match, index) => (
                   <tr
                     key={match.id}
-                    className="border-b border-zinc-800"
+                    className="border-b border-zinc-800 transition hover:bg-blue-500/5"
                   >
-                    <td className="py-4 px-2">
-                      {match.match_no || index + 1}
+                    <td className={tableCellClass}>
+                      <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 font-bold text-blue-300">
+                        #{match.match_no || index + 1}
+                      </span>
                     </td>
 
-                    <td className="py-4 px-2">
+                    <td className={tableCellClass}>
                       {match.stage || "Bracket"}
                     </td>
 
-                    <td className="py-4 px-2">
+                    <td className={tableCellClass}>
                       {match.stage === "Round Robin"
                         ? "-"
                         : match.bracket_round || "-"}
                     </td>
 
-                    <td className="py-4 px-2">
-                      {getTeam1(match)}
+                    <td className={tableCellClass}>
+                      <span className="font-bold text-white">
+                        {getTeam1(match)}
+                      </span>
                     </td>
 
-                    <td className="py-4 px-2">
-                      {getTeam2(match)}
+                    <td className={tableCellClass}>
+                      <span className="font-bold text-white">
+                        {getTeam2(match)}
+                      </span>
                     </td>
 
-                    <td className="py-4 px-2">
+                    <td className={tableCellClass}>
                       {formatDate(match.match_date)}
                     </td>
 
-                    <td className="py-4 px-2">
+                    <td className={tableCellClass}>
                       {formatTime(match.match_time)}
                     </td>
 
-                    <td className="py-4 px-2">
+                    <td className={tableCellClass}>
                       {match.winner ? (
-                        <span className="text-green-500 font-bold">
+                        <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
                           {match.winner} won
                         </span>
                       ) : (
-                        <span className="text-gray-500">
+                        <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs font-bold text-gray-400">
                           Not played
                         </span>
                       )}
                     </td>
 
-                    <td className="py-4 px-2">
-                     {canUpdateWinner(match) ? (
+                    <td className={tableCellClass}>
+                      {canUpdateWinner(match) ? (
                         <select
-                            onChange={(e) =>
-                            handleUpdateWinner(
-                                match.id,
-                                e.target.value
-                            )
-                            }
-                            className="bg-zinc-800 p-2 rounded-lg"
-                            value={match.winner || ""}
+                          onChange={(e) =>
+                            handleUpdateWinner(match.id, e.target.value)
+                          }
+                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                          value={match.winner || ""}
                         >
-                            <option value="">
-                            Select Winner
-                            </option>
+                          <option value="">Select Winner</option>
 
-                            <option value={getTeam1(match)}>
+                          <option value={getTeam1(match)}>
                             {getTeam1(match)}
-                            </option>
+                          </option>
 
-                            <option value={getTeam2(match)}>
+                          <option value={getTeam2(match)}>
                             {getTeam2(match)}
-                            </option>
+                          </option>
                         </select>
-                        ) : (
-                        <span className="text-yellow-400 text-sm">
-                            Waiting source match
-                        </span> 
-                    )}
+                      ) : (
+                        <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs font-bold text-yellow-400">
+                          Waiting source match
+                        </span>
+                      )}
                     </td>
-                    <td className="py-4 px-2">
+
+                    <td className={tableCellClass}>
                       <button
                         onClick={() => handleDeleteMatch(match.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg"
+                        className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
                       >
                         Delete
                       </button>

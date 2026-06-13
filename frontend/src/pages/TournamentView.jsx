@@ -132,7 +132,6 @@ export default function TournamentView() {
   const tournamentFormat =
     tournament?.tournament_format || "Bracket Only";
 
-  
   const bracketMatches = matches.filter(
     (match) => (match.stage || "Bracket") === "Bracket"
   );
@@ -219,7 +218,7 @@ export default function TournamentView() {
     return sources;
   };
 
-  const renderBracketMatchCard = (match) => { 
+  const renderBracketMatchCard = (match) => {
     const teamOne = getTeam1(match);
     const teamTwo = getTeam2(match);
 
@@ -233,17 +232,17 @@ export default function TournamentView() {
       match.winner && match.winner === teamTwo;
 
     return (
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden shadow-lg w-[310px]">
-        <div className="flex items-center justify-between px-4 py-2 bg-zinc-800 border-b border-zinc-700">
-          <span className="text-xs text-gray-400">
+      <div className="w-[310px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40">
+        <div className="flex items-center justify-between border-b border-zinc-800 bg-black px-4 py-3">
+          <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             Match {match.match_no || "-"}
           </span>
 
           <span
-            className={`text-xs px-2 py-1 rounded-full ${
+            className={`rounded-full border px-3 py-1 text-xs font-bold ${
               match.winner
-                ? "bg-green-900 text-green-300"
-                : "bg-zinc-700 text-gray-300"
+                ? "border-green-500/40 bg-green-500/10 text-green-400"
+                : "border-zinc-700 bg-zinc-900 text-gray-400"
             }`}
           >
             {match.winner ? "Completed" : "Pending"}
@@ -251,48 +250,48 @@ export default function TournamentView() {
         </div>
 
         <div
-          className={`px-4 py-4 border-b border-zinc-700 ${
+          className={`border-b border-zinc-800 px-4 py-4 transition ${
             teamOneIsWinner
-              ? "bg-green-700 text-white"
-              : "bg-zinc-900"
+              ? "bg-green-600 text-white"
+              : "bg-zinc-950 text-gray-300"
           }`}
         >
-          <p className="font-bold truncate">
+          <p className="truncate font-black">
             {teamOne}
           </p>
 
           {isFutureParticipant(rawTeamOne) &&
             rawTeamOne !== teamOne && (
-              <p className="text-xs text-gray-300 mt-1">
+              <p className="mt-1 text-xs text-gray-300">
                 {rawTeamOne}
               </p>
             )}
         </div>
 
         <div
-          className={`px-4 py-4 ${
+          className={`px-4 py-4 transition ${
             teamTwoIsWinner
-              ? "bg-green-700 text-white"
-              : "bg-zinc-900"
+              ? "bg-green-600 text-white"
+              : "bg-zinc-950 text-gray-300"
           }`}
         >
-          <p className="font-bold truncate">
+          <p className="truncate font-black">
             {teamTwo}
           </p>
 
           {isFutureParticipant(rawTeamTwo) &&
             rawTeamTwo !== teamTwo && (
-              <p className="text-xs text-gray-300 mt-1">
+              <p className="mt-1 text-xs text-gray-300">
                 {rawTeamTwo}
               </p>
             )}
         </div>
 
-        <div className="px-4 py-3 bg-zinc-800 border-t border-zinc-700">
+        <div className="border-t border-zinc-800 bg-black px-4 py-3">
           <p className="text-sm text-gray-400">
             Winner:{" "}
             {match.winner ? (
-              <span className="text-green-400 font-bold">
+              <span className="font-bold text-green-400">
                 {match.winner}
               </span>
             ) : (
@@ -428,7 +427,7 @@ export default function TournamentView() {
 
     return (
       <div>
-        <h3 className={`text-2xl font-bold mb-8 ${titleColor}`}>
+        <h3 className={`mb-8 text-3xl font-black ${titleColor}`}>
           {title}
         </h3>
 
@@ -438,14 +437,14 @@ export default function TournamentView() {
           </p>
         ) : (
           <div
-            className="relative"
+            className="relative rounded-3xl border border-zinc-800 bg-black/60 p-6"
             style={{
               width: `${boardWidth}px`,
               height: `${boardHeight}px`,
             }}
           >
             <svg
-              className="absolute inset-0 pointer-events-none z-0"
+              className="pointer-events-none absolute inset-0 z-0"
               width={boardWidth}
               height={boardHeight}
             >
@@ -461,7 +460,7 @@ export default function TournamentView() {
                 >
                   <path
                     d="M0,0 L0,6 L9,3 z"
-                    fill="#52525b"
+                    fill="#3b82f6"
                   />
                 </marker>
               </defs>
@@ -471,7 +470,7 @@ export default function TournamentView() {
                   key={line.key}
                   d={line.path}
                   fill="none"
-                  stroke="#52525b"
+                  stroke="#3b82f6"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -483,7 +482,7 @@ export default function TournamentView() {
             {columns.map((column) => (
               <h4
                 key={column.roundName}
-                className={`absolute text-lg font-bold ${roundTitleColor}`}
+                className={`absolute rounded-full border border-zinc-700 bg-zinc-950 px-4 py-2 text-sm font-black ${roundTitleColor}`}
                 style={{
                   left: `${column.x}px`,
                   top: "0px",
@@ -503,7 +502,7 @@ export default function TournamentView() {
                     top: `${node.y + HEADER_OFFSET}px`,
                   }}
                 >
-                 {renderBracketMatchCard(node.match)}
+                  {renderBracketMatchCard(node.match)}
                 </div>
               ))
             )}
@@ -515,50 +514,73 @@ export default function TournamentView() {
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white p-8">
-        Loading tournament...
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-10 py-8 text-center shadow-xl shadow-blue-600/10">
+          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
+          <p className="font-semibold text-gray-300">
+            Loading tournament...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* BANNER */}
-      <div className="relative h-[320px] bg-zinc-900">
+      <div className="relative h-[420px] overflow-hidden border-b border-zinc-900 bg-zinc-950">
         {tournament.banner_image && (
           <img
             src={`http://127.0.0.1:8000/${tournament.banner_image}`}
             alt={tournament.title}
-            className="w-full h-full object-cover opacity-50"
+            className="h-full w-full object-cover opacity-45"
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
 
-        <div className="absolute bottom-8 left-8">
-          <h1 className="text-5xl font-bold">
-            {tournament.title}
-          </h1>
+        <div className="absolute bottom-10 left-0 right-0">
+          <div className="mx-auto max-w-[1600px] px-6">
+            <div className="max-w-5xl">
+              <p className="text-sm font-bold uppercase tracking-[0.35em] text-blue-400">
+                Tournament View
+              </p>
 
-          <p className="text-gray-300 mt-2">
-            {tournament.subtitle}
-          </p>
+              <h1 className="mt-4 text-5xl font-black leading-tight md:text-7xl">
+                {tournament.title}
+              </h1>
 
-          <p className="text-blue-400 mt-2">
-            Format: {tournamentFormat}
-          </p>
+              <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-300">
+                {tournament.subtitle}
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-300">
+                  Format: {tournamentFormat}
+                </span>
+
+                <span className="rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-bold text-green-400">
+                  {teams.length} Teams
+                </span>
+
+                <span className="rounded-full border border-zinc-700 bg-black/70 px-4 py-2 text-sm font-bold text-gray-300">
+                  {matches.length} Matches
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-6 py-10">
+      <div className="mx-auto max-w-[1600px] px-6 py-10">
         {/* TABS */}
-        <div className="flex flex-wrap gap-4 mb-10">
+        <div className="mb-10 flex flex-wrap gap-4 rounded-3xl border border-zinc-800 bg-zinc-950 p-3 shadow-xl shadow-black/30">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`px-6 py-3 rounded-lg font-semibold ${
+            className={`rounded-2xl px-6 py-3 font-bold transition ${
               activeTab === "overview"
-                ? "bg-blue-600"
-                : "bg-zinc-800 hover:bg-zinc-700"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
             }`}
           >
             Overview
@@ -566,10 +588,10 @@ export default function TournamentView() {
 
           <button
             onClick={() => setActiveTab("teams")}
-            className={`px-6 py-3 rounded-lg font-semibold ${
+            className={`rounded-2xl px-6 py-3 font-bold transition ${
               activeTab === "teams"
-                ? "bg-blue-600"
-                : "bg-zinc-800 hover:bg-zinc-700"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
             }`}
           >
             Teams
@@ -577,10 +599,10 @@ export default function TournamentView() {
 
           <button
             onClick={() => setActiveTab("schedule")}
-            className={`px-6 py-3 rounded-lg font-semibold ${
+            className={`rounded-2xl px-6 py-3 font-bold transition ${
               activeTab === "schedule"
-                ? "bg-blue-600"
-                : "bg-zinc-800 hover:bg-zinc-700"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
             }`}
           >
             Schedule
@@ -588,10 +610,10 @@ export default function TournamentView() {
 
           <button
             onClick={() => setActiveTab("bracket")}
-            className={`px-6 py-3 rounded-lg font-semibold ${
+            className={`rounded-2xl px-6 py-3 font-bold transition ${
               activeTab === "bracket"
-                ? "bg-blue-600"
-                : "bg-zinc-800 hover:bg-zinc-700"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
             }`}
           >
             Bracket
@@ -600,33 +622,37 @@ export default function TournamentView() {
 
         {/* OVERVIEW */}
         {activeTab === "overview" && (
-          <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
-            <h2 className="text-3xl font-bold mb-6">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Overview
+            </p>
+
+            <h2 className="mt-2 text-3xl font-black">
               Tournament Overview
             </h2>
 
-            <p className="text-gray-300 leading-8">
+            <p className="mt-6 leading-8 text-gray-300">
               {tournament.description}
             </p>
 
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <div className="bg-zinc-800 p-6 rounded-xl">
-                <p className="text-gray-400">Game</p>
-                <h3 className="text-xl font-bold">
+            <div className="mt-8 grid gap-6 md:grid-cols-3">
+              <div className="rounded-2xl border border-zinc-800 bg-black p-6">
+                <p className="text-sm text-gray-500">Game</p>
+                <h3 className="mt-2 text-xl font-black">
                   {tournament.game_name || "MLBB"}
                 </h3>
               </div>
 
-              <div className="bg-zinc-800 p-6 rounded-xl">
-                <p className="text-gray-400">Prize Pool</p>
-                <h3 className="text-xl font-bold">
+              <div className="rounded-2xl border border-zinc-800 bg-black p-6">
+                <p className="text-sm text-gray-500">Prize Pool</p>
+                <h3 className="mt-2 text-xl font-black text-blue-400">
                   Rs. {tournament.prize_pool || 0}
                 </h3>
               </div>
 
-              <div className="bg-zinc-800 p-6 rounded-xl">
-                <p className="text-gray-400">Status</p>
-                <h3 className="text-xl font-bold">
+              <div className="rounded-2xl border border-zinc-800 bg-black p-6">
+                <p className="text-sm text-gray-500">Status</p>
+                <h3 className="mt-2 text-xl font-black">
                   {tournament.status}
                 </h3>
               </div>
@@ -636,35 +662,41 @@ export default function TournamentView() {
 
         {/* TEAMS */}
         {activeTab === "teams" && (
-          <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
-            <h2 className="text-3xl font-bold mb-6">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Teams
+            </p>
+
+            <h2 className="mt-2 text-3xl font-black">
               Approved Teams
             </h2>
 
             {teams.length === 0 ? (
-              <p className="text-gray-400">
-                No approved teams yet.
-              </p>
+              <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+                <p className="text-gray-400">
+                  No approved teams yet.
+                </p>
+              </div>
             ) : (
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {teams.map((team) => (
                   <div
                     key={team.id}
-                    className="bg-zinc-800 rounded-xl p-5 text-center border border-zinc-700"
+                    className="rounded-3xl border border-zinc-800 bg-black p-6 text-center shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60"
                   >
                     {team.team_logo ? (
                       <img
                         src={`http://127.0.0.1:8000/${team.team_logo}`}
                         alt={team.team_name}
-                        className="w-20 h-20 object-cover rounded-full mx-auto mb-4"
+                        className="mx-auto mb-4 h-24 w-24 rounded-2xl border border-blue-500/30 object-cover"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-zinc-700 mx-auto mb-4 flex items-center justify-center">
+                      <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 text-sm text-gray-400">
                         Team
                       </div>
                     )}
 
-                    <h3 className="font-bold text-lg">
+                    <h3 className="text-lg font-black">
                       {team.team_name}
                     </h3>
                   </div>
@@ -676,26 +708,32 @@ export default function TournamentView() {
 
         {/* SCHEDULE */}
         {activeTab === "schedule" && (
-          <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
-            <h2 className="text-3xl font-bold mb-6">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Schedule
+            </p>
+
+            <h2 className="mt-2 text-3xl font-black">
               Match Schedule
             </h2>
 
             {matches.length === 0 ? (
-              <p className="text-gray-400">
-                Schedule not released yet.
-              </p>
+              <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+                <p className="text-gray-400">
+                  Schedule not released yet.
+                </p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px]">
-                  <thead>
-                    <tr className="border-b border-zinc-700 text-gray-400">
-                      <th className="text-left py-3 px-3">Match No</th>
-                      <th className="text-left py-3 px-3">Team 1</th>
-                      <th className="text-left py-3 px-3">Team 2</th>
-                      <th className="text-left py-3 px-3">Date</th>
-                      <th className="text-left py-3 px-3">Time</th>
-                      <th className="text-left py-3 px-3">Winner</th>
+              <div className="mt-8 overflow-x-auto rounded-2xl border border-zinc-800">
+                <table className="w-full min-w-[900px] bg-black">
+                  <thead className="bg-zinc-950">
+                    <tr className="border-b border-zinc-800">
+                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Match No</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Team 1</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Team 2</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Date</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Time</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Winner</th>
                     </tr>
                   </thead>
 
@@ -703,35 +741,35 @@ export default function TournamentView() {
                     {matches.map((match, index) => (
                       <tr
                         key={match.id}
-                        className="border-b border-zinc-800"
+                        className="border-b border-zinc-800 transition hover:bg-blue-500/5"
                       >
-                        <td className="py-4 px-3">
-                          {match.match_no || index + 1}
+                        <td className="px-4 py-4 text-sm text-gray-300">
+                          #{match.match_no || index + 1}
                         </td>
 
-                        <td className="py-4 px-3">
+                        <td className="px-4 py-4 text-sm font-bold text-white">
                           {getTeam1(match)}
                         </td>
 
-                        <td className="py-4 px-3">
+                        <td className="px-4 py-4 text-sm font-bold text-white">
                           {getTeam2(match)}
                         </td>
 
-                        <td className="py-4 px-3">
+                        <td className="px-4 py-4 text-sm text-gray-300">
                           {formatDate(match.match_date)}
                         </td>
 
-                        <td className="py-4 px-3">
+                        <td className="px-4 py-4 text-sm text-gray-300">
                           {formatTime(match.match_time)}
                         </td>
 
-                        <td className="py-4 px-3">
+                        <td className="px-4 py-4 text-sm">
                           {match.winner ? (
-                            <span className="text-green-400 font-bold">
+                            <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
                               {match.winner}
                             </span>
                           ) : (
-                            <span className="text-gray-500">
+                            <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs font-bold text-gray-400">
                               Pending
                             </span>
                           )}
@@ -750,23 +788,29 @@ export default function TournamentView() {
           <div className="space-y-10">
             {/* ROUND ROBIN GROUP TABLES */}
             {tournamentFormat === "Round Robin + Bracket" && (
-              <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
-                <h2 className="text-3xl font-bold mb-6">
+              <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+                <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                  Round Robin
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black">
                   Round Robin Groups
                 </h2>
 
                 {roundRobinGroups.length === 0 ? (
-                  <p className="text-gray-400">
-                    Group tables not released yet.
-                  </p>
+                  <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+                    <p className="text-gray-400">
+                      Group tables not released yet.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-10">
+                  <div className="mt-8 space-y-10">
                     {roundRobinGroups.map((group) => (
                       <div
                         key={group.id}
-                        className="bg-zinc-950 rounded-xl p-6 border border-zinc-800"
+                        className="rounded-3xl border border-zinc-800 bg-black p-6"
                       >
-                        <h3 className="text-2xl font-bold text-purple-400 mb-5">
+                        <h3 className="mb-5 text-2xl font-black text-blue-400">
                           {group.group_name}
                         </h3>
 
@@ -775,41 +819,18 @@ export default function TournamentView() {
                             No teams added to this group yet.
                           </p>
                         ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full min-w-[900px]">
-                              <thead>
-                                <tr className="border-b border-zinc-700 text-gray-400">
-                                  <th className="text-left py-3 px-3">
-                                    Rank
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    Team
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    Full Matches
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    Played
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    Won
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    Lost
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    BP
-                                  </th>
-
-                                  <th className="text-left py-3 px-3">
-                                    Points
-                                  </th>
+                          <div className="overflow-x-auto rounded-2xl border border-zinc-800">
+                            <table className="w-full min-w-[900px] bg-black">
+                              <thead className="bg-zinc-950">
+                                <tr className="border-b border-zinc-800">
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Rank</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Team</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Full Matches</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Played</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Won</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Lost</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">BP</th>
+                                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Points</th>
                                 </tr>
                               </thead>
 
@@ -817,37 +838,37 @@ export default function TournamentView() {
                                 {(group.teams || []).map((team, index) => (
                                   <tr
                                     key={team.id}
-                                    className="border-b border-zinc-800"
+                                    className="border-b border-zinc-800 transition hover:bg-blue-500/5"
                                   >
-                                    <td className="py-4 px-3 font-bold text-gray-300">
+                                    <td className="px-4 py-4 font-bold text-gray-300">
                                       #{index + 1}
                                     </td>
 
-                                    <td className="py-4 px-3 font-bold">
+                                    <td className="px-4 py-4 font-bold text-white">
                                       {team.team_name}
                                     </td>
 
-                                    <td className="py-4 px-3">
+                                    <td className="px-4 py-4 text-gray-300">
                                       {team.full_matches}
                                     </td>
 
-                                    <td className="py-4 px-3">
+                                    <td className="px-4 py-4 text-gray-300">
                                       {team.played}
                                     </td>
 
-                                    <td className="py-4 px-3 text-green-400">
+                                    <td className="px-4 py-4 font-bold text-green-400">
                                       {team.won}
                                     </td>
 
-                                    <td className="py-4 px-3 text-red-400">
+                                    <td className="px-4 py-4 font-bold text-red-400">
                                       {team.lost}
                                     </td>
 
-                                    <td className="py-4 px-3 text-yellow-400">
+                                    <td className="px-4 py-4 font-bold text-yellow-400">
                                       {team.bp}
                                     </td>
 
-                                    <td className="py-4 px-3 font-bold text-blue-400">
+                                    <td className="px-4 py-4 font-black text-blue-400">
                                       {team.points}
                                     </td>
                                   </tr>
@@ -864,49 +885,53 @@ export default function TournamentView() {
             )}
 
             {/* BRACKET SECTION */}
-            <div className="bg-zinc-950 rounded-2xl p-8 border border-zinc-800 overflow-x-auto">
-              <h2 className="text-3xl font-bold mb-10">
+            <div className="overflow-x-auto rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                Bracket
+              </p>
+
+              <h2 className="mt-2 mb-10 text-3xl font-black">
                 Tournament Bracket
               </h2>
 
               {bracketMatches.length === 0 ? (
-                <p className="text-gray-400">
-                  Bracket not released yet.
-                </p>
+                <div className="rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+                  <p className="text-gray-400">
+                    Bracket not released yet.
+                  </p>
+                </div>
               ) : (
-                <div className="space-y-20 min-w-[1200px]">
+                <div className="min-w-[1200px] space-y-20">
+                  {/* UPPER BRACKET */}
+                  {upperRounds.length > 0 &&
+                    renderConnectedBracketBoard(
+                      "Upper Bracket",
+                      "text-green-400",
+                      "text-blue-400",
+                      upperRounds
+                    )
+                  }
 
-  {/* UPPER BRACKET */}
-  {upperRounds.length > 0 &&
-    renderConnectedBracketBoard(
-      "Upper Bracket",
-      "text-green-400",
-      "text-blue-400",
-      upperRounds
-    )
-  }
+                  {/* LOWER BRACKET */}
+                  {lowerRounds.length > 0 &&
+                    renderConnectedBracketBoard(
+                      "Lower Bracket",
+                      "text-red-400",
+                      "text-red-300",
+                      lowerRounds
+                    )
+                  }
 
-  {/* LOWER BRACKET */}
-  {lowerRounds.length > 0 &&
-    renderConnectedBracketBoard(
-      "Lower Bracket",
-      "text-red-400",
-      "text-red-300",
-      lowerRounds
-    )
-  }
-
-  {/* FINAL STAGE */}
-  {finalRounds.length > 0 &&
-    renderConnectedBracketBoard(
-      "Final Stage",
-      "text-yellow-400",
-      "text-yellow-300",
-      finalRounds
-    )
-  }
-
-</div>
+                  {/* FINAL STAGE */}
+                  {finalRounds.length > 0 &&
+                    renderConnectedBracketBoard(
+                      "Final Stage",
+                      "text-yellow-400",
+                      "text-yellow-300",
+                      finalRounds
+                    )
+                  }
+                </div>
               )}
             </div>
           </div>

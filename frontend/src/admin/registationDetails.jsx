@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
 
 export default function RegistrationDetails() {
@@ -7,15 +7,30 @@ export default function RegistrationDetails() {
 
   const [registration, setRegistration] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const getFileUrl = (filePath) => {
+    if (!filePath) return "";
+
+    if (String(filePath).startsWith("http")) {
+      return filePath;
+    }
+
+    return `${api.defaults.baseURL}/${String(filePath).replace(/^\/+/, "")}`;
+  };
 
   const fetchRegistration = useCallback(async () => {
     try {
       const response = await api.get(`/registrations/${id}/full`);
 
       setRegistration(response.data.registration);
-      setPlayers(response.data.players);
+      setPlayers(response.data.players || []);
     } catch (error) {
       console.error(error);
+      alert("Failed to load registration details");
+    } finally {
+      setLoading(false);
     }
   }, [id]);
 
@@ -28,193 +43,393 @@ export default function RegistrationDetails() {
   }, [fetchRegistration]);
 
   const approveTeam = async () => {
-    try {
-      await api.put(
-        `/registrations/${id}/approve`
-      );
+    const confirmed = window.confirm("Approve this team?");
+    if (!confirmed) return;
 
+    try {
+      setActionLoading(true);
+
+      await api.put(`/registrations/${id}/approve`);
+
+      alert("Team Approved");
       fetchRegistration();
     } catch (error) {
       console.error(error);
+      alert("Approve Failed");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const rejectTeam = async () => {
-    try {
-      await api.put(
-        `/registrations/${id}/reject`
-      );
+    const confirmed = window.confirm("Reject this team?");
+    if (!confirmed) return;
 
+    try {
+      setActionLoading(true);
+
+      await api.put(`/registrations/${id}/reject`);
+
+      alert("Team Rejected");
       fetchRegistration();
     } catch (error) {
       console.error(error);
+      alert("Reject Failed");
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  if (!registration) {
+  const getStatusClass = (status) => {
+    const value = String(status || "").toLowerCase();
+
+    if (value === "approved") {
+      return "border-green-500/40 bg-green-500/10 text-green-400";
+    }
+
+    if (value === "rejected") {
+      return "border-red-500/40 bg-red-500/10 text-red-400";
+    }
+
+    return "border-yellow-500/40 bg-yellow-500/10 text-yellow-400";
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+
+    return String(value).replace("T", " ").slice(0, 16);
+  };
+
+  if (loading) {
     return (
-      <div className="text-white p-8">
-        Loading...
+      <div className="min-h-screen bg-black text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
+          <p className="text-gray-400">
+            Loading registration details...
+          </p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="text-white">
+  if (!registration) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center">
+          <h2 className="text-3xl font-bold">
+            Registration Not Found
+          </h2>
 
-      <h1 className="text-4xl font-bold mb-8">
-        Registration Details
-      </h1>
+          <p className="mt-3 text-gray-400">
+            This registration does not exist or failed to load.
+          </p>
+
+          <Link to="/admin/registrations">
+            <button className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700">
+              Back to Registrations
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const mainPlayers = players.filter(
+    (player) => !player.is_substitute
+  );
+
+  const substitutePlayers = players.filter(
+    (player) => player.is_substitute
+  );
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* HEADER */}
+      <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+            Admin Panel
+          </p>
+
+          <h1 className="mt-2 text-4xl font-black">
+            Registration Details
+          </h1>
+
+          <p className="mt-2 max-w-2xl text-gray-400">
+            Review team information, captain details, lobby screenshot,
+            and player list.
+          </p>
+        </div>
+
+        <Link to="/admin/registrations">
+          <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
+            ← Back
+          </button>
+        </Link>
+      </div>
 
       {/* TEAM INFO */}
-
-      <div className="bg-zinc-900 p-6 rounded-xl mb-6">
-
-        <div className="flex items-center gap-6">
-
-          <img
-            src={`${api.defaults.baseURL}/${registration.team_logo}`}
-            alt={registration.team_name}
-            className="w-32 h-32 rounded-xl object-cover"
-          />
-
-          <div>
-
-            <h2 className="text-3xl font-bold">
-              {registration.team_name}
-            </h2>
-
-            <p className="mt-2">
-              Captain: {registration.captain_name}
-            </p>
-
-            <p>
-              Email: {registration.captain_email}
-            </p>
-
-            <p>
-              Phone: {registration.captain_phone}
-            </p>
-
-            <p>
-              Discord: {registration.discord_username}
-            </p>
-
-            <div className="mt-3">
-              <span
-                className={`px-3 py-1 rounded-full text-sm ${
-                  registration.status === "Approved"
-                    ? "bg-green-600"
-                    : registration.status === "Rejected"
-                    ? "bg-red-600"
-                    : "bg-yellow-600"
-                }`}
-              >
-                {registration.status}
-              </span>
+      <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-6 md:flex-row">
+            <div className="h-36 w-36 overflow-hidden rounded-3xl border border-blue-500/30 bg-black">
+              {registration.team_logo ? (
+                <img
+                  src={getFileUrl(registration.team_logo)}
+                  alt={registration.team_name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-5xl">
+                  🛡️
+                </div>
+              )}
             </div>
 
+            <div>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
+                    registration.status
+                  )}`}
+                >
+                  {registration.status || "Pending"}
+                </span>
+
+                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
+                  Registration #{registration.id}
+                </span>
+              </div>
+
+              <h2 className="text-4xl font-black">
+                {registration.team_name}
+              </h2>
+
+              <p className="mt-2 text-gray-400">
+                Submitted: {formatDate(registration.created_at)}
+              </p>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                  <p className="text-sm text-gray-500">
+                    Captain Name
+                  </p>
+
+                  <p className="mt-1 font-bold text-white">
+                    {registration.captain_name || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                  <p className="text-sm text-gray-500">
+                    Captain Email
+                  </p>
+
+                  <a
+                    href={`mailto:${registration.captain_email}`}
+                    className="mt-1 block break-all font-bold text-blue-400 hover:underline"
+                  >
+                    {registration.captain_email || "-"}
+                  </a>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                  <p className="text-sm text-gray-500">
+                    Captain Phone
+                  </p>
+
+                  <p className="mt-1 font-bold text-white">
+                    {registration.captain_phone || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                  <p className="text-sm text-gray-500">
+                    Discord Username
+                  </p>
+
+                  <p className="mt-1 font-bold text-white">
+                    {registration.discord_username || "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* ACTIONS */}
+          <div className="flex flex-wrap gap-3 lg:flex-col">
+            <button
+              onClick={approveTeam}
+              disabled={actionLoading}
+              className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {actionLoading ? "Processing..." : "Approve"}
+            </button>
+
+            <button
+              onClick={rejectTeam}
+              disabled={actionLoading}
+              className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {actionLoading ? "Processing..." : "Reject"}
+            </button>
+          </div>
         </div>
-
-        <div className="flex gap-4 mt-6">
-
-          <button
-            onClick={approveTeam}
-            className="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg"
-          >
-            Approve
-          </button>
-
-          <button
-            onClick={rejectTeam}
-            className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg"
-          >
-            Reject
-          </button>
-
-        </div>
-
       </div>
 
       {/* LOBBY SCREENSHOT */}
-
       {registration.lobby_screenshot && (
-        <div className="bg-zinc-900 p-6 rounded-xl mb-6">
+        <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+          <div className="mb-6">
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Verification
+            </p>
 
-          <h2 className="text-2xl font-bold mb-4">
-            Lobby Screenshot
-          </h2>
+            <h2 className="mt-2 text-2xl font-bold">
+              Lobby Screenshot
+            </h2>
+          </div>
 
-          <img
-            src={`${api.defaults.baseURL}/${registration.lobby_screenshot}`}
-            alt="Lobby Screenshot"
-            className="rounded-xl max-h-[500px]"
-          />
-
+          <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-black">
+            <img
+              src={getFileUrl(registration.lobby_screenshot)}
+              alt="Lobby Screenshot"
+              className="max-h-[600px] w-full object-contain"
+            />
+          </div>
         </div>
       )}
 
-      {/* PLAYERS */}
+      {/* MAIN PLAYERS */}
+      <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Team Roster
+            </p>
 
-      <div className="bg-zinc-900 p-6 rounded-xl">
+            <h2 className="mt-2 text-2xl font-bold">
+              Main Players
+            </h2>
+          </div>
 
-        <h2 className="text-2xl font-bold mb-6">
-          Team Players
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-6">
-
-          {players.map((player) => (
-
-            <div
-              key={player.id}
-              className="border border-zinc-700 rounded-xl p-4"
-            >
-
-              <img
-                src={`${api.defaults.baseURL}/${player.player_photo}`}
-                alt={player.real_name}
-                className="w-24 h-24 rounded-lg object-cover mb-4"
-              />
-
-              <h3 className="text-xl font-bold">
-                {player.real_name}
-              </h3>
-
-              <p>
-                IGN: {player.ign}
-              </p>
-
-              <p>
-                MLBB ID: {player.mlbb_id}
-              </p>
-
-              <p>
-                Server ID: {player.server_id}
-              </p>
-
-              <p
-                className={`mt-2 font-semibold ${
-                  player.is_substitute
-                    ? "text-yellow-400"
-                    : "text-green-400"
-                }`}
-              >
-                {player.is_substitute
-                  ? "Substitute Player"
-                  : "Main Player"}
-              </p>
-
-            </div>
-
-          ))}
-
+          <span className="rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-bold text-green-400">
+            {mainPlayers.length} Players
+          </span>
         </div>
 
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {mainPlayers.map((player) => (
+            <PlayerCard
+              key={player.id}
+              player={player}
+              getFileUrl={getFileUrl}
+            />
+          ))}
+        </div>
       </div>
 
+      {/* SUBSTITUTE PLAYERS */}
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              Backup Roster
+            </p>
+
+            <h2 className="mt-2 text-2xl font-bold">
+              Substitute Players
+            </h2>
+          </div>
+
+          <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-400">
+            {substitutePlayers.length} Substitutes
+          </span>
+        </div>
+
+        {substitutePlayers.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-800 bg-black p-6 text-center">
+            <p className="text-gray-400">
+              No substitute players added.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {substitutePlayers.map((player) => (
+              <PlayerCard
+                key={player.id}
+                player={player}
+                getFileUrl={getFileUrl}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PlayerCard({ player, getFileUrl }) {
+  return (
+    <div className="rounded-3xl border border-zinc-800 bg-black p-5 transition hover:border-blue-500/60">
+      <div className="mb-5 flex items-center gap-4">
+        <div className="h-24 w-24 overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900">
+          {player.player_photo ? (
+            <img
+              src={getFileUrl(player.player_photo)}
+              alt={player.real_name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-3xl">
+              👤
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-xl font-black text-white">
+            {player.real_name || "-"}
+          </h3>
+
+          <p
+            className={`mt-1 text-sm font-bold ${
+              player.is_substitute
+                ? "text-yellow-400"
+                : "text-green-400"
+            }`}
+          >
+            {player.is_substitute
+              ? "Substitute Player"
+              : "Main Player"}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+          <p className="text-sm text-gray-500">IGN</p>
+          <p className="mt-1 font-bold text-blue-400">
+            {player.ign || "-"}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+            <p className="text-sm text-gray-500">MLBB ID</p>
+            <p className="mt-1 break-all font-bold text-white">
+              {player.mlbb_id || "-"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+            <p className="text-sm text-gray-500">Server ID</p>
+            <p className="mt-1 break-all font-bold text-white">
+              {player.server_id || "-"}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
