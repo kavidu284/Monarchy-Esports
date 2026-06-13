@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams , Link } from "react-router-dom";
 import api from "../services/api";
 
 export default function MatchAdmin() {
@@ -289,9 +289,22 @@ const canUpdateWinner = (match) => {
         {tournament?.title || tournament?.tournament_name}
       </h1>
 
-      <p className="text-blue-400 mb-8">
-        Format: {tournament?.tournament_format || "Bracket Only"}
-      </p>
+      <div className="flex items-center justify-between mb-8">
+
+  <p className="text-blue-400">
+    Format: {tournament?.tournament_format || "Bracket Only"}
+  </p>
+
+  {tournament?.tournament_format === "Round Robin + Bracket" && (
+    <Link
+      to={`/admin/tournament/${tournamentId}/matches/round-robin`}
+      className="bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-lg font-semibold"
+    >
+      Manage Round Robin Groups
+    </Link>
+  )}
+
+</div>
 
       <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 mb-8">
         <h2 className="text-2xl font-bold mb-6">

@@ -203,6 +203,42 @@ ADD COLUMN stage ENUM(
 ) DEFAULT 'Bracket',
 ADD COLUMN bracket_round VARCHAR(100),
 ADD COLUMN match_no INT;
+
+
+CREATE TABLE round_robin_groups (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tournament_id INT NOT NULL,
+    group_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (tournament_id)
+    REFERENCES tournaments(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE round_robin_group_teams (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    group_id INT NOT NULL,
+    registration_id INT,
+    team_name VARCHAR(150) NOT NULL,
+
+    full_matches INT DEFAULT 0,
+    played INT DEFAULT 0,
+    won INT DEFAULT 0,
+    lost INT DEFAULT 0,
+    bp INT DEFAULT 0,
+    points INT DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (group_id)
+    REFERENCES round_robin_groups(id)
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (registration_id)
+    REFERENCES registrations(id)
+    ON DELETE SET NULL
+);
 -- =====================================
 -- DUMMY ADMIN
 -- =====================================

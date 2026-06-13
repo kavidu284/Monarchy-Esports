@@ -9,6 +9,7 @@ export default function TournamentView() {
   const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [roundRobinGroups, setRoundRobinGroups] = useState([]);
 
   useEffect(() => {
     async function loadData() {
@@ -28,7 +29,11 @@ export default function TournamentView() {
         const sortedMatches = [...matchesResponse.data].sort(
           (a, b) => Number(a.match_no || 0) - Number(b.match_no || 0)
         );
+        const groupsResponse = await api.get(
+          `/tournaments/${id}/round-robin-groups`
+        );
 
+        setRoundRobinGroups(groupsResponse.data);
         setMatches(sortedMatches);
       } catch (error) {
         console.error(error);
@@ -127,10 +132,7 @@ export default function TournamentView() {
   const tournamentFormat =
     tournament?.tournament_format || "Bracket Only";
 
-  const roundRobinMatches = matches.filter(
-    (match) => match.stage === "Round Robin"
-  );
-
+  
   const bracketMatches = matches.filter(
     (match) => (match.stage || "Bracket") === "Bracket"
   );
@@ -746,72 +748,116 @@ export default function TournamentView() {
         {/* BRACKET */}
         {activeTab === "bracket" && (
           <div className="space-y-10">
-            {/* ROUND ROBIN SECTION */}
+            {/* ROUND ROBIN GROUP TABLES */}
             {tournamentFormat === "Round Robin + Bracket" && (
               <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
                 <h2 className="text-3xl font-bold mb-6">
-                  Round Robin Matches
+                  Round Robin Groups
                 </h2>
 
-                {roundRobinMatches.length === 0 ? (
+                {roundRobinGroups.length === 0 ? (
                   <p className="text-gray-400">
-                    Round Robin matches not released yet.
+                    Group tables not released yet.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px]">
-                      <thead>
-                        <tr className="border-b border-zinc-700 text-gray-400">
-                          <th className="text-left py-3 px-3">Match No</th>
-                          <th className="text-left py-3 px-3">Team 1</th>
-                          <th className="text-left py-3 px-3">Team 2</th>
-                          <th className="text-left py-3 px-3">Date</th>
-                          <th className="text-left py-3 px-3">Time</th>
-                          <th className="text-left py-3 px-3">Winner</th>
-                        </tr>
-                      </thead>
+                  <div className="space-y-10">
+                    {roundRobinGroups.map((group) => (
+                      <div
+                        key={group.id}
+                        className="bg-zinc-950 rounded-xl p-6 border border-zinc-800"
+                      >
+                        <h3 className="text-2xl font-bold text-purple-400 mb-5">
+                          {group.group_name}
+                        </h3>
 
-                      <tbody>
-                        {roundRobinMatches.map((match, index) => (
-                          <tr
-                            key={match.id}
-                            className="border-b border-zinc-800"
-                          >
-                            <td className="py-4 px-3">
-                              {match.match_no || index + 1}
-                            </td>
+                        {(group.teams || []).length === 0 ? (
+                          <p className="text-gray-400">
+                            No teams added to this group yet.
+                          </p>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full min-w-[900px]">
+                              <thead>
+                                <tr className="border-b border-zinc-700 text-gray-400">
+                                  <th className="text-left py-3 px-3">
+                                    Rank
+                                  </th>
 
-                            <td className="py-4 px-3">
-                              {getTeam1(match)}
-                            </td>
+                                  <th className="text-left py-3 px-3">
+                                    Team
+                                  </th>
 
-                            <td className="py-4 px-3">
-                              {getTeam2(match)}
-                            </td>
+                                  <th className="text-left py-3 px-3">
+                                    Full Matches
+                                  </th>
 
-                            <td className="py-4 px-3">
-                              {formatDate(match.match_date)}
-                            </td>
+                                  <th className="text-left py-3 px-3">
+                                    Played
+                                  </th>
 
-                            <td className="py-4 px-3">
-                              {formatTime(match.match_time)}
-                            </td>
+                                  <th className="text-left py-3 px-3">
+                                    Won
+                                  </th>
 
-                            <td className="py-4 px-3">
-                              {match.winner ? (
-                                <span className="text-green-400 font-bold">
-                                  {match.winner}
-                                </span>
-                              ) : (
-                                <span className="text-gray-500">
-                                  Pending
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                                  <th className="text-left py-3 px-3">
+                                    Lost
+                                  </th>
+
+                                  <th className="text-left py-3 px-3">
+                                    BP
+                                  </th>
+
+                                  <th className="text-left py-3 px-3">
+                                    Points
+                                  </th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                {(group.teams || []).map((team, index) => (
+                                  <tr
+                                    key={team.id}
+                                    className="border-b border-zinc-800"
+                                  >
+                                    <td className="py-4 px-3 font-bold text-gray-300">
+                                      #{index + 1}
+                                    </td>
+
+                                    <td className="py-4 px-3 font-bold">
+                                      {team.team_name}
+                                    </td>
+
+                                    <td className="py-4 px-3">
+                                      {team.full_matches}
+                                    </td>
+
+                                    <td className="py-4 px-3">
+                                      {team.played}
+                                    </td>
+
+                                    <td className="py-4 px-3 text-green-400">
+                                      {team.won}
+                                    </td>
+
+                                    <td className="py-4 px-3 text-red-400">
+                                      {team.lost}
+                                    </td>
+
+                                    <td className="py-4 px-3 text-yellow-400">
+                                      {team.bp}
+                                    </td>
+
+                                    <td className="py-4 px-3 font-bold text-blue-400">
+                                      {team.points}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
