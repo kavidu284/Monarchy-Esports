@@ -20,7 +20,7 @@ export default function CreateTournament() {
   });
 
   const [bannerImage, setBannerImage] = useState(null);
-  const [rulebookFile, setRulebookFile] = useState(null);
+
 
   const handleChange = (e) => {
     setForm({
@@ -77,11 +77,6 @@ export default function CreateTournament() {
       if (bannerImage) {
         formData.append("banner_image", bannerImage);
       }
-
-      if (rulebookFile) {
-        formData.append("rulebook_file", rulebookFile);
-      }
-
       await api.post("/tournaments", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -106,7 +101,6 @@ export default function CreateTournament() {
       });
 
       setBannerImage(null);
-      setRulebookFile(null);
       e.target.reset();
     } catch (error) {
       console.error(error);
@@ -284,27 +278,6 @@ export default function CreateTournament() {
                 {bannerImage && (
                   <p className="mt-2 truncate text-xs text-blue-400">
                     Selected: {bannerImage.name}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className={labelClass}>
-                  Rulebook File
-                </label>
-
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,image/*"
-                  onChange={(e) =>
-                    setRulebookFile(e.target.files?.[0] || null)
-                  }
-                  className={fileInputClass}
-                />
-
-                {rulebookFile && (
-                  <p className="mt-2 truncate text-xs text-blue-400">
-                    Selected: {rulebookFile.name}
                   </p>
                 )}
               </div>
