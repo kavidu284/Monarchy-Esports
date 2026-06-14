@@ -1,9 +1,9 @@
 CREATE DATABASE IF NOT EXISTS monarchy_esports;
 USE monarchy_esports;
 
--- =====================================
+-- =========================================================
 -- ADMINS
--- =====================================
+-- =========================================================
 
 CREATE TABLE admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -13,9 +13,9 @@ CREATE TABLE admins (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
+-- =========================================================
 -- TOURNAMENTS
--- =====================================
+-- =========================================================
 
 CREATE TABLE tournaments (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,15 +45,19 @@ CREATE TABLE tournaments (
 
     max_teams INT DEFAULT 32,
 
+    tournament_format ENUM(
+        'Bracket Only',
+        'Round Robin + Bracket'
+    ) DEFAULT 'Bracket Only',
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
+-- =========================================================
 -- REGISTRATIONS
--- =====================================
+-- =========================================================
 
 CREATE TABLE registrations (
-
     id INT AUTO_INCREMENT PRIMARY KEY,
 
     tournament_id INT NOT NULL,
@@ -78,16 +82,15 @@ CREATE TABLE registrations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (tournament_id)
-    REFERENCES tournaments(id)
-    ON DELETE CASCADE
+        REFERENCES tournaments(id)
+        ON DELETE CASCADE
 );
 
--- =====================================
+-- =========================================================
 -- PLAYERS
--- =====================================
+-- =========================================================
 
 CREATE TABLE players (
-
     id INT AUTO_INCREMENT PRIMARY KEY,
 
     registration_id INT NOT NULL,
@@ -105,15 +108,13 @@ CREATE TABLE players (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (registration_id)
-    REFERENCES registrations(id)
-    ON DELETE CASCADE
+        REFERENCES registrations(id)
+        ON DELETE CASCADE
 );
 
-
-
--- =====================================
+-- =========================================================
 -- ANNOUNCEMENTS
--- =====================================
+-- =========================================================
 
 CREATE TABLE announcements (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -122,9 +123,9 @@ CREATE TABLE announcements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
+-- =========================================================
 -- NEWS
--- =====================================
+-- =========================================================
 
 CREATE TABLE news (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -134,25 +135,27 @@ CREATE TABLE news (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
+-- =========================================================
 -- GALLERY
--- =====================================
+-- =========================================================
 
 CREATE TABLE gallery (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     tournament_id INT,
     image_url VARCHAR(500),
     caption VARCHAR(255),
+
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (tournament_id)
-    REFERENCES tournaments(id)
-    ON DELETE CASCADE
+        REFERENCES tournaments(id)
+        ON DELETE CASCADE
 );
 
--- =====================================
+-- =========================================================
 -- CONTACT MESSAGES
--- =====================================
+-- =========================================================
 
 CREATE TABLE contact_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -162,9 +165,11 @@ CREATE TABLE contact_messages (
     message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- =====================================
+
+-- =========================================================
 -- MATCHES
--- =====================================
+-- =========================================================
+
 CREATE TABLE matches (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -183,43 +188,48 @@ CREATE TABLE matches (
         'Completed'
     ) DEFAULT 'Upcoming',
 
+    stage ENUM(
+        'Round Robin',
+        'Bracket'
+    ) DEFAULT 'Bracket',
+
+    bracket_round VARCHAR(100),
+    match_no INT,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (tournament_id)
-    REFERENCES tournaments(id)
-    ON DELETE CASCADE
+        REFERENCES tournaments(id)
+        ON DELETE CASCADE
 );
 
-ALTER TABLE tournaments
-ADD COLUMN tournament_format ENUM(
-  'Bracket Only',
-  'Round Robin + Bracket'
-) DEFAULT 'Bracket Only';
-
-ALTER TABLE matches
-ADD COLUMN stage ENUM(
-  'Round Robin',
-  'Bracket'
-) DEFAULT 'Bracket',
-ADD COLUMN bracket_round VARCHAR(100),
-ADD COLUMN match_no INT;
-
+-- =========================================================
+-- ROUND ROBIN GROUPS
+-- =========================================================
 
 CREATE TABLE round_robin_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     tournament_id INT NOT NULL,
     group_name VARCHAR(100) NOT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (tournament_id)
-    REFERENCES tournaments(id)
-    ON DELETE CASCADE
+        REFERENCES tournaments(id)
+        ON DELETE CASCADE
 );
+
+-- =========================================================
+-- ROUND ROBIN GROUP TEAMS
+-- =========================================================
 
 CREATE TABLE round_robin_group_teams (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     group_id INT NOT NULL,
     registration_id INT,
+
     team_name VARCHAR(150) NOT NULL,
 
     full_matches INT DEFAULT 0,
@@ -232,10 +242,11 @@ CREATE TABLE round_robin_group_teams (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (group_id)
-    REFERENCES round_robin_groups(id)
-    ON DELETE CASCADE,
+        REFERENCES round_robin_groups(id)
+        ON DELETE CASCADE,
 
     FOREIGN KEY (registration_id)
-    REFERENCES registrations(id)
-    ON DELETE SET NULL
+        REFERENCES registrations(id)
+        ON DELETE SET NULL
 );
+
