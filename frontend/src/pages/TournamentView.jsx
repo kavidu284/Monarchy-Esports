@@ -304,6 +304,34 @@ export default function TournamentView() {
     return sources;
   };
 
+  const pageSectionClass =
+    "rounded-2xl border border-zinc-800 bg-zinc-950 p-4 shadow-xl shadow-black/30 sm:rounded-3xl sm:p-8";
+
+  const tableWrapClass =
+    "mt-6 overflow-x-auto rounded-xl border border-zinc-800 sm:mt-8 sm:rounded-2xl";
+
+  const scheduleTableClass =
+    "w-full min-w-[540px] bg-black text-[10px] sm:min-w-[900px] sm:text-sm";
+
+  const roundRobinTableClass =
+    "w-full min-w-[650px] bg-black text-[10px] sm:min-w-[1000px] sm:text-sm";
+
+  const smallThClass =
+    "px-2 py-2 text-left text-[9px] font-bold uppercase tracking-wide text-gray-400 sm:px-4 sm:py-4 sm:text-xs sm:tracking-widest";
+
+  const smallTdClass =
+    "px-2 py-2 text-[10px] text-gray-300 sm:px-4 sm:py-4 sm:text-sm";
+
+  const smallTdBoldClass =
+    "px-2 py-2 text-[10px] font-bold text-white sm:px-4 sm:py-4 sm:text-sm";
+
+  const tabClass = (tabName) =>
+    `rounded-xl px-3 py-3 text-xs font-bold transition sm:rounded-2xl sm:px-6 sm:text-base ${
+      activeTab === tabName
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+        : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
+    }`;
+
   const renderBracketMatchCard = (match) => {
     const teamOne = getTeam1(match);
     const teamTwo = getTeam2(match);
@@ -513,7 +541,7 @@ export default function TournamentView() {
 
     return (
       <div>
-        <h3 className={`mb-8 text-3xl font-black ${titleColor}`}>
+        <h3 className={`mb-6 text-2xl font-black sm:mb-8 sm:text-3xl ${titleColor}`}>
           {title}
         </h3>
 
@@ -600,8 +628,8 @@ export default function TournamentView() {
 
   if (!tournament) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-white">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-10 py-8 text-center shadow-xl shadow-blue-600/10">
+      <div className="flex min-h-screen items-center justify-center bg-black px-4 text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-8 py-7 text-center shadow-xl shadow-blue-600/10 sm:px-10 sm:py-8">
           <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
 
           <p className="font-semibold text-gray-300">
@@ -615,7 +643,7 @@ export default function TournamentView() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* BANNER */}
-      <div className="relative h-[420px] overflow-hidden border-b border-zinc-900 bg-zinc-950">
+      <div className="relative h-[320px] overflow-hidden border-b border-zinc-900 bg-zinc-950 sm:h-[420px]">
         {tournament.banner_image && (
           <img
             src={`http://127.0.0.1:8000/${tournament.banner_image}`}
@@ -626,31 +654,31 @@ export default function TournamentView() {
 
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
 
-        <div className="absolute bottom-10 left-0 right-0">
-          <div className="mx-auto max-w-[1600px] px-6">
+        <div className="absolute bottom-6 left-0 right-0 sm:bottom-10">
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6">
             <div className="max-w-5xl">
-              <p className="text-sm font-bold uppercase tracking-[0.35em] text-blue-400">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-400 sm:text-sm sm:tracking-[0.35em]">
                 Tournament View
               </p>
 
-              <h1 className="mt-4 text-5xl font-black leading-tight md:text-7xl">
+              <h1 className="mt-3 line-clamp-2 text-3xl font-black leading-tight sm:mt-4 sm:text-5xl md:text-7xl">
                 {tournament.title}
               </h1>
 
-              <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-300">
+              <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-gray-300 sm:mt-4 sm:text-lg sm:leading-8">
                 {tournament.subtitle}
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-300">
+              <div className="mt-4 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
+                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[10px] font-bold text-blue-300 sm:px-4 sm:py-2 sm:text-sm">
                   Format: {tournamentFormat}
                 </span>
 
-                <span className="rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-bold text-green-400">
+                <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-[10px] font-bold text-green-400 sm:px-4 sm:py-2 sm:text-sm">
                   {teams.length} Teams
                 </span>
 
-                <span className="rounded-full border border-zinc-700 bg-black/70 px-4 py-2 text-sm font-bold text-gray-300">
+                <span className="rounded-full border border-zinc-700 bg-black/70 px-3 py-1.5 text-[10px] font-bold text-gray-300 sm:px-4 sm:py-2 sm:text-sm">
                   {matches.length} Matches
                 </span>
               </div>
@@ -659,49 +687,33 @@ export default function TournamentView() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1600px] px-6 py-10">
+      <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 sm:py-10">
         {/* TABS */}
-        <div className="mb-10 flex flex-wrap gap-4 rounded-3xl border border-zinc-800 bg-zinc-950 p-3 shadow-xl shadow-black/30">
+        <div className="mb-8 grid grid-cols-2 gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-2 shadow-xl shadow-black/30 sm:mb-10 sm:flex sm:flex-wrap sm:gap-4 sm:rounded-3xl sm:p-3">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`rounded-2xl px-6 py-3 font-bold transition ${
-              activeTab === "overview"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
-            }`}
+            className={tabClass("overview")}
           >
             Overview
           </button>
 
           <button
             onClick={() => setActiveTab("teams")}
-            className={`rounded-2xl px-6 py-3 font-bold transition ${
-              activeTab === "teams"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
-            }`}
+            className={tabClass("teams")}
           >
             Teams
           </button>
 
           <button
             onClick={() => setActiveTab("schedule")}
-            className={`rounded-2xl px-6 py-3 font-bold transition ${
-              activeTab === "schedule"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
-            }`}
+            className={tabClass("schedule")}
           >
             Schedule
           </button>
 
           <button
             onClick={() => setActiveTab("bracket")}
-            className={`rounded-2xl px-6 py-3 font-bold transition ${
-              activeTab === "bracket"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                : "bg-black text-gray-300 hover:bg-blue-500/10 hover:text-white"
-            }`}
+            className={tabClass("bracket")}
           >
             Bracket
           </button>
@@ -709,37 +721,37 @@ export default function TournamentView() {
 
         {/* OVERVIEW */}
         {activeTab === "overview" && (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+          <div className={pageSectionClass}>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
               Overview
             </p>
 
-            <h2 className="mt-2 text-3xl font-black">
+            <h2 className="mt-2 text-2xl font-black sm:text-3xl">
               Tournament Overview
             </h2>
 
-            <p className="mt-6 leading-8 text-gray-300">
+            <p className="mt-5 text-sm leading-7 text-gray-300 sm:mt-6 sm:text-base sm:leading-8">
               {tournament.description}
             </p>
 
-            <div className="mt-8 grid gap-6 md:grid-cols-3">
-              <div className="rounded-2xl border border-zinc-800 bg-black p-6">
-                <p className="text-sm text-gray-500">Game</p>
-                <h3 className="mt-2 text-xl font-black">
+            <div className="mt-6 grid gap-4 sm:mt-8 sm:gap-6 md:grid-cols-3">
+              <div className="rounded-2xl border border-zinc-800 bg-black p-5 sm:p-6">
+                <p className="text-xs text-gray-500 sm:text-sm">Game</p>
+                <h3 className="mt-2 text-lg font-black sm:text-xl">
                   {tournament.game_name || "MLBB"}
                 </h3>
               </div>
 
-              <div className="rounded-2xl border border-zinc-800 bg-black p-6">
-                <p className="text-sm text-gray-500">Prize Pool</p>
-                <h3 className="mt-2 text-xl font-black text-blue-400">
+              <div className="rounded-2xl border border-zinc-800 bg-black p-5 sm:p-6">
+                <p className="text-xs text-gray-500 sm:text-sm">Prize Pool</p>
+                <h3 className="mt-2 text-lg font-black text-blue-400 sm:text-xl">
                   Rs. {tournament.prize_pool || 0}
                 </h3>
               </div>
 
-              <div className="rounded-2xl border border-zinc-800 bg-black p-6">
-                <p className="text-sm text-gray-500">Status</p>
-                <h3 className="mt-2 text-xl font-black">
+              <div className="rounded-2xl border border-zinc-800 bg-black p-5 sm:p-6">
+                <p className="text-xs text-gray-500 sm:text-sm">Status</p>
+                <h3 className="mt-2 text-lg font-black sm:text-xl">
                   {tournament.status}
                 </h3>
               </div>
@@ -749,41 +761,41 @@ export default function TournamentView() {
 
         {/* TEAMS */}
         {activeTab === "teams" && (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+          <div className={pageSectionClass}>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
               Teams
             </p>
 
-            <h2 className="mt-2 text-3xl font-black">
+            <h2 className="mt-2 text-2xl font-black sm:text-3xl">
               Approved Teams
             </h2>
 
             {teams.length === 0 ? (
-              <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+              <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-8 text-center sm:mt-8 sm:rounded-3xl sm:p-12">
                 <p className="text-gray-400">
                   No approved teams yet.
                 </p>
               </div>
             ) : (
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
                 {teams.map((team) => (
                   <div
                     key={team.id}
-                    className="rounded-3xl border border-zinc-800 bg-black p-6 text-center shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60"
+                    className="rounded-2xl border border-zinc-800 bg-black p-5 text-center shadow-xl shadow-black/30 transition hover:border-blue-500/60 sm:rounded-3xl sm:p-6 sm:hover:-translate-y-1"
                   >
                     {team.team_logo ? (
                       <img
                         src={`http://127.0.0.1:8000/${team.team_logo}`}
                         alt={team.team_name}
-                        className="mx-auto mb-4 h-24 w-24 rounded-2xl border border-blue-500/30 object-cover"
+                        className="mx-auto mb-4 h-20 w-20 rounded-2xl border border-blue-500/30 object-cover sm:h-24 sm:w-24"
                       />
                     ) : (
-                      <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 text-sm text-gray-400">
+                      <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 text-sm text-gray-400 sm:h-24 sm:w-24">
                         Team
                       </div>
                     )}
 
-                    <h3 className="text-lg font-black">
+                    <h3 className="text-base font-black sm:text-lg">
                       {team.team_name}
                     </h3>
                   </div>
@@ -795,32 +807,32 @@ export default function TournamentView() {
 
         {/* SCHEDULE */}
         {activeTab === "schedule" && (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+          <div className={pageSectionClass}>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
               Schedule
             </p>
 
-            <h2 className="mt-2 text-3xl font-black">
+            <h2 className="mt-2 text-2xl font-black sm:text-3xl">
               Match Schedule
             </h2>
 
             {matches.length === 0 ? (
-              <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+              <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-8 text-center sm:mt-8 sm:rounded-3xl sm:p-12">
                 <p className="text-gray-400">
                   Schedule not released yet.
                 </p>
               </div>
             ) : (
-              <div className="mt-8 overflow-x-auto rounded-2xl border border-zinc-800">
-                <table className="w-full min-w-[900px] bg-black">
+              <div className={tableWrapClass}>
+                <table className={scheduleTableClass}>
                   <thead className="bg-zinc-950">
                     <tr className="border-b border-zinc-800">
-                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Match No</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Team 1</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Team 2</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Date</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Time</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Winner</th>
+                      <th className={smallThClass}>No</th>
+                      <th className={smallThClass}>Team 1</th>
+                      <th className={smallThClass}>Team 2</th>
+                      <th className={smallThClass}>Date</th>
+                      <th className={smallThClass}>Time</th>
+                      <th className={smallThClass}>Winner</th>
                     </tr>
                   </thead>
 
@@ -830,51 +842,51 @@ export default function TournamentView() {
                         key={match.id}
                         className="border-b border-zinc-800 transition hover:bg-blue-500/5"
                       >
-                        <td className="px-4 py-4 text-sm text-gray-300">
+                        <td className={smallTdClass}>
                           #{match.match_no || index + 1}
                         </td>
 
-                        <td className="px-4 py-4 text-sm font-bold text-white">
+                        <td className={smallTdBoldClass}>
                           <div>
                             {getTeam1(match)}
 
                             {isFutureParticipant(match.team1) &&
                               getTeam1(match) !== match.team1 && (
-                                <p className="mt-1 text-xs font-normal text-blue-400">
+                                <p className="mt-1 text-[9px] font-normal text-blue-400 sm:text-xs">
                                   Source: {match.team1}
                                 </p>
                               )}
                           </div>
                         </td>
 
-                        <td className="px-4 py-4 text-sm font-bold text-white">
+                        <td className={smallTdBoldClass}>
                           <div>
                             {getTeam2(match)}
 
                             {isFutureParticipant(match.team2) &&
                               getTeam2(match) !== match.team2 && (
-                                <p className="mt-1 text-xs font-normal text-blue-400">
+                                <p className="mt-1 text-[9px] font-normal text-blue-400 sm:text-xs">
                                   Source: {match.team2}
                                 </p>
                               )}
                           </div>
                         </td>
 
-                        <td className="px-4 py-4 text-sm text-gray-300">
+                        <td className={smallTdClass}>
                           {formatDate(match.match_date)}
                         </td>
 
-                        <td className="px-4 py-4 text-sm text-gray-300">
+                        <td className={smallTdClass}>
                           {formatTime(match.match_time)}
                         </td>
 
-                        <td className="px-4 py-4 text-sm">
+                        <td className="px-2 py-2 text-[10px] sm:px-4 sm:py-4 sm:text-sm">
                           {match.winner ? (
-                            <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
+                            <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-1 text-[9px] font-bold text-green-400 sm:px-3 sm:text-xs">
                               {match.winner}
                             </span>
                           ) : (
-                            <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs font-bold text-gray-400">
+                            <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-1 text-[9px] font-bold text-gray-400 sm:px-3 sm:text-xs">
                               Pending
                             </span>
                           )}
@@ -890,35 +902,35 @@ export default function TournamentView() {
 
         {/* BRACKET */}
         {activeTab === "bracket" && (
-          <div className="space-y-10">
+          <div className="space-y-8 sm:space-y-10">
             {/* ROUND ROBIN GROUP TABLES */}
             {tournamentFormat === "Round Robin + Bracket" && (
-              <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-                <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+              <div className={pageSectionClass}>
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
                   Round Robin
                 </p>
 
-                <h2 className="mt-2 text-3xl font-black">
+                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
                   Round Robin Groups
                 </h2>
 
                 {roundRobinGroups.length === 0 ? (
-                  <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+                  <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-8 text-center sm:mt-8 sm:rounded-3xl sm:p-12">
                     <p className="text-gray-400">
                       Group tables not released yet.
                     </p>
                   </div>
                 ) : (
-                  <div className="mt-8 space-y-10">
+                  <div className="mt-6 space-y-6 sm:mt-8 sm:space-y-10">
                     {roundRobinGroups.map((group) => {
                       const sortedTeams = getSortedGroupTeams(group);
 
                       return (
                         <div
                           key={group.id}
-                          className="rounded-3xl border border-zinc-800 bg-black p-6"
+                          className="rounded-2xl border border-zinc-800 bg-black p-4 sm:rounded-3xl sm:p-6"
                         >
-                          <h3 className="mb-5 text-2xl font-black text-blue-400">
+                          <h3 className="mb-4 text-xl font-black text-blue-400 sm:mb-5 sm:text-2xl">
                             {group.group_name}
                           </h3>
 
@@ -927,19 +939,19 @@ export default function TournamentView() {
                               No teams added to this group yet.
                             </p>
                           ) : (
-                            <div className="overflow-x-auto rounded-2xl border border-zinc-800">
-                              <table className="w-full min-w-[1000px] bg-black">
+                            <div className="overflow-x-auto rounded-xl border border-zinc-800 sm:rounded-2xl">
+                              <table className={roundRobinTableClass}>
                                 <thead className="bg-zinc-950">
                                   <tr className="border-b border-zinc-800">
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Rank</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Slot</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Team</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Full Matches</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Played</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Won</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Lost</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">BP</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Points</th>
+                                    <th className={smallThClass}>Rank</th>
+                                    <th className={smallThClass}>Slot</th>
+                                    <th className={smallThClass}>Team</th>
+                                    <th className={smallThClass}>Full</th>
+                                    <th className={smallThClass}>Play</th>
+                                    <th className={smallThClass}>Won</th>
+                                    <th className={smallThClass}>Lost</th>
+                                    <th className={smallThClass}>BP</th>
+                                    <th className={smallThClass}>Pts</th>
                                   </tr>
                                 </thead>
 
@@ -949,41 +961,41 @@ export default function TournamentView() {
                                       key={team.id}
                                       className="border-b border-zinc-800 transition hover:bg-blue-500/5"
                                     >
-                                      <td className="px-4 py-4 font-bold text-gray-300">
+                                      <td className={smallTdClass}>
                                         #{index + 1}
                                       </td>
 
-                                      <td className="px-4 py-4">
-                                        <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
+                                      <td className="px-2 py-2 sm:px-4 sm:py-4">
+                                        <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-1 text-[9px] font-bold text-green-400 sm:px-3 sm:text-xs">
                                           {getSlotCode(group, index)}
                                         </span>
                                       </td>
 
-                                      <td className="px-4 py-4 font-bold text-white">
+                                      <td className={smallTdBoldClass}>
                                         {team.team_name}
                                       </td>
 
-                                      <td className="px-4 py-4 text-gray-300">
+                                      <td className={smallTdClass}>
                                         {team.full_matches}
                                       </td>
 
-                                      <td className="px-4 py-4 text-gray-300">
+                                      <td className={smallTdClass}>
                                         {team.played}
                                       </td>
 
-                                      <td className="px-4 py-4 font-bold text-green-400">
+                                      <td className="px-2 py-2 text-[10px] font-bold text-green-400 sm:px-4 sm:py-4 sm:text-sm">
                                         {team.won}
                                       </td>
 
-                                      <td className="px-4 py-4 font-bold text-red-400">
+                                      <td className="px-2 py-2 text-[10px] font-bold text-red-400 sm:px-4 sm:py-4 sm:text-sm">
                                         {team.lost}
                                       </td>
 
-                                      <td className="px-4 py-4 font-bold text-yellow-400">
+                                      <td className="px-2 py-2 text-[10px] font-bold text-yellow-400 sm:px-4 sm:py-4 sm:text-sm">
                                         {team.bp}
                                       </td>
 
-                                      <td className="px-4 py-4 font-black text-blue-400">
+                                      <td className="px-2 py-2 text-[10px] font-black text-blue-400 sm:px-4 sm:py-4 sm:text-sm">
                                         {team.points}
                                       </td>
                                     </tr>
@@ -1001,23 +1013,23 @@ export default function TournamentView() {
             )}
 
             {/* BRACKET SECTION */}
-            <div className="overflow-x-auto rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+            <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-4 shadow-xl shadow-black/30 sm:rounded-3xl sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
                 Bracket
               </p>
 
-              <h2 className="mt-2 mb-10 text-3xl font-black">
+              <h2 className="mb-8 mt-2 text-2xl font-black sm:mb-10 sm:text-3xl">
                 Tournament Bracket
               </h2>
 
               {bracketMatches.length === 0 ? (
-                <div className="rounded-3xl border border-zinc-800 bg-black p-12 text-center">
+                <div className="rounded-2xl border border-zinc-800 bg-black p-8 text-center sm:rounded-3xl sm:p-12">
                   <p className="text-gray-400">
                     Bracket not released yet.
                   </p>
                 </div>
               ) : (
-                <div className="min-w-[1200px] space-y-20">
+                <div className="min-w-[1050px] space-y-16 sm:min-w-[1200px] sm:space-y-20">
                   {upperRounds.length > 0 &&
                     renderConnectedBracketBoard(
                       "Upper Bracket",

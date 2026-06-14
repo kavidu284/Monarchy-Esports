@@ -47,23 +47,24 @@ export default function TournamentCard({ tournament }) {
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40 transition-all duration-500 hover:-translate-y-2 hover:border-blue-500/70 hover:shadow-blue-600/20">
+    <div className="group relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40 transition-all duration-500 hover:border-blue-500/70 hover:shadow-blue-600/20 sm:rounded-3xl sm:hover:-translate-y-2">
       {/* Glow Effects */}
-      <div className="absolute -left-20 -top-20 h-48 w-48 rounded-full bg-blue-600/10 blur-3xl transition duration-500 group-hover:bg-blue-500/20" />
-      <div className="absolute -bottom-24 -right-24 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl transition duration-500 group-hover:bg-cyan-400/20" />
+      <div className="absolute -left-20 -top-20 h-40 w-40 rounded-full bg-blue-600/10 blur-3xl transition duration-500 group-hover:bg-blue-500/20 sm:h-48 sm:w-48" />
+      <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl transition duration-500 group-hover:bg-cyan-400/20 sm:h-56 sm:w-56" />
 
-      <div className="relative h-64 overflow-hidden bg-zinc-900">
+      {/* IMAGE */}
+      <div className="relative h-48 overflow-hidden bg-zinc-900 sm:h-64">
         <img
           src={tournament.banner_image}
           alt={tournament.title}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
         <div className="absolute inset-0 bg-blue-600/0 transition duration-500 group-hover:bg-blue-600/10" />
 
         <span
-          className={`absolute right-4 top-4 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide backdrop-blur ${
+          className={`absolute right-3 top-3 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide backdrop-blur sm:right-4 sm:top-4 sm:px-4 sm:py-2 sm:text-xs ${
             tournament.status === "Ongoing"
               ? "border-green-500/40 bg-green-500/10 text-green-400"
               : tournament.status === "Upcoming"
@@ -74,61 +75,55 @@ export default function TournamentCard({ tournament }) {
           {tournament.status}
         </span>
 
-        <div className="absolute left-4 top-4 rounded-full border border-zinc-700 bg-black/70 px-4 py-2 text-xs font-bold text-gray-300 backdrop-blur">
-          🎮 {tournament.game_name || "MLBB"}
-        </div>
-
-        <div className="absolute bottom-5 left-5 right-5">
-          <h3 className="line-clamp-1 text-3xl font-black text-white drop-shadow-lg">
+        <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5">
+          <h3 className="line-clamp-2 text-2xl font-black leading-tight text-white drop-shadow-lg sm:text-3xl">
             {tournament.title}
           </h3>
 
-          <p className="mt-2 line-clamp-1 text-sm font-semibold text-blue-300">
+          <p className="mt-2 line-clamp-1 text-xs font-semibold text-blue-300 sm:text-sm">
             {tournament.subtitle}
           </p>
         </div>
       </div>
 
-      <div className="relative p-6">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      {/* CONTENT */}
+      <div className="relative p-4 sm:p-6">
+        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <div className="rounded-2xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500/40">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:text-xs">
               Game
             </p>
 
-            <p className="mt-2 font-black text-white">
-              🎮 {tournament.game_name}
+            <p className="mt-2 truncate text-sm font-black text-white sm:text-base">
+              🎮 {tournament.game_name || "MLBB"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500/40">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:text-xs">
               Prize Pool
             </p>
 
-            <p className="mt-2 font-black text-blue-400">
+            <p className="mt-2 text-sm font-black text-blue-400 sm:text-base">
               Rs. {Number(tournament.prize_pool || 0).toLocaleString()}
             </p>
           </div>
         </div>
 
         {countdownDate ? (
-          <div className="mt-5 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 shadow-lg shadow-blue-600/5">
-            <p className="mb-4 text-sm font-black uppercase tracking-widest text-blue-300">
-              {countdownTitle}
-            </p>
-
+          <div className="mt-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-3 shadow-lg shadow-blue-600/5 sm:mt-5 sm:p-5">
             <Countdown
               targetDate={countdownDate}
+              title={countdownTitle}
               endedText={endedText}
             />
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-3">
+        <div className="mt-5 grid gap-3 sm:mt-6">
           <Link
             to={`/tournament/${tournament.id}`}
-            className="inline-flex w-full items-center justify-center rounded-2xl bg-blue-600 px-6 py-4 font-black text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-600/40"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:bg-blue-700 hover:shadow-blue-600/40 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:hover:-translate-y-0.5"
           >
             View Tournament
           </Link>
@@ -136,7 +131,7 @@ export default function TournamentCard({ tournament }) {
           {registrationOpen ? (
             <Link
               to={`/register/${tournament.id}`}
-              className="inline-flex w-full items-center justify-center rounded-2xl border border-blue-500/40 bg-black px-6 py-4 font-black text-white transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-400 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-600/10"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-blue-500/40 bg-black px-5 py-3 text-sm font-black text-white transition-all duration-300 hover:border-blue-400 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-600/10 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base sm:hover:-translate-y-0.5"
             >
               Register Team
             </Link>

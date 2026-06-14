@@ -30,7 +30,11 @@ function calculateTimeLeft(targetDate) {
   };
 }
 
-export default function Countdown({ targetDate, endedText = "Started" }) {
+export default function Countdown({
+  targetDate,
+  title = "Starts In",
+  endedText = "Started",
+}) {
   const [timeLeft, setTimeLeft] = useState(null);
   const [ready, setReady] = useState(false);
 
@@ -40,14 +44,11 @@ export default function Countdown({ targetDate, endedText = "Started" }) {
       setReady(true);
     };
 
-    const startTimer = setTimeout(updateCountdown, 0);
+    updateCountdown();
 
     const timer = setInterval(updateCountdown, 1000);
 
-    return () => {
-      clearTimeout(startTimer);
-      clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, [targetDate]);
 
   if (!ready) {
@@ -56,32 +57,46 @@ export default function Countdown({ targetDate, endedText = "Started" }) {
 
   if (!timeLeft) {
     return (
-      <span className="text-blue-400 font-semibold">
-        {endedText}
-      </span>
+      <div className="w-full rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-center">
+        <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 sm:text-xs">
+          {endedText}
+        </span>
+      </div>
     );
   }
 
+  const items = [
+    { label: "Days", short: "D", value: timeLeft.days },
+    { label: "Hours", short: "H", value: timeLeft.hours },
+    { label: "Minutes", short: "M", value: timeLeft.minutes },
+    { label: "Seconds", short: "S", value: timeLeft.seconds },
+  ];
+
   return (
-    <div className="grid grid-cols-4 gap-3">
-      <div className="bg-zinc-900 rounded-xl p-4 text-center border border-blue-500/40">
-        <p className="text-2xl font-bold text-white">{timeLeft.days}</p>
-        <p className="text-xs text-gray-400">Days</p>
-      </div>
+    <div className="w-full">
+      <p className="mb-2 text-center text-[9px] font-black uppercase tracking-widest text-blue-300 sm:text-xs">
+        {title}
+      </p>
 
-      <div className="bg-zinc-900 rounded-xl p-4 text-center border border-blue-500/40">
-        <p className="text-2xl font-bold text-white">{timeLeft.hours}</p>
-        <p className="text-xs text-gray-400">Hours</p>
-      </div>
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="min-w-0 rounded-lg border border-blue-500/30 bg-zinc-900 px-1 py-2 text-center sm:rounded-xl sm:px-3 sm:py-4"
+          >
+            <p className="truncate text-base font-black leading-none text-white sm:text-2xl">
+              {String(item.value).padStart(2, "0")}
+            </p>
 
-      <div className="bg-zinc-900 rounded-xl p-4 text-center border border-blue-500/40">
-        <p className="text-2xl font-bold text-white">{timeLeft.minutes}</p>
-        <p className="text-xs text-gray-400">Minutes</p>
-      </div>
+            <p className="mt-1 text-[8px] font-bold uppercase text-gray-400 sm:hidden">
+              {item.short}
+            </p>
 
-      <div className="bg-zinc-900 rounded-xl p-4 text-center border border-blue-500/40">
-        <p className="text-2xl font-bold text-white">{timeLeft.seconds}</p>
-        <p className="text-xs text-gray-400">Seconds</p>
+            <p className="mt-1 hidden text-xs font-semibold text-gray-400 sm:block">
+              {item.label}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
