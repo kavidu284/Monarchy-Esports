@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Countdown from "./Countdown";
+import getImageUrl from "../utils/getImageUrl";
 
 export default function TournamentCard({ tournament }) {
   if (!tournament) return null;
@@ -55,7 +56,7 @@ export default function TournamentCard({ tournament }) {
       {/* IMAGE */}
       <div className="relative h-48 overflow-hidden bg-zinc-900 sm:h-64">
         <img
-          src={tournament.banner_image}
+          src={getImageUrl(tournament.banner_image)}
           alt={tournament.title}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />

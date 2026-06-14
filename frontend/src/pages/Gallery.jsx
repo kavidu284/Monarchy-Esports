@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import getImageUrl from "../utils/getImageUrl";
 
 export default function Gallery() {
   const [images, setImages] = useState([]);
@@ -12,11 +13,16 @@ export default function Gallery() {
     const fetchGallery = async () => {
       try {
         const response = await api.get("/gallery");
-        if (mounted) setImages(response.data);
+
+        if (mounted) {
+          setImages(response.data);
+        }
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -26,14 +32,15 @@ export default function Gallery() {
       mounted = false;
     };
   }, []);
-    if (loading) {
+
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black text-white">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-10 py-8 text-center shadow-xl shadow-blue-600/10">
           <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
 
           <p className="font-semibold text-gray-300">
-            Loading tournaments...
+            Loading gallery...
           </p>
         </div>
       </div>
@@ -65,33 +72,37 @@ export default function Gallery() {
       <section className="mx-auto max-w-7xl px-6 py-16">
         {images.length > 0 ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {images.map((image) => (
-              <div
-                key={image.id}
-                onClick={() => setSelected(image.image_url)}
-                className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-blue-500/10"
-              >
-                <div className="relative h-72 overflow-hidden bg-zinc-900">
-                  <img
-                    src={image.image_url}
-                    alt={image.caption}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                  />
+            {images.map((image) => {
+              const imageUrl = getImageUrl(image.image_url);
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
+              return (
+                <div
+                  key={image.id}
+                  onClick={() => setSelected(imageUrl)}
+                  className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-blue-500/10"
+                >
+                  <div className="relative h-72 overflow-hidden bg-zinc-900">
+                    <img
+                      src={imageUrl}
+                      alt={image.caption || "Gallery image"}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                    />
 
-                  <div className="absolute left-4 top-4 rounded-full border border-blue-500/30 bg-black/80 px-3 py-1 text-xs font-bold text-blue-300 backdrop-blur">
-                    Moment #{image.id}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
+
+                    <div className="absolute left-4 top-4 rounded-full border border-blue-500/30 bg-black/80 px-3 py-1 text-xs font-bold text-blue-300 backdrop-blur">
+                      Moment #{image.id}
+                    </div>
+                  </div>
+
+                  <div className="p-5">
+                    <p className="text-center font-semibold text-gray-300">
+                      {image.caption || "Monarchy Esports Moment"}
+                    </p>
                   </div>
                 </div>
-
-                <div className="p-5">
-                  <p className="text-center font-semibold text-gray-300">
-                    {image.caption || "Monarchy Esports Moment"}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center shadow-xl shadow-black/30">

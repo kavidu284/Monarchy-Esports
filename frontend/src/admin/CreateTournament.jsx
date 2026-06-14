@@ -9,8 +9,6 @@ export default function CreateTournament() {
     subtitle: "",
     description: "",
     game_name: "Mobile Legends: Bang Bang",
-    banner_image: "",
-    rulebook_url: "",
     prize_pool: "",
     status: "Upcoming",
     registration_start: "",
@@ -21,11 +19,26 @@ export default function CreateTournament() {
     tournament_format: "Bracket Only",
   });
 
+  const [bannerImage, setBannerImage] = useState(null);
+  const [rulebookFile, setRulebookFile] = useState(null);
+
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const toBackendDateTime = (value) => {
+    if (!value) return "";
+
+    const dateValue = String(value).replace("T", " ");
+
+    if (dateValue.length === 16) {
+      return `${dateValue}:00`;
+    }
+
+    return dateValue;
   };
 
   const handleSubmit = async (e) => {
@@ -34,9 +47,67 @@ export default function CreateTournament() {
     try {
       setSubmitting(true);
 
-      await api.post("/tournaments", form);
+      const formData = new FormData();
+
+      formData.append("title", form.title);
+      formData.append("subtitle", form.subtitle);
+      formData.append("description", form.description);
+      formData.append("game_name", form.game_name);
+      formData.append("prize_pool", form.prize_pool);
+      formData.append("status", form.status);
+      formData.append(
+        "registration_start",
+        toBackendDateTime(form.registration_start)
+      );
+      formData.append(
+        "registration_end",
+        toBackendDateTime(form.registration_end)
+      );
+      formData.append(
+        "tournament_start",
+        toBackendDateTime(form.tournament_start)
+      );
+      formData.append(
+        "tournament_end",
+        toBackendDateTime(form.tournament_end)
+      );
+      formData.append("max_teams", form.max_teams);
+      formData.append("tournament_format", form.tournament_format);
+
+      if (bannerImage) {
+        formData.append("banner_image", bannerImage);
+      }
+
+      if (rulebookFile) {
+        formData.append("rulebook_file", rulebookFile);
+      }
+
+      await api.post("/tournaments", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       alert("Tournament Created Successfully");
+
+      setForm({
+        title: "",
+        subtitle: "",
+        description: "",
+        game_name: "Mobile Legends: Bang Bang",
+        prize_pool: "",
+        status: "Upcoming",
+        registration_start: "",
+        registration_end: "",
+        tournament_start: "",
+        tournament_end: "",
+        max_teams: 64,
+        tournament_format: "Bracket Only",
+      });
+
+      setBannerImage(null);
+      setRulebookFile(null);
+      e.target.reset();
     } catch (error) {
       console.error(error);
       alert(
@@ -51,26 +122,29 @@ export default function CreateTournament() {
   const inputClass =
     "w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
+  const fileInputClass =
+    "w-full rounded-xl border border-dashed border-zinc-700 bg-black px-4 py-4 text-sm text-gray-300 outline-none transition file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-bold file:text-white hover:border-blue-500/60 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+
   const labelClass =
     "mb-2 block text-sm font-semibold text-gray-300";
 
   const sectionClass =
-    "rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30";
+    "rounded-3xl border border-zinc-800 bg-zinc-950 p-5 shadow-xl shadow-black/30 sm:p-8";
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl px-6 py-10">
+      <div className="max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         {/* HEADER */}
-        <div className="mb-10">
-          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+        <div className="mb-8 sm:mb-10">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
             Admin Panel
           </p>
 
-          <h1 className="mt-2 text-4xl font-black">
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">
             Create Tournament
           </h1>
 
-          <p className="mt-3 max-w-2xl text-gray-400">
+          <p className="mt-3 max-w-2xl text-sm text-gray-400 sm:text-base">
             Create a new Monarchy Esports tournament and configure
             registration, schedule, format, rules, and prize pool.
           </p>
@@ -78,21 +152,21 @@ export default function CreateTournament() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-8 max-w-5xl"
+          className="max-w-5xl space-y-6 sm:space-y-8"
         >
           {/* BASIC DETAILS */}
           <div className={sectionClass}>
             <div className="mb-6 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
                 🏆
               </div>
 
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
                   Step 01
                 </p>
 
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl font-bold sm:text-2xl">
                   Basic Tournament Details
                 </h2>
               </div>
@@ -177,16 +251,16 @@ export default function CreateTournament() {
           {/* MEDIA AND RULES */}
           <div className={sectionClass}>
             <div className="mb-6 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
                 🖼️
               </div>
 
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
                   Step 02
                 </p>
 
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl font-bold sm:text-2xl">
                   Media & Rules
                 </h2>
               </div>
@@ -195,30 +269,44 @@ export default function CreateTournament() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className={labelClass}>
-                  Banner Image URL
+                  Banner Image
                 </label>
 
                 <input
-                  name="banner_image"
-                  value={form.banner_image}
-                  placeholder="Banner Image URL"
-                  onChange={handleChange}
-                  className={inputClass}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setBannerImage(e.target.files?.[0] || null)
+                  }
+                  className={fileInputClass}
                 />
+
+                {bannerImage && (
+                  <p className="mt-2 truncate text-xs text-blue-400">
+                    Selected: {bannerImage.name}
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className={labelClass}>
-                  Rulebook URL
+                  Rulebook File
                 </label>
 
                 <input
-                  name="rulebook_url"
-                  value={form.rulebook_url}
-                  placeholder="Rulebook URL"
-                  onChange={handleChange}
-                  className={inputClass}
+                  type="file"
+                  accept=".pdf,.doc,.docx,image/*"
+                  onChange={(e) =>
+                    setRulebookFile(e.target.files?.[0] || null)
+                  }
+                  className={fileInputClass}
                 />
+
+                {rulebookFile && (
+                  <p className="mt-2 truncate text-xs text-blue-400">
+                    Selected: {rulebookFile.name}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -226,16 +314,16 @@ export default function CreateTournament() {
           {/* STATUS AND FORMAT */}
           <div className={sectionClass}>
             <div className="mb-6 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
                 ⚙️
               </div>
 
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
                   Step 03
                 </p>
 
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl font-bold sm:text-2xl">
                   Status & Format
                 </h2>
               </div>
@@ -309,16 +397,16 @@ export default function CreateTournament() {
           {/* DATES */}
           <div className={sectionClass}>
             <div className="mb-6 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
                 📅
               </div>
 
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
                   Step 04
                 </p>
 
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl font-bold sm:text-2xl">
                   Registration & Tournament Dates
                 </h2>
               </div>
@@ -384,7 +472,7 @@ export default function CreateTournament() {
           </div>
 
           {/* SUBMIT */}
-          <div className="sticky bottom-6 rounded-3xl border border-zinc-800 bg-black/90 p-5 backdrop-blur">
+          <div className="sticky bottom-4 rounded-3xl border border-zinc-800 bg-black/90 p-4 backdrop-blur sm:bottom-6 sm:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 className="text-lg font-bold">

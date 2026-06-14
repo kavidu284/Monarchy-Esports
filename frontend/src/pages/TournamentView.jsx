@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../services/api";
+import getImageUrl from "../utils/getImageUrl";
 
 export default function TournamentView() {
   const { id } = useParams();
@@ -745,7 +746,7 @@ export default function TournamentView() {
               <div className="rounded-2xl border border-zinc-800 bg-black p-5 sm:p-6">
                 <p className="text-xs text-gray-500 sm:text-sm">Prize Pool</p>
                 <h3 className="mt-2 text-lg font-black text-blue-400 sm:text-xl">
-                  Rs. {tournament.prize_pool || 0}
+                  Rs. {Number(tournament.prize_pool || 0).toLocaleString()}
                 </h3>
               </div>
 
@@ -785,7 +786,7 @@ export default function TournamentView() {
                   >
                     {team.team_logo ? (
                       <img
-                        src={`http://127.0.0.1:8000/${team.team_logo}`}
+                        src={getImageUrl(team.team_logo)}
                         alt={team.team_name}
                         className="mx-auto mb-4 h-20 w-20 rounded-2xl border border-blue-500/30 object-cover sm:h-24 sm:w-24"
                       />

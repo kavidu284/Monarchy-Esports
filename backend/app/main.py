@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 from app.routes.tournaments import router as tournament_router
 from app.routes.announcements import router as announcements_router
@@ -9,10 +11,16 @@ from app.routes.gallery import router as gallery_router
 from app.routes.adminlogin import router as admin_login_router
 from app.routes.AdminDashboard import router as admin_dashboard_router
 from app.routes.matches import router as matches_router
-from app.routes.round_robin import router as round_robin_router 
+from app.routes.round_robin import router as round_robin_router
 
 
 app = FastAPI()
+
+# Create uploads folder if not exists
+os.makedirs("uploads", exist_ok=True)
+
+# Serve uploaded images/files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(tournament_router )
+app.include_router(tournament_router)
 app.include_router(announcements_router)
 app.include_router(registrations_router)
 app.include_router(contact_router)
@@ -31,6 +39,7 @@ app.include_router(admin_login_router)
 app.include_router(admin_dashboard_router)
 app.include_router(matches_router)
 app.include_router(round_robin_router)
+
 
 @app.get("/")
 def root():
