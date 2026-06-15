@@ -20,7 +20,7 @@ import AdminTournaments from "./admin/TournamentsAdmin";
 import CreateTournament from "./admin/CreateTournament";
 import EditTournament from "./admin/EditTournament";
 import Registrationsteam from  "./admin/TournamentRegistrations.jsx";
-import RegistrationDetails from "./admin/RegistationDetails.jsx";
+import RegistrationDetails from "./admin/RegistationTeams.jsx";
 import NewsAdmin from "./admin/NewsAdmin";
 import CreateNews from "./admin/CreateNews";
 import Editnews from "./admin/editNews";
