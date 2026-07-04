@@ -2,14 +2,9 @@ from fastapi import APIRouter, Depends, Form, File, UploadFile
 from app.database import get_connection
 from app.dependencies.auth import get_current_admin
 from typing import Optional
-import os
-import uuid
-import shutil
+import app.utils.cloudinary_upload as cloudinary_utils
 
 router = APIRouter()
-
-UPLOAD_DIR = "uploads/tournaments"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def clean_datetime(value):
@@ -30,22 +25,6 @@ def auto_show_registration(registration_start, registration_end):
 
     return 0
 
-
-def save_upload_file(file: Optional[UploadFile]):
-    if file is None:
-        return None
-
-    if not file.filename:
-        return None
-
-    file_extension = os.path.splitext(file.filename)[1]
-    safe_filename = f"{uuid.uuid4().hex}{file_extension}"
-    file_path = os.path.join(UPLOAD_DIR, safe_filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return file_path.replace("\\", "/")
 
 
 @router.get("/tournaments")
@@ -119,9 +98,15 @@ def create_tournament(
         registration_start,
         registration_end
     )
+    banner_image_path = cloudinary_utils.upload_image(
+    banner_image,
+    "monarchy_esports/tournament_banners"
+)
 
-    banner_image_path = save_upload_file(banner_image)
-    rulebook_file_path = save_upload_file(rulebook_file)
+    rulebook_file_path = cloudinary_utils.upload_file(
+        rulebook_file,
+        "monarchy_esports/rulebooks"
+    )
 
     query = """
     INSERT INTO tournaments

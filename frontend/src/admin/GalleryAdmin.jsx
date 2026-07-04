@@ -56,14 +56,15 @@ export default function GalleryAdmin() {
   const handleUpload = async (e) => {
     e.preventDefault();
 
-    if (!image || !tournamentId) {
-      alert("Select tournament and image");
+    if (!image) {
+      alert("Select an image");
       return;
     }
 
     const formData = new FormData();
-
-    formData.append("tournament_id", tournamentId);
+    if (tournamentId) {
+      formData.append("tournament_id", tournamentId);
+    }
     formData.append("caption", caption);
     formData.append("image", image);
 
@@ -189,7 +190,6 @@ export default function GalleryAdmin() {
               value={tournamentId}
               onChange={(e) => setTournamentId(e.target.value)}
               className={inputClass}
-              required
             >
               <option value="">Select Tournament</option>
 

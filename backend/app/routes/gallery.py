@@ -1,15 +1,11 @@
-import os
-import shutil
 
 from fastapi import APIRouter, UploadFile, File, Form
 from app.database import get_connection
 from fastapi import Depends
 from app.dependencies.auth import get_current_admin
+from app.utils.cloudinary_upload import upload_image
 
 router = APIRouter()
-
-UPLOAD_DIR = "uploads/gallery"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.get("/gallery")
@@ -34,17 +30,16 @@ def get_gallery():
 
 @router.post("/gallery")
 async def create_gallery_image(
-    tournament_id: int = Form(...),
+    tournament_id: int = Form(None),
     caption: str = Form(""),
     image: UploadFile = File(...),
     current_admin: dict = Depends(get_current_admin)
 ):
 
-    file_path = f"{UPLOAD_DIR}/{image.filename}"
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(image.file, buffer)
-
+    image_url = upload_image(
+        image,
+        "monarchy_esports/gallery"
+    )    
     connection = get_connection()
     cursor = connection.cursor()
 
@@ -61,7 +56,7 @@ async def create_gallery_image(
         """,
         (
             tournament_id,
-            file_path,
+            image_url,
             caption
         )
     )

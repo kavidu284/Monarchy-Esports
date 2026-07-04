@@ -1,24 +1,13 @@
-import os
-import shutil
+
 
 from fastapi import APIRouter, UploadFile, File, Form
 from app.database import get_connection
 from fastapi import Depends
 from app.dependencies.auth import get_current_admin
+from app.utils.cloudinary_upload import upload_image
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-def save_file(file):
-    path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return path
 
 
 @router.post("/registrations/register")
@@ -84,8 +73,8 @@ async def register_team(
     connection = get_connection()
     cursor = connection.cursor()
 
-    team_logo_path = save_file(team_logo)
-    lobby_path = save_file(lobby_screenshot)
+    team_logo_path = upload_image(team_logo)
+    lobby_path = upload_image(lobby_screenshot)
 
     cursor.execute(
         """
@@ -125,7 +114,7 @@ async def register_team(
             player1_ign,
             player1_mlbb_id,
             player1_server_id,
-            save_file(player1_photo),
+            upload_image(player1_photo),
             False
         ),
 
@@ -134,7 +123,7 @@ async def register_team(
             player2_ign,
             player2_mlbb_id,
             player2_server_id,
-            save_file(player2_photo),
+            upload_image(player2_photo),
             False
         ),
 
@@ -143,7 +132,7 @@ async def register_team(
             player3_ign,
             player3_mlbb_id,
             player3_server_id,
-            save_file(player3_photo),
+            upload_image(player3_photo),
             False
         ),
 
@@ -152,7 +141,7 @@ async def register_team(
             player4_ign,
             player4_mlbb_id,
             player4_server_id,
-            save_file(player4_photo),
+            upload_image(player4_photo),
             False
         ),
 
@@ -161,7 +150,7 @@ async def register_team(
             player5_ign,
             player5_mlbb_id,
             player5_server_id,
-            save_file(player5_photo),
+            upload_image(player5_photo),
             False
         )
     ]
@@ -173,7 +162,7 @@ async def register_team(
                 sub1_ign,
                 sub1_mlbb_id,
                 sub1_server_id,
-                save_file(sub1_photo) if sub1_photo else "",
+                upload_image(sub1_photo) if sub1_photo else "",
                 True
             )
         )
@@ -185,7 +174,7 @@ async def register_team(
                 sub2_ign,
                 sub2_mlbb_id,
                 sub2_server_id,
-                save_file(sub2_photo) if sub2_photo else "",
+                upload_image(sub2_photo) if sub2_photo else "",
                 True
             )
         )
