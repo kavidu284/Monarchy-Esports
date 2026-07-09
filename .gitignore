@@ -12,7 +12,7 @@ backend/__pycache__/
 backend/**/__pycache__/
 backend/*.pyc
 backend/.env
-backend/venv
+
 # Upload files
 backend/uploads/*
 !backend/uploads/.gitkeep
