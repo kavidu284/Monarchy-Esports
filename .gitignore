@@ -5,7 +5,10 @@ frontend/.env
 frontend/.env.local
 frontend/.env.production
 
-# Python / FastAPI
+# Environment files
+.env
+.env.local
+.env.production
 backend/venv/
 backend/env/
 backend/__pycache__/
