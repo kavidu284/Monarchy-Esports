@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import logo from "../assets/Monarchy.png";
+import logo from "../assets/footer.png";
 
 export default function Hero() {
   return (

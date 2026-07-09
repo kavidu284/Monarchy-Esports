@@ -437,6 +437,11 @@ export default function MatchAdmin() {
               </Link>
             )}
           </div>
+          <Link to="/admin/tournaments">
+          <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
+            ← Back
+          </button>
+        </Link>
         </div>
       </div>
 

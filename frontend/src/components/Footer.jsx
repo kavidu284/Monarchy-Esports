@@ -1,3 +1,4 @@
+import logo from "../assets/footer.png";
 export default function Footer() {
   return (
     <footer className="mt-20 border-t border-zinc-800 bg-black text-white">
@@ -6,7 +7,7 @@ export default function Footer() {
 
         <div className="relative mx-auto max-w-7xl px-6 py-12 text-center">
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl shadow-lg shadow-blue-600/10">
-            <img src="./logo.PNG" alt="Monarchy Esports Logo" />
+            <img src={logo} alt="Monarchy Esports Logo" />
           </div>
 
           <h3 className="text-3xl font-black tracking-wide text-blue-500">

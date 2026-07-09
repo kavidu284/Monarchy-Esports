@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import logo from "../assets/footer.png";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ export default function AdminLayout() {
         <div className={isMobile ? "mb-6" : "mb-10"}>
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
-              MC
+              <img src={logo} alt="Monarchy Esports Logo" />
             </div>
 
             <div className="min-w-0">

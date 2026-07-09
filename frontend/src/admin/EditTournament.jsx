@@ -270,37 +270,28 @@ export default function EditTournament() {
               </p>
 
               <h2 className="mt-2 text-2xl font-bold">
-                Media & Rules
+               Tournament Logo
               </h2>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className={labelClass}>
-                  Banner Image URL
+                  Banner Image 
                 </label>
 
                 <input
-                  name="banner_image"
-                  value={form.banner_image}
-                  placeholder="Banner Image URL"
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>
-                  Rulebook URL
-                </label>
-
-                <input
-                  name="rulebook_url"
-                  value={form.rulebook_url}
-                  placeholder="Rulebook URL"
-                  onChange={handleChange}
-                  className={inputClass}
-                />
+                    type="file"
+                    name="banner_image"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        banner_image: e.target.files[0],
+                      })
+                    }
+                    className="w-full p-3 bg-black border border-zinc-700 rounded-xl text-white"
+                  />
               </div>
             </div>
           </div>

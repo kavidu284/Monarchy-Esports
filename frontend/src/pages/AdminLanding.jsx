@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from "../assets/Monarchy.png";
+import logo from "../assets/footer.png";
 
 export default function AdminLanding() {
   return (

@@ -229,16 +229,21 @@ export default function CreateTournament() {
                 <label className={labelClass}>
                   Prize Pool
                 </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+                  $
+                </span>
 
                 <input
                   type="number"
                   name="prize_pool"
                   value={form.prize_pool}
-                  placeholder="Prize Pool"
                   onChange={handleChange}
-                  className={inputClass}
+                  placeholder="0.00"
+                  className="w-full rounded-xl border border-zinc-700 bg-black py-3 pl-10 pr-4 text-white outline-none focus:border-blue-500"
                 />
               </div>
+            </div>
             </div>
           </div>
 

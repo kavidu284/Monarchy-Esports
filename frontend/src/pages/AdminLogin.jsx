@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import logo from "../assets/footer.png";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
+      setLoading(true);
       const response = await api.post("/login", {
         username,
         password,
@@ -30,7 +33,9 @@ export default function AdminLogin() {
     } catch (error) {
       console.error(error);
       alert("Login Failed");
-    }
+    }finally {
+    setLoading(false);
+  }
   };
 
   return (
@@ -44,7 +49,11 @@ export default function AdminLogin() {
         {/* LOGO */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-blue-500/30 bg-blue-500/10 text-xl shadow-lg shadow-blue-600/20">
-            M
+            <img
+              src={logo}
+              alt="Monarchy Esports Logo"
+              className="w-12 object-contain"
+            />
           </div>
 
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
@@ -95,8 +104,9 @@ export default function AdminLogin() {
         <button
           type="submit"
           className="w-full rounded-xl bg-blue-600 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700"
+          disabled={loading}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p className="mt-6 text-center text-xs text-gray-500">
