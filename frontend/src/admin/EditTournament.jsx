@@ -90,23 +90,48 @@ export default function EditTournament() {
     try {
       setSaving(true);
 
-      const payload = {
-        ...form,
-        registration_start: toBackendDateTime(
-          form.registration_start
-        ),
-        registration_end: toBackendDateTime(
-          form.registration_end
-        ),
-        tournament_start: toBackendDateTime(
-          form.tournament_start
-        ),
-        tournament_end: toBackendDateTime(
-          form.tournament_end
-        ),
-      };
+      const formData = new FormData();
 
-      await api.put(`/tournaments/${id}`, payload);
+      formData.append("title", form.title || "");
+      formData.append("subtitle", form.subtitle || "");
+      formData.append("description", form.description || "");
+      formData.append("game_name", form.game_name || "Mobile Legends: Bang Bang");
+      formData.append("prize_pool", form.prize_pool || 0);
+      formData.append("status", form.status || "Upcoming");
+      formData.append(
+        "registration_start",
+        toBackendDateTime(form.registration_start)
+      );
+      formData.append(
+        "registration_end",
+        toBackendDateTime(form.registration_end)
+      );
+      formData.append(
+        "tournament_start",
+        toBackendDateTime(form.tournament_start)
+      );
+      formData.append(
+        "tournament_end",
+        toBackendDateTime(form.tournament_end)
+      );
+      formData.append("max_teams", form.max_teams || 64);
+      formData.append(
+        "tournament_format",
+        form.tournament_format || "Bracket Only"
+      );
+      formData.append("rulebook_url", form.rulebook_url || "");
+
+      if (form.banner_image instanceof File) {
+        formData.append("banner_image_file", form.banner_image);
+      } else {
+        formData.append("banner_image", form.banner_image || "");
+      }
+
+      await api.put(`/tournaments/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       alert("Tournament Updated Successfully");
 

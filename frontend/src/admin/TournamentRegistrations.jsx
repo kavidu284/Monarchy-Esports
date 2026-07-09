@@ -6,6 +6,14 @@ export default function RegistrationsAdmin() {
   const [registrations, setRegistrations] = useState([]);
   const [tournament, setTournament] = useState(null);
 
+  const getFileUrl = (filePath) => {
+    if (!filePath) return "";
+    if (filePath.startsWith("http")) return filePath;
+
+    const baseURL = api.defaults?.baseURL || "";
+    return `${baseURL}/${filePath}`;
+  };
+
   const navigate = useNavigate();
   const { tournamentId } = useParams();
 
@@ -215,17 +223,17 @@ export default function RegistrationsAdmin() {
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex flex-col gap-5 md:flex-row md:items-center">
                       <div className="h-24 w-24 overflow-hidden rounded-2xl border border-blue-500/30 bg-black">
-                        {team.team_logo ? (
-                          <img
-                            src={`${api.defaults.baseURL}/${team.team_logo}`}
-                            alt={team.team_name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-4xl">
-                            🛡️
-                          </div>
-                        )}
+                          {team.team_logo ? (
+                <img
+                  src={getFileUrl(team.team_logo)}
+                  alt={team.team_name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-5xl">
+                  🛡️
+                </div>
+              )}
                       </div>
 
                       <div>

@@ -127,7 +127,7 @@ export default function AdminLayout() {
             className="flex min-w-0 items-center gap-3 text-left"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-xl">
-              👑
+              <img src={logo} alt="Monarchy Esports Logo" className="h-6 w-6" />
             </div>
 
             <div className="min-w-0">
