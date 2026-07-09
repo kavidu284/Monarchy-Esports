@@ -1,7 +1,6 @@
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 
-SECRET_KEY = "monarchy_secret_key"
 ALGORITHM = "HS256"
 
 def create_access_token(data: dict):
