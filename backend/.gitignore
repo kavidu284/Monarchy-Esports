@@ -13,7 +13,6 @@ backend/**/__pycache__/
 backend/*.pyc
 backend/.env
 backend/venv
-backend/env
 backend__pycache__
 # Upload files
 backend/uploads/*
