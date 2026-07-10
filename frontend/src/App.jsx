@@ -27,7 +27,6 @@ import Editnews from "./admin/editNews";
 import MessagesAdmin from "./admin/MessageAdmin";
 import GalleryAdmin from "./admin/GalleryAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
-import RegistrationAdmin from "./admin/RegistationAdmin.jsx";
 import TournamentView from "./pages/TournamentView";
 import TournamentMatchesAdmin from "./admin/TournamentMatchesAdmin.jsx";
 import RoundRobinAdmin from "./admin/RoundRobinAdmin.jsx";
@@ -64,7 +63,6 @@ function App() {
           <Route path="tournaments" element={<ProtectedRoute><AdminTournaments /></ProtectedRoute>} />
           <Route path="tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
           <Route path="tournaments/edit/:id" element={<ProtectedRoute><EditTournament /></ProtectedRoute>} />
-          <Route path="registrations" element={<ProtectedRoute><RegistrationAdmin /></ProtectedRoute>} />
           <Route path="registrations/:id" element={<ProtectedRoute><RegistrationDetails /></ProtectedRoute>} />
           <Route path="news" element={<ProtectedRoute><NewsAdmin /></ProtectedRoute>} />
           <Route path="news/create" element={<ProtectedRoute><CreateNews /></ProtectedRoute>} />

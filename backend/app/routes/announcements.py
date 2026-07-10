@@ -1,7 +1,17 @@
-from fastapi import APIRouter
+from typing import Optional
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile
+)
+
 from app.database import get_connection
-from fastapi import Depends
 from app.dependencies.auth import get_current_admin
+from app.utils.cloudinary_upload import upload_image
 
 router = APIRouter()
 
@@ -12,18 +22,20 @@ def get_announcements():
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT *
-        FROM announcements
-        ORDER BY created_at DESC
-    """)
+    try:
+        cursor.execute(
+            """
+            SELECT *
+            FROM announcements
+            ORDER BY created_at DESC
+            """
+        )
 
-    announcements = cursor.fetchall()
+        return cursor.fetchall()
 
-    cursor.close()
-    connection.close()
-
-    return announcements
+    finally:
+        cursor.close()
+        connection.close()
 
 
 @router.get("/announcements/{announcement_id}")
@@ -32,92 +44,182 @@ def get_announcement(announcement_id: int):
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
-    cursor.execute(
-        """
-        SELECT *
-        FROM announcements
-        WHERE id = %s
-        """,
-        (announcement_id,)
-    )
+    try:
+        cursor.execute(
+            """
+            SELECT *
+            FROM announcements
+            WHERE id = %s
+            """,
+            (announcement_id,)
+        )
 
-    announcement = cursor.fetchone()
+        announcement = cursor.fetchone()
 
-    cursor.close()
-    connection.close()
+        if not announcement:
+            raise HTTPException(
+                status_code=404,
+                detail="Announcement not found"
+            )
 
-    return announcement
+        return announcement
 
-# CREATE ANNOUNCEMENT
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @router.post("/announcements")
-def create_announcement(data: dict , current_admin: dict = Depends(get_current_admin)):
-
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO announcements
-        (
-            title,
-            message
-        )
-        VALUES
-        (%s,%s)
-        """,
-        (
-            data["title"],
-            data["message"]
-        )
-    )
-
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-    return {
-        "message": "Announcement Created"
-    }
-
-
-# UPDATE ANNOUNCEMENT
-@router.put("/announcements/{announcement_id}")
-def update_announcement(
-    announcement_id: int,
-    data: dict,
+def create_announcement(
+    title: str = Form(...),
+    message: str = Form(...),
+    image: Optional[UploadFile] = File(None),
     current_admin: dict = Depends(get_current_admin)
 ):
 
-    connection = get_connection()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
 
-    cursor.execute(
-        """
-        UPDATE announcements
-        SET
-            title=%s,
-            message=%s
-        WHERE id=%s
-        """,
-        (
-            data["title"],
-            data["message"],
-            announcement_id
+    try:
+        image_url = None
+
+        if image and image.filename:
+            image_url = upload_image(
+                image,
+                "monarchy_esports/announcements"
+            )
+
+        connection = get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO announcements
+            (
+                title,
+                message,
+                image_url
+            )
+            VALUES
+            (%s, %s, %s)
+            """,
+            (
+                title,
+                message,
+                image_url
+            )
         )
-    )
 
-    connection.commit()
+        connection.commit()
 
-    cursor.close()
-    connection.close()
+        return {
+            "message": "Announcement Created",
+            "announcement_id": cursor.lastrowid,
+            "image_url": image_url
+        }
 
-    return {
-        "message": "Announcement Updated"
-    }
+    except Exception as error:
+
+        if connection:
+            connection.rollback()
+
+        print("Create Announcement Error:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create announcement"
+        )
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
 
 
-# DELETE ANNOUNCEMENT
+@router.put("/announcements/{announcement_id}")
+def update_announcement(
+    announcement_id: int,
+    title: str = Form(...),
+    message: str = Form(...),
+    existing_image_url: str = Form(""),
+    image: Optional[UploadFile] = File(None),
+    current_admin: dict = Depends(get_current_admin)
+):
+
+    connection = None
+    cursor = None
+
+    try:
+        image_url = existing_image_url or None
+
+        if image and image.filename:
+            image_url = upload_image(
+                image,
+                "monarchy_esports/announcements"
+            )
+
+        connection = get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE announcements
+            SET
+                title = %s,
+                message = %s,
+                image_url = %s
+            WHERE id = %s
+            """,
+            (
+                title,
+                message,
+                image_url,
+                announcement_id
+            )
+        )
+
+        if cursor.rowcount == 0:
+            connection.rollback()
+
+            raise HTTPException(
+                status_code=404,
+                detail="Announcement not found"
+            )
+
+        connection.commit()
+
+        return {
+            "message": "Announcement Updated",
+            "image_url": image_url
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+
+        if connection:
+            connection.rollback()
+
+        print("Update Announcement Error:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update announcement"
+        )
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+
 @router.delete("/announcements/{announcement_id}")
 def delete_announcement(
     announcement_id: int,
@@ -127,19 +229,29 @@ def delete_announcement(
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute(
-        """
-        DELETE FROM announcements
-        WHERE id=%s
-        """,
-        (announcement_id,)
-    )
+    try:
+        cursor.execute(
+            """
+            DELETE FROM announcements
+            WHERE id = %s
+            """,
+            (announcement_id,)
+        )
 
-    connection.commit()
+        if cursor.rowcount == 0:
+            connection.rollback()
 
-    cursor.close()
-    connection.close()
+            raise HTTPException(
+                status_code=404,
+                detail="Announcement not found"
+            )
 
-    return {
-        "message": "Announcement Deleted"
-    }
+        connection.commit()
+
+        return {
+            "message": "Announcement Deleted"
+        }
+
+    finally:
+        cursor.close()
+        connection.close()

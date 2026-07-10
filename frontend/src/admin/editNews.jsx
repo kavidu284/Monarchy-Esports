@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import api from "../services/api";
 
 export default function EditAnnouncement() {
@@ -9,20 +13,34 @@ export default function EditAnnouncement() {
   const [formData, setFormData] = useState({
     title: "",
     message: "",
+    image_url: "",
   });
 
+  const [newImage, setNewImage] = useState(null);
+  const [imagePreview, setImagePreview] =
+    useState("");
+
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] =
+    useState(false);
 
   useEffect(() => {
     const fetchAnnouncement = async () => {
       try {
-        const response = await api.get(`/announcements/${id}`);
+        const response = await api.get(
+          `/announcements/${id}`
+        );
 
         setFormData({
           title: response.data.title || "",
           message: response.data.message || "",
+          image_url:
+            response.data.image_url || "",
         });
+
+        setImagePreview(
+          response.data.image_url || ""
+        );
       } catch (error) {
         console.error(error);
         alert("Failed to load announcement");
@@ -41,19 +59,92 @@ export default function EditAnnouncement() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const selectedImage = e.target.files?.[0];
+
+    if (!selectedImage) return;
+
+    if (!selectedImage.type.startsWith("image/")) {
+      alert("Please select a valid image");
+
+      e.target.value = "";
+      return;
+    }
+
+    if (imagePreview.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setNewImage(selectedImage);
+
+    setImagePreview(
+      URL.createObjectURL(selectedImage)
+    );
+  };
+
+  const removeNewImage = () => {
+    if (imagePreview.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setNewImage(null);
+    setImagePreview(formData.image_url || "");
+  };
+
+  const removeCurrentImage = () => {
+    if (imagePreview.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setNewImage(null);
+    setImagePreview("");
+
+    setFormData({
+      ...formData,
+      image_url: "",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       setSubmitting(true);
 
-      await api.put(`/announcements/${id}`, formData);
+      const submitData = new FormData();
 
-      alert("Announcement Updated Successfully");
+      submitData.append(
+        "title",
+        formData.title
+      );
+
+      submitData.append(
+        "message",
+        formData.message
+      );
+
+      submitData.append(
+        "existing_image_url",
+        formData.image_url || ""
+      );
+
+      if (newImage) {
+        submitData.append("image", newImage);
+      }
+
+      await api.put(
+        `/announcements/${id}`,
+        submitData
+      );
+
+      alert(
+        "Announcement Updated Successfully"
+      );
 
       navigate("/admin/news");
     } catch (error) {
       console.error(error);
+
       alert(
         error.response?.data?.detail ||
           "Update Failed"
@@ -64,42 +155,34 @@ export default function EditAnnouncement() {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+    "w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none focus:border-blue-500";
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <p className="text-gray-400">
-            Loading announcement...
-          </p>
-        </div>
+      <div className="min-h-screen bg-black p-10 text-center text-white">
+        Loading announcement...
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HEADER */}
-      <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
+      <div className="mb-10 flex justify-between rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
         <div>
-          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+          <p className="font-bold uppercase text-blue-400">
             Admin Panel
           </p>
 
           <h1 className="mt-2 text-4xl font-black">
             Edit Announcement
           </h1>
-
-          <p className="mt-2 max-w-2xl text-gray-400">
-            Update official Monarchy Esports news and announcements.
-          </p>
         </div>
 
-        <Link to="/admin/news">
-          <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
-            ← Back to News
-          </button>
+        <Link
+          to="/admin/news"
+          className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold"
+        >
+          ← Back
         </Link>
       </div>
 
@@ -107,110 +190,99 @@ export default function EditAnnouncement() {
         onSubmit={handleSubmit}
         className="max-w-5xl space-y-8"
       >
-        {/* FORM CARD */}
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-          <div className="mb-6 flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-3xl">
-              📝
-            </div>
+        <div className="space-y-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
+          <div>
+            <label className="mb-2 block font-semibold">
+              Announcement Title
+            </label>
 
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-                Announcement Details
-              </p>
-
-              <h2 className="text-2xl font-bold">
-                Update Content
-              </h2>
-            </div>
+            <input
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              className={inputClass}
+            />
           </div>
 
-          <div className="space-y-6">
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-300">
-                Announcement Title
-              </label>
+          <div>
+            <label className="mb-2 block font-semibold">
+              Announcement Message
+            </label>
 
-              <input
-                type="text"
-                name="title"
-                placeholder="Announcement Title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-300">
-                Announcement Message
-              </label>
-
-              <textarea
-                name="message"
-                placeholder="Announcement Message"
-                rows="10"
-                value={formData.message}
-                onChange={handleChange}
-                required
-                className={`${inputClass} resize-none leading-7`}
-              />
-            </div>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              rows="10"
+              required
+              className={`${inputClass} resize-none`}
+            />
           </div>
+
+          <div>
+            <label className="mb-2 block font-semibold">
+              New Image (Optional)
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3"
+            />
+          </div>
+
+          {newImage && (
+            <button
+              type="button"
+              onClick={removeNewImage}
+              className="rounded-xl bg-red-600 px-5 py-3 font-bold"
+            >
+              Cancel New Image
+            </button>
+          )}
         </div>
 
-        {/* PREVIEW */}
-        <div className="rounded-3xl border border-blue-500/20 bg-blue-500/5 p-8">
-          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-            Preview
-          </p>
+        <div className="overflow-hidden rounded-3xl border border-blue-500/20 bg-blue-500/5">
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Announcement"
+              className="h-72 w-full object-cover"
+            />
+          )}
 
-          <h3 className="mt-3 text-2xl font-black text-white">
-            {formData.title || "Announcement title preview"}
-          </h3>
+          <div className="p-8">
+            <h3 className="text-2xl font-black">
+              {formData.title}
+            </h3>
 
-          <p className="mt-4 whitespace-pre-line leading-7 text-gray-300">
-            {formData.message ||
-              "Announcement message preview will appear here."}
-          </p>
-        </div>
+            <p className="mt-4 whitespace-pre-line text-gray-300">
+              {formData.message}
+            </p>
 
-        {/* ACTIONS */}
-        <div className="sticky bottom-6 rounded-3xl border border-zinc-800 bg-black/90 p-5 backdrop-blur">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h3 className="text-lg font-bold">
-                Save announcement changes?
-              </h3>
-
-              <p className="text-sm text-gray-500">
-                This update will change the public announcement content.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link to="/admin/news">
-                <button
-                  type="button"
-                  className="w-full rounded-xl border border-zinc-700 bg-black px-8 py-4 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
-                >
-                  Cancel
-                </button>
-              </Link>
-
+            {imagePreview && !newImage && (
               <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                onClick={removeCurrentImage}
+                className="mt-5 rounded-xl bg-red-600 px-5 py-3 font-bold"
               >
-                {submitting
-                  ? "Updating..."
-                  : "Update Announcement"}
+                Remove Current Image
               </button>
-            </div>
+            )}
           </div>
         </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-xl bg-blue-600 px-8 py-4 font-bold disabled:opacity-50"
+        >
+          {submitting
+            ? "Updating..."
+            : "Update Announcement"}
+        </button>
       </form>
     </div>
   );

@@ -10,9 +10,15 @@ export default function News() {
     const fetchNews = async () => {
       try {
         const response = await api.get("/announcements");
-        setNews(response.data);
+
+        const announcements = Array.isArray(response.data)
+          ? response.data
+          : [];
+
+        setNews(announcements);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load news:", error);
+        setNews([]);
       } finally {
         setLoading(false);
       }
@@ -20,14 +26,15 @@ export default function News() {
 
     void fetchNews();
   }, []);
-    if (loading) {
+
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black text-white">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-10 py-8 text-center shadow-xl shadow-blue-600/10">
           <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
 
           <p className="font-semibold text-gray-300">
-            Loading tournaments...
+            Loading news...
           </p>
         </div>
       </div>
@@ -89,7 +96,7 @@ export default function News() {
               {news.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-3xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-blue-500/10"
+                  className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-blue-500/10"
                 >
                   <NewsCard news={item} />
                 </div>

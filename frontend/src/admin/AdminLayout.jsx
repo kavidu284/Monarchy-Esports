@@ -27,11 +27,6 @@ export default function AdminLayout() {
       icon: "🏆",
     },
     {
-      name: "Registrations",
-      path: "/admin/registrations",
-      icon: "📝",
-    },
-    {
       name: "News",
       path: "/admin/news",
       icon: "📰",

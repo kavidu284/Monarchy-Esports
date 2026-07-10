@@ -3,12 +3,24 @@ import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
 
 export default function RegistrationDetails() {
-  const { id } = useParams();
+  const {
+    id,
+    tournamentId,
+    registrationId,
+  } = useParams();
 
-  const [registration, setRegistration] = useState(null);
+  // Supports both old route and new tournament route
+  const currentRegistrationId =
+    registrationId || id;
+
+  const [registration, setRegistration] =
+    useState(null);
+
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+
+  const [actionLoading, setActionLoading] =
+    useState(false);
 
   const getFileUrl = (filePath) => {
     if (!filePath) return "";
@@ -17,22 +29,118 @@ export default function RegistrationDetails() {
       return filePath;
     }
 
-    return `${api.defaults.baseURL}/${String(filePath).replace(/^\/+/, "")}`;
+    return `${api.defaults.baseURL}/${String(
+      filePath
+    ).replace(/^\/+/, "")}`;
   };
 
-  const fetchRegistration = useCallback(async () => {
-    try {
-      const response = await api.get(`/registrations/${id}/full`);
-
-      setRegistration(response.data.registration);
-      setPlayers(response.data.players || []);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to load registration details");
-    } finally {
-      setLoading(false);
+  // New download function
+  const downloadFile = async (
+    filePath,
+    fileName
+  ) => {
+    if (!filePath) {
+      alert("Photo is not available");
+      return;
     }
-  }, [id]);
+
+    const fileUrl = getFileUrl(filePath);
+
+    const safeFileName = String(
+      fileName || "download"
+    )
+      .trim()
+      .replace(/[^a-zA-Z0-9-_]/g, "-")
+      .replace(/-+/g, "-");
+
+    try {
+      // Cloudinary image download
+      if (
+        fileUrl.includes("res.cloudinary.com") &&
+        fileUrl.includes("/upload/")
+      ) {
+        const downloadUrl = fileUrl.replace(
+          "/upload/",
+          `/upload/fl_attachment:${safeFileName}/`
+        );
+
+        const link =
+          document.createElement("a");
+
+        link.href = downloadUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        return;
+      }
+
+      // Local or other hosted file download
+      const response = await fetch(fileUrl);
+
+      if (!response.ok) {
+        throw new Error(
+          "Unable to download file"
+        );
+      }
+
+      const blob = await response.blob();
+
+      const blobUrl =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = blobUrl;
+      link.download = safeFileName;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error(
+        "Download error:",
+        error
+      );
+
+      window.open(
+        fileUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+  };
+
+  const fetchRegistration =
+    useCallback(async () => {
+      try {
+        const response = await api.get(
+          `/registrations/${currentRegistrationId}/full`
+        );
+
+        setRegistration(
+          response.data.registration
+        );
+
+        setPlayers(
+          response.data.players || []
+        );
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          "Failed to load registration details"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, [currentRegistrationId]);
 
   useEffect(() => {
     const load = async () => {
@@ -43,15 +151,22 @@ export default function RegistrationDetails() {
   }, [fetchRegistration]);
 
   const approveTeam = async () => {
-    const confirmed = window.confirm("Approve this team?");
+    const confirmed =
+      window.confirm(
+        "Approve this team?"
+      );
+
     if (!confirmed) return;
 
     try {
       setActionLoading(true);
 
-      await api.put(`/registrations/${id}/approve`);
+      await api.put(
+        `/registrations/${currentRegistrationId}/approve`
+      );
 
       alert("Team Approved");
+
       fetchRegistration();
     } catch (error) {
       console.error(error);
@@ -62,15 +177,22 @@ export default function RegistrationDetails() {
   };
 
   const rejectTeam = async () => {
-    const confirmed = window.confirm("Reject this team?");
+    const confirmed =
+      window.confirm(
+        "Reject this team?"
+      );
+
     if (!confirmed) return;
 
     try {
       setActionLoading(true);
 
-      await api.put(`/registrations/${id}/reject`);
+      await api.put(
+        `/registrations/${currentRegistrationId}/reject`
+      );
 
       alert("Team Rejected");
+
       fetchRegistration();
     } catch (error) {
       console.error(error);
@@ -81,7 +203,9 @@ export default function RegistrationDetails() {
   };
 
   const getStatusClass = (status) => {
-    const value = String(status || "").toLowerCase();
+    const value = String(
+      status || ""
+    ).toLowerCase();
 
     if (value === "approved") {
       return "border-green-500/40 bg-green-500/10 text-green-400";
@@ -97,9 +221,14 @@ export default function RegistrationDetails() {
   const formatDate = (value) => {
     if (!value) return "-";
 
-    return String(value).replace("T", " ").slice(0, 16);
+    return String(value)
+      .replace("T", " ")
+      .slice(0, 16);
   };
 
+  const backPath = tournamentId
+      ? `/admin/tournaments/${tournamentId}/registrations`
+      : "/admin/tournaments"
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white">
@@ -121,10 +250,11 @@ export default function RegistrationDetails() {
           </h2>
 
           <p className="mt-3 text-gray-400">
-            This registration does not exist or failed to load.
+            This registration does not exist
+            or failed to load.
           </p>
 
-          <Link to="/admin/registrations">
+          <Link to={backPath}>
             <button className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700">
               Back to Registrations
             </button>
@@ -138,13 +268,16 @@ export default function RegistrationDetails() {
     (player) => !player.is_substitute
   );
 
-  const substitutePlayers = players.filter(
-    (player) => player.is_substitute
-  );
+  const substitutePlayers =
+    players.filter(
+      (player) =>
+        player.is_substitute
+    );
 
   return (
     <div className="min-h-screen bg-black text-white">
       {/* HEADER */}
+
       <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
@@ -156,12 +289,13 @@ export default function RegistrationDetails() {
           </h1>
 
           <p className="mt-2 max-w-2xl text-gray-400">
-            Review team information, captain details, lobby screenshot,
-            and player list.
+            Review team information,
+            captain details, lobby
+            screenshot, and player list.
           </p>
         </div>
 
-        <Link to="/admin/registrations">
+        <Link to={backPath}>
           <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
             ← Back
           </button>
@@ -169,20 +303,45 @@ export default function RegistrationDetails() {
       </div>
 
       {/* TEAM INFO */}
+
       <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex flex-col gap-6 md:flex-row">
-            <div className="h-36 w-36 overflow-hidden rounded-3xl border border-blue-500/30 bg-black">
-              {registration.team_logo ? (
-                <img
-                  src={getFileUrl(registration.team_logo)}
-                  alt={registration.team_name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl">
-                  🛡️
-                </div>
+
+            {/* TEAM LOGO */}
+
+            <div>
+              <div className="h-36 w-36 overflow-hidden rounded-3xl border border-blue-500/30 bg-black">
+                {registration.team_logo ? (
+                  <img
+                    src={getFileUrl(
+                      registration.team_logo
+                    )}
+                    alt={
+                      registration.team_name
+                    }
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-5xl">
+                    🛡️
+                  </div>
+                )}
+              </div>
+
+              {registration.team_logo && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadFile(
+                      registration.team_logo,
+                      `${registration.team_name}-team-logo`
+                    )
+                  }
+                  className="mt-3 w-36 rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+                >
+                  Download Logo
+                </button>
               )}
             </div>
 
@@ -193,11 +352,13 @@ export default function RegistrationDetails() {
                     registration.status
                   )}`}
                 >
-                  {registration.status || "Pending"}
+                  {registration.status ||
+                    "Pending"}
                 </span>
 
                 <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
-                  Registration #{registration.id}
+                  Registration #
+                  {registration.id}
                 </span>
               </div>
 
@@ -206,7 +367,10 @@ export default function RegistrationDetails() {
               </h2>
 
               <p className="mt-2 text-gray-400">
-                Submitted: {formatDate(registration.created_at)}
+                Submitted:{" "}
+                {formatDate(
+                  registration.created_at
+                )}
               </p>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -216,7 +380,8 @@ export default function RegistrationDetails() {
                   </p>
 
                   <p className="mt-1 font-bold text-white">
-                    {registration.captain_name || "-"}
+                    {registration.captain_name ||
+                      "-"}
                   </p>
                 </div>
 
@@ -229,7 +394,8 @@ export default function RegistrationDetails() {
                     href={`mailto:${registration.captain_email}`}
                     className="mt-1 block break-all font-bold text-blue-400 hover:underline"
                   >
-                    {registration.captain_email || "-"}
+                    {registration.captain_email ||
+                      "-"}
                   </a>
                 </div>
 
@@ -239,7 +405,8 @@ export default function RegistrationDetails() {
                   </p>
 
                   <p className="mt-1 font-bold text-white">
-                    {registration.captain_phone || "-"}
+                    {registration.captain_phone ||
+                      "-"}
                   </p>
                 </div>
 
@@ -249,7 +416,8 @@ export default function RegistrationDetails() {
                   </p>
 
                   <p className="mt-1 font-bold text-white">
-                    {registration.discord_username || "-"}
+                    {registration.discord_username ||
+                      "-"}
                   </p>
                 </div>
               </div>
@@ -257,13 +425,16 @@ export default function RegistrationDetails() {
           </div>
 
           {/* ACTIONS */}
+
           <div className="flex flex-wrap gap-3 lg:flex-col">
             <button
               onClick={approveTeam}
               disabled={actionLoading}
               className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {actionLoading ? "Processing..." : "Approve"}
+              {actionLoading
+                ? "Processing..."
+                : "Approve"}
             </button>
 
             <button
@@ -271,28 +442,48 @@ export default function RegistrationDetails() {
               disabled={actionLoading}
               className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {actionLoading ? "Processing..." : "Reject"}
+              {actionLoading
+                ? "Processing..."
+                : "Reject"}
             </button>
           </div>
         </div>
       </div>
 
       {/* LOBBY SCREENSHOT */}
+
       {registration.lobby_screenshot && (
         <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-          <div className="mb-6">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-              Verification
-            </p>
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                Verification
+              </p>
 
-            <h2 className="mt-2 text-2xl font-bold">
-              Lobby Screenshot
-            </h2>
+              <h2 className="mt-2 text-2xl font-bold">
+                Lobby Screenshot
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                downloadFile(
+                  registration.lobby_screenshot,
+                  `${registration.team_name}-lobby-screenshot`
+                )
+              }
+              className="rounded-xl bg-cyan-600 px-6 py-3 font-bold text-white transition hover:bg-cyan-700"
+            >
+              Download Screenshot
+            </button>
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-black">
             <img
-              src={getFileUrl(registration.lobby_screenshot)}
+              src={getFileUrl(
+                registration.lobby_screenshot
+              )}
               alt="Lobby Screenshot"
               className="max-h-[600px] w-full object-contain"
             />
@@ -301,6 +492,7 @@ export default function RegistrationDetails() {
       )}
 
       {/* MAIN PLAYERS */}
+
       <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -324,12 +516,17 @@ export default function RegistrationDetails() {
               key={player.id}
               player={player}
               getFileUrl={getFileUrl}
+              downloadFile={downloadFile}
+              teamName={
+                registration.team_name
+              }
             />
           ))}
         </div>
       </div>
 
       {/* SUBSTITUTE PLAYERS */}
+
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -343,11 +540,13 @@ export default function RegistrationDetails() {
           </div>
 
           <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-400">
-            {substitutePlayers.length} Substitutes
+            {substitutePlayers.length}{" "}
+            Substitutes
           </span>
         </div>
 
-        {substitutePlayers.length === 0 ? (
+        {substitutePlayers.length ===
+        0 ? (
           <div className="rounded-2xl border border-zinc-800 bg-black p-6 text-center">
             <p className="text-gray-400">
               No substitute players added.
@@ -355,13 +554,21 @@ export default function RegistrationDetails() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {substitutePlayers.map((player) => (
-              <PlayerCard
-                key={player.id}
-                player={player}
-                getFileUrl={getFileUrl}
-              />
-            ))}
+            {substitutePlayers.map(
+              (player) => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  getFileUrl={getFileUrl}
+                  downloadFile={
+                    downloadFile
+                  }
+                  teamName={
+                    registration.team_name
+                  }
+                />
+              )
+            )}
           </div>
         )}
       </div>
@@ -369,14 +576,21 @@ export default function RegistrationDetails() {
   );
 }
 
-function PlayerCard({ player, getFileUrl }) {
+function PlayerCard({
+  player,
+  getFileUrl,
+  downloadFile,
+  teamName,
+}) {
   return (
     <div className="rounded-3xl border border-zinc-800 bg-black p-5 transition hover:border-blue-500/60">
       <div className="mb-5 flex items-center gap-4">
         <div className="h-24 w-24 overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900">
           {player.player_photo ? (
             <img
-              src={getFileUrl(player.player_photo)}
+              src={getFileUrl(
+                player.player_photo
+              )}
               alt={player.real_name}
               className="h-full w-full object-cover"
             />
@@ -408,7 +622,10 @@ function PlayerCard({ player, getFileUrl }) {
 
       <div className="space-y-3">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-sm text-gray-500">IGN</p>
+          <p className="text-sm text-gray-500">
+            IGN
+          </p>
+
           <p className="mt-1 font-bold text-blue-400">
             {player.ign || "-"}
           </p>
@@ -416,20 +633,44 @@ function PlayerCard({ player, getFileUrl }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-            <p className="text-sm text-gray-500">MLBB ID</p>
+            <p className="text-sm text-gray-500">
+              MLBB ID
+            </p>
+
             <p className="mt-1 break-all font-bold text-white">
               {player.mlbb_id || "-"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-            <p className="text-sm text-gray-500">Server ID</p>
+            <p className="text-sm text-gray-500">
+              Server ID
+            </p>
+
             <p className="mt-1 break-all font-bold text-white">
               {player.server_id || "-"}
             </p>
           </div>
         </div>
       </div>
+
+      {player.player_photo && (
+        <button
+          type="button"
+          onClick={() =>
+            downloadFile(
+              player.player_photo,
+              `${teamName}-${
+                player.ign ||
+                player.real_name
+              }-photo`
+            )
+          }
+          className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition hover:bg-blue-700"
+        >
+          Download Player Photo
+        </button>
+      )}
     </div>
   );
 }

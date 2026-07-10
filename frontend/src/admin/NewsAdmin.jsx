@@ -31,7 +31,9 @@ export default function NewsAdmin() {
     try {
       await api.delete(`/announcements/${id}`);
 
-      setNews(news.filter((item) => item.id !== id));
+      setNews((currentNews) =>
+        currentNews.filter((item) => item.id !== id)
+      );
 
       alert("News Deleted");
     } catch (error) {
@@ -56,11 +58,34 @@ export default function NewsAdmin() {
     return message;
   };
 
+  const getImageUrl = (filePath) => {
+    if (!filePath) return "";
+
+    const path = String(filePath)
+      .trim()
+      .replace(/\\/g, "/");
+
+    if (
+      path.startsWith("http://") ||
+      path.startsWith("https://")
+    ) {
+      return path;
+    }
+
+    const baseURL = String(
+      api.defaults.baseURL || ""
+    ).replace(/\/+$/, "");
+
+    return `${baseURL}/${path.replace(/^\/+/, "")}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <p className="text-gray-400">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+
+          <p className="mt-4 text-gray-400">
             Loading news...
           </p>
         </div>
@@ -71,6 +96,7 @@ export default function NewsAdmin() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* HEADER */}
+
       <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
@@ -87,14 +113,16 @@ export default function NewsAdmin() {
           </p>
         </div>
 
-        <Link to="/admin/news/create">
-          <button className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700">
-            + Create Announcement
-          </button>
+        <Link
+          to="/admin/news/create"
+          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700"
+        >
+          + Create Announcement
         </Link>
       </div>
 
       {/* SUMMARY */}
+
       <div className="mb-8 grid gap-5 md:grid-cols-3">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-xl shadow-black/30">
           <p className="text-sm text-gray-500">
@@ -128,6 +156,7 @@ export default function NewsAdmin() {
       </div>
 
       {/* EMPTY */}
+
       {news.length === 0 ? (
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center shadow-xl shadow-black/30">
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-4xl">
@@ -142,10 +171,11 @@ export default function NewsAdmin() {
             Create your first announcement for players and visitors.
           </p>
 
-          <Link to="/admin/news/create">
-            <button className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700">
-              Create Announcement
-            </button>
+          <Link
+            to="/admin/news/create"
+            className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700"
+          >
+            Create Announcement
           </Link>
         </div>
       ) : (
@@ -153,44 +183,72 @@ export default function NewsAdmin() {
           {news.map((item) => (
             <div
               key={item.id}
-              className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-xl shadow-black/30 transition hover:border-blue-500/60 hover:shadow-blue-500/10"
+              className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/30 transition hover:border-blue-500/60 hover:shadow-blue-500/10"
             >
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                {/* LEFT */}
-                <div className="flex-1">
-                  <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
-                      Announcement #{item.id}
-                    </span>
+              <div className="flex flex-col lg:flex-row">
+                {/* ANNOUNCEMENT IMAGE */}
 
-                    <span className="rounded-full border border-zinc-700 bg-black px-3 py-1 text-xs font-bold text-gray-400">
-                      {formatDate(item.created_at)}
-                    </span>
+                {item.image_url ? (
+                  <div className="h-64 w-full shrink-0 overflow-hidden bg-black lg:h-auto lg:w-80">
+                    <img
+                      src={getImageUrl(item.image_url)}
+                      alt={item.title}
+                      className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-48 w-full shrink-0 items-center justify-center bg-black text-6xl text-zinc-700 lg:h-auto lg:w-80">
+                    📰
+                  </div>
+                )}
+
+                {/* CONTENT */}
+
+                <div className="flex flex-1 flex-col justify-between gap-6 p-6 lg:flex-row lg:items-start">
+                  <div className="flex-1">
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                      <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
+                        Announcement #{item.id}
+                      </span>
+
+                      <span className="rounded-full border border-zinc-700 bg-black px-3 py-1 text-xs font-bold text-gray-400">
+                        {formatDate(item.created_at)}
+                      </span>
+
+                      {item.image_url && (
+                        <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
+                          Image Added
+                        </span>
+                      )}
+                    </div>
+
+                    <h2 className="text-2xl font-black text-white">
+                      {item.title}
+                    </h2>
+
+                    <p className="mt-3 max-w-4xl whitespace-pre-line leading-7 text-gray-400">
+                      {getShortMessage(item.message)}
+                    </p>
                   </div>
 
-                  <h2 className="text-2xl font-black text-white">
-                    {item.title}
-                  </h2>
+                  {/* ACTIONS */}
 
-                  <p className="mt-3 max-w-4xl leading-7 text-gray-400">
-                    {getShortMessage(item.message)}
-                  </p>
-                </div>
-
-                {/* ACTIONS */}
-                <div className="flex flex-wrap gap-3 lg:flex-col">
-                  <Link to={`/admin/news/edit/${item.id}`}>
-                    <button className="w-full rounded-xl bg-white px-5 py-3 font-bold text-black transition hover:bg-blue-100">
+                  <div className="flex flex-wrap gap-3 lg:flex-col">
+                    <Link
+                      to={`/admin/news/edit/${item.id}`}
+                      className="inline-flex min-w-28 items-center justify-center rounded-xl bg-white px-5 py-3 font-bold text-black transition hover:bg-blue-100"
+                    >
                       Edit
-                    </button>
-                  </Link>
+                    </Link>
 
-                  <button
-                    onClick={() => deleteNews(item.id)}
-                    className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteNews(item.id)}
+                      className="min-w-28 rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -231,7 +231,12 @@ export default function TournamentsAdmin() {
                         Edit
                       </button>
                     </Link>
-
+                    <Link
+                      to={`/admin/registrationsteam/${tournament.id}`}
+                      className="rounded-lg bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
+                    >
+                      Registrations
+                    </Link>      
                     {canManageMatches ? (
                       <Link
                         to={`/admin/tournament/${tournament.id}/matches`}

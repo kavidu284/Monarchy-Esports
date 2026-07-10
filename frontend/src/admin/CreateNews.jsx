@@ -10,6 +10,8 @@ export default function CreateNews() {
     message: "",
   });
 
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -19,18 +21,67 @@ export default function CreateNews() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const selectedImage = e.target.files?.[0];
+
+    if (!selectedImage) {
+      setImage(null);
+      setImagePreview("");
+      return;
+    }
+
+    if (!selectedImage.type.startsWith("image/")) {
+      alert("Please select a valid image");
+
+      e.target.value = "";
+      return;
+    }
+
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImage(selectedImage);
+    setImagePreview(
+      URL.createObjectURL(selectedImage)
+    );
+  };
+
+  const removeImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImage(null);
+    setImagePreview("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       setSubmitting(true);
 
-      await api.post("/announcements", formData);
+      const submitData = new FormData();
+
+      submitData.append("title", formData.title);
+      submitData.append("message", formData.message);
+
+      if (image) {
+        submitData.append("image", image);
+      }
+
+      await api.post(
+        "/announcements",
+        submitData
+      );
 
       alert("News Created Successfully");
+
       navigate("/admin/news");
     } catch (error) {
       console.error(error);
+
       alert(
         error.response?.data?.detail ||
           "Failed To Create News"
@@ -45,8 +96,7 @@ export default function CreateNews() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HEADER */}
-      <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
+      <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
             Admin Panel
@@ -56,114 +106,123 @@ export default function CreateNews() {
             Create News
           </h1>
 
-          <p className="mt-2 max-w-2xl text-gray-400">
-            Publish official Monarchy Esports announcements and news
-            updates for players.
+          <p className="mt-2 text-gray-400">
+            Publish Monarchy Esports announcements.
           </p>
         </div>
 
-        <Link to="/admin/news">
-          <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
-            ← Back to News
-          </button>
+        <Link
+          to="/admin/news"
+          className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold transition hover:border-blue-500"
+        >
+          ← Back to News
         </Link>
       </div>
 
-      {/* FORM */}
       <form
         onSubmit={handleSubmit}
         className="max-w-5xl space-y-8"
       >
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
-          <div className="mb-6 flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-3xl">
-              📰
-            </div>
-
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-                News Details
-              </p>
-
-              <h2 className="text-2xl font-bold">
-                Announcement Content
-              </h2>
-            </div>
-          </div>
-
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-300">
+              <label className="mb-2 block font-semibold text-gray-300">
                 News Title
               </label>
 
               <input
                 type="text"
                 name="title"
-                placeholder="Enter news title"
                 value={formData.title}
                 onChange={handleChange}
+                placeholder="Enter news title"
                 required
                 className={inputClass}
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-300">
+              <label className="mb-2 block font-semibold text-gray-300">
                 News Message
               </label>
 
               <textarea
                 name="message"
-                placeholder="Write announcement message..."
                 rows="10"
                 value={formData.message}
                 onChange={handleChange}
+                placeholder="Write announcement message..."
                 required
-                className={`${inputClass} resize-none leading-7`}
+                className={`${inputClass} resize-none`}
               />
             </div>
-          </div>
-        </div>
 
-        {/* PREVIEW */}
-        <div className="rounded-3xl border border-blue-500/20 bg-blue-500/5 p-8">
-          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-            Preview
-          </p>
-
-          <h3 className="mt-3 text-2xl font-black text-white">
-            {formData.title || "News title preview"}
-          </h3>
-
-          <p className="mt-4 whitespace-pre-line leading-7 text-gray-300">
-            {formData.message ||
-              "News message preview will appear here while typing."}
-          </p>
-        </div>
-
-        {/* SUBMIT */}
-        <div className="sticky bottom-6 rounded-3xl border border-zinc-800 bg-black/90 p-5 backdrop-blur">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="text-lg font-bold">
-                Ready to publish?
-              </h3>
+              <label className="mb-2 block font-semibold text-gray-300">
+                Announcement Image (Optional)
+              </label>
 
-              <p className="text-sm text-gray-500">
-                This news will be visible to public users.
-              </p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-gray-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-bold file:text-white"
+              />
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submitting ? "Publishing..." : "Publish News"}
-            </button>
+            {image && (
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4">
+                <p className="font-bold text-blue-400">
+                  {image.name}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="mt-3 rounded-xl bg-red-600 px-5 py-2 font-bold"
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        <div className="overflow-hidden rounded-3xl border border-blue-500/20 bg-blue-500/5">
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="h-72 w-full object-cover"
+            />
+          )}
+
+          <div className="p-8">
+            <p className="text-sm font-bold uppercase text-blue-400">
+              Preview
+            </p>
+
+            <h3 className="mt-3 text-2xl font-black">
+              {formData.title ||
+                "News title preview"}
+            </h3>
+
+            <p className="mt-4 whitespace-pre-line text-gray-300">
+              {formData.message ||
+                "News message preview"}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-xl bg-blue-600 px-8 py-4 font-bold disabled:opacity-50"
+        >
+          {submitting
+            ? "Publishing..."
+            : "Publish News"}
+        </button>
       </form>
     </div>
   );
