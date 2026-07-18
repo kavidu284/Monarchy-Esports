@@ -365,7 +365,9 @@ export default function RegistrationDetails() {
               <h2 className="text-4xl font-black">
                 {registration.team_name}
               </h2>
-
+              <h2 className="text-2xl font-bold text-gray-400">
+                {registration.clan_name}
+              </h2>
               <p className="mt-2 text-gray-400">
                 Submitted:{" "}
                 {formatDate(

@@ -16,6 +16,7 @@ async def register_team(
     tournament_id: int = Form(...),
 
     team_name: str = Form(...),
+    clan_name: str = Form(...),
     captain_name: str = Form(...),
     captain_email: str = Form(...),
     captain_phone: str = Form(...),
@@ -82,6 +83,7 @@ async def register_team(
         (
             tournament_id,
             team_name,
+            clan_name,
             team_logo,
             captain_name,
             captain_email,
@@ -91,17 +93,19 @@ async def register_team(
             status
         )
         VALUES
-        (%s,%s,%s,%s,%s,%s,%s,%s,'Pending')
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """,
         (
             tournament_id,
             team_name,
+            clan_name,
             team_logo_path,
             captain_name,
             captain_email,
             captain_phone,
             discord_username,
-            lobby_path
+            lobby_path,
+            'Pending'
         )
     )
 

@@ -64,6 +64,7 @@ CREATE TABLE registrations (
 
     team_name VARCHAR(100) NOT NULL,
     team_logo VARCHAR(500),
+    clan_name VARCHAR(100),
 
     captain_name VARCHAR(100) NOT NULL,
     captain_email VARCHAR(150),
@@ -120,9 +121,11 @@ CREATE TABLE announcements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
+
+    image_url VARCHAR(500),
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- =========================================================
 -- NEWS
 -- =========================================================

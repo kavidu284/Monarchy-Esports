@@ -130,8 +130,21 @@ export default function RegisterTeam() {
                   className={inputClass}
                 />
               </div>
-
               <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-300">
+                  Clan Name
+                </label>
+
+                <input
+                  type="text"
+                  name="clan_name"
+                  placeholder="Enter clan name"
+                  required
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-semibold text-gray-300">
                   Team Logo
                 </label>
