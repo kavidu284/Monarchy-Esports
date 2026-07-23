@@ -5,12 +5,16 @@ export default function NewsCard({ news }) {
   return (
     <div className="group overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-xl">
       {news.image_url ? (
-        <div className="h-60 overflow-hidden bg-black">
+        <div className="relative h-60 overflow-hidden bg-black ring-1 ring-white/10">
           <img
             src={getImageUrl(news.image_url)}
             alt={news.title}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+            className="h-full w-full object-cover object-center contrast-110 brightness-110 saturate-110 transition duration-700 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
           />
+
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </div>
       ) : (
         <div className="flex h-44 items-center justify-center bg-black text-6xl">

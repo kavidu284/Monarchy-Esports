@@ -53,49 +53,50 @@ export default function AdminLayout() {
   const renderSidebarContent = (isMobile = false) => {
     return (
       <>
-        {/* BRAND */}
-        <div className={isMobile ? "mb-6" : "mb-10"}>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
-              <img src={logo} alt="Monarchy Esports Logo" />
-            </div>
+        <div className="flex h-full flex-col">
+          {/* BRAND */}
+          <div className={isMobile ? "mb-6" : "mb-10"}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-2xl">
+                <img src={logo} alt="Monarchy Esports Logo" />
+              </div>
 
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-black text-white">
-                Monarchy
-              </h1>
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-black text-white">
+                  Monarchy
+                </h1>
 
-              <p className="text-xs font-semibold uppercase tracking-widest text-blue-400">
-                Admin Panel
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* NAVIGATION */}
-        <nav className="space-y-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              onClick={closeMenu}
-              className={navLinkClass}
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="shrink-0 text-lg">
-                  {item.icon}
-                </span>
-
-                <p className="truncate font-semibold">
-                  {item.name}
+                <p className="text-xs font-semibold uppercase tracking-widest text-blue-400">
+                  Admin Panel
                 </p>
               </div>
-            </NavLink>
-          ))}
-        </nav>
+            </div>
+          </div>
 
-        {/* LOGOUT */}
-        <div className={isMobile ? "mt-6" : "absolute bottom-6 left-6 right-6"}>
+          {/* NAVIGATION */}
+          <nav className="space-y-2 md:flex-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                onClick={closeMenu}
+                className={navLinkClass}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="shrink-0 text-lg">
+                    {item.icon}
+                  </span>
+
+                  <p className="truncate font-semibold">
+                    {item.name}
+                  </p>
+                </div>
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* LOGOUT */}
+          <div className={isMobile ? "mt-6" : "mt-6"}>
           <button
             onClick={handleLogout}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 font-bold text-white transition hover:bg-red-700"
@@ -107,6 +108,7 @@ export default function AdminLayout() {
             Monarchy Esports Admin
           </p>
         </div>
+        </div>
       </>
     );
   };
@@ -114,7 +116,7 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* MOBILE TOP BAR */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-black/95 px-4 py-4 backdrop-blur-xl lg:hidden">
+      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-black/95 px-4 py-4 backdrop-blur-xl md:hidden">
         <div className="flex items-center justify-between gap-4">
           <button
             type="button"
@@ -147,15 +149,15 @@ export default function AdminLayout() {
         </div>
       </header>
 
-      <div className="flex min-h-screen">
-        {/* DESKTOP SIDEBAR */}
-        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-zinc-800 bg-zinc-950 p-6 lg:block">
+      <div className="min-h-screen md:flex">
+        {/* TABLET / DESKTOP SIDEBAR */}
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-zinc-800 bg-zinc-950 p-5 md:block lg:w-72 lg:p-6">
           {renderSidebarContent(false)}
         </aside>
 
         {/* MOBILE SIDEBAR */}
         {menuOpen && (
-          <div className="fixed inset-0 z-[60] lg:hidden">
+          <div className="fixed inset-0 z-[60] md:hidden">
             <button
               type="button"
               onClick={closeMenu}
@@ -163,7 +165,7 @@ export default function AdminLayout() {
               aria-label="Close admin menu overlay"
             />
 
-            <aside className="absolute left-0 top-0 h-full w-[82%] max-w-80 overflow-y-auto border-r border-zinc-800 bg-zinc-950 p-5 shadow-2xl shadow-black">
+            <aside className="absolute left-0 top-0 h-full w-[86%] max-w-sm overflow-y-auto border-r border-zinc-800 bg-zinc-950 p-5 shadow-2xl shadow-black">
               {renderSidebarContent(true)}
             </aside>
           </div>

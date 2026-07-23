@@ -88,7 +88,7 @@ export default function Home() {
             <motion.div
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.3 }}
-              className="rounded-3xl border border-zinc-800 bg-zinc-950 p-4 shadow-xl shadow-blue-600/10 md:p-6"
+              className="rounded-3xl border border-zinc-800/70 bg-zinc-950/70 p-3 shadow-xl shadow-blue-600/10 backdrop-blur md:p-4"
             >
               <TournamentCard
                 tournament={tournaments[0]}

@@ -4,8 +4,17 @@ import getImageUrl from "../utils/getImageUrl";
 
 export default function Gallery() {
   const [images, setImages] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const aspectClasses = [
+    "aspect-[4/3]",
+    "aspect-[3/4]",
+    "aspect-[1/1]",
+    "aspect-[16/10]",
+    "aspect-[5/4]",
+    "aspect-[4/5]",
+  ];
 
   useEffect(() => {
     let mounted = true;
@@ -32,6 +41,60 @@ export default function Gallery() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedIndex === null) {
+      return;
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setSelectedIndex(null);
+      }
+
+      if (event.key === "ArrowRight") {
+        setSelectedIndex((prev) => (prev + 1) % images.length);
+      }
+
+      if (event.key === "ArrowLeft") {
+        setSelectedIndex((prev) =>
+          prev === 0 ? images.length - 1 : prev - 1
+        );
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selectedIndex, images.length]);
+
+  const selectedImage =
+    selectedIndex !== null ? images[selectedIndex] : null;
+  const selectedImageUrl = selectedImage
+    ? getImageUrl(selectedImage.image_url)
+    : null;
+
+  const openImage = (index) => {
+    setSelectedIndex(index);
+  };
+
+  const closeImage = () => {
+    setSelectedIndex(null);
+  };
+
+  const showNextImage = (event) => {
+    event.stopPropagation();
+    setSelectedIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const showPreviousImage = (event) => {
+    event.stopPropagation();
+    setSelectedIndex((prev) =>
+      prev === 0 ? images.length - 1 : prev - 1
+    );
+  };
 
   if (loading) {
     return (
@@ -71,32 +134,41 @@ export default function Gallery() {
       {/* GALLERY */}
       <section className="mx-auto max-w-7xl px-6 py-16">
         {images.length > 0 ? (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {images.map((image) => {
+          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
+            {images.map((image, index) => {
               const imageUrl = getImageUrl(image.image_url);
+              const aspectClass =
+                aspectClasses[index % aspectClasses.length];
 
               return (
                 <div
                   key={image.id}
-                  onClick={() => setSelected(imageUrl)}
-                  className="group cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-blue-500/10"
+                  onClick={() => openImage(index)}
+                  className="group mb-6 cursor-pointer break-inside-avoid overflow-hidden rounded-3xl border border-zinc-800/80 bg-zinc-950 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1.5 hover:border-blue-500/60 hover:shadow-blue-500/20"
                 >
-                  <div className="relative h-72 overflow-hidden bg-zinc-900">
+                  <div
+                    className={`relative ${aspectClass} overflow-hidden bg-zinc-900`}
+                  >
                     <img
                       src={imageUrl}
                       alt={image.caption || "Gallery image"}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                      className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.18),transparent_40%)] opacity-0 transition duration-300 group-hover:opacity-100" />
 
                     <div className="absolute left-4 top-4 rounded-full border border-blue-500/30 bg-black/80 px-3 py-1 text-xs font-bold text-blue-300 backdrop-blur">
                       Moment #{image.id}
                     </div>
+
+                    <div className="absolute bottom-4 right-4 rounded-full border border-white/20 bg-black/70 px-3 py-1 text-xs font-semibold text-white/90 opacity-0 backdrop-blur transition duration-300 group-hover:opacity-100">
+                      View
+                    </div>
                   </div>
 
                   <div className="p-5">
-                    <p className="text-center font-semibold text-gray-300">
+                    <p className="line-clamp-2 text-center font-semibold text-gray-200">
                       {image.caption || "Monarchy Esports Moment"}
                     </p>
                   </div>
@@ -122,24 +194,58 @@ export default function Gallery() {
       </section>
 
       {/* IMAGE MODAL */}
-      {selected && (
+      {selectedImage && selectedImageUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 px-6 backdrop-blur-sm"
-          onClick={() => setSelected(null)}
+          onClick={closeImage}
         >
           <button
-            onClick={() => setSelected(null)}
+            onClick={closeImage}
             className="absolute right-6 top-6 rounded-full border border-zinc-700 bg-zinc-950 px-5 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
           >
             ✕
           </button>
 
-          <img
-            src={selected}
-            alt="Gallery"
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={showPreviousImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700 bg-zinc-950/90 px-4 py-3 text-lg font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
+                aria-label="Previous image"
+              >
+                ←
+              </button>
+
+              <button
+                onClick={showNextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-zinc-700 bg-zinc-950/90 px-4 py-3 text-lg font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
+                aria-label="Next image"
+              >
+                →
+              </button>
+            </>
+          )}
+
+          <div
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[88vh] max-w-6xl rounded-3xl border border-zinc-800 object-contain shadow-2xl shadow-blue-600/10"
-          />
+            className="w-full max-w-6xl overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-blue-600/10"
+          >
+            <img
+              src={selectedImageUrl}
+              alt={selectedImage.caption || "Gallery"}
+              className="max-h-[78vh] w-full object-contain"
+            />
+
+            <div className="flex items-center justify-between border-t border-zinc-800 px-5 py-4">
+              <p className="pr-4 text-sm font-medium text-gray-200 md:text-base">
+                {selectedImage.caption || "Monarchy Esports Moment"}
+              </p>
+
+              <p className="shrink-0 text-xs font-semibold tracking-wide text-blue-300 md:text-sm">
+                {selectedIndex + 1} / {images.length}
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
