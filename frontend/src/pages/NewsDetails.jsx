@@ -65,11 +65,7 @@ export default function NewsDetails() {
           <div className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-zinc-950 p-3 shadow-2xl shadow-black/40">
             <div className="mb-3 flex items-center justify-between rounded-2xl border border-zinc-800 bg-black/60 px-4 py-2">
               <p className="text-sm font-semibold text-gray-400">
-                {news.created_at
-                  ? new Date(
-                      news.created_at
-                    ).toLocaleDateString()
-                  : "No Date"}
+                {news.title}
               </p>
             </div>
 
