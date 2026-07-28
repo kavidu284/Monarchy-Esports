@@ -52,7 +52,7 @@ export default function NewsCard({ news }) {
 
               {news.image_url && (
                 <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-400">
-                  Image Added
+                  On going
                 </span>
               )}
             </div>
