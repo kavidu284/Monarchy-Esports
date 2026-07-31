@@ -48,95 +48,98 @@ export default function TournamentCard({ tournament }) {
   }
 
   return (
-    <article className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40 transition duration-300 hover:-translate-y-1.5 hover:border-blue-500/60 hover:shadow-blue-500/20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_95%_0%,rgba(59,130,246,0.15),transparent_35%)] opacity-0 transition duration-300 group-hover:opacity-100" />
+    <div className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-zinc-950 shadow-xl shadow-black/30 transition hover:border-blue-500/60 hover:shadow-blue-500/10">
+      <div className="flex flex-col lg:flex-row lg:items-stretch">
+        {/* FIXED CONTAINER SIZE - PREVENTS PORTRAIT IMAGE STRETCHING */}
+        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-black lg:aspect-none lg:h-auto lg:w-80">
+          {/* Ambient blurred backdrop for empty space */}
+          <img
+            src={getImageUrl(tournament.banner_image)}
+            alt=""
+            className="absolute inset-0 h-full w-full scale-150 object-cover opacity-40 blur-2xl"
+          />
 
-      <div className="relative aspect-[16/9] overflow-hidden bg-zinc-900 ring-1 ring-white/10">
-        <img
-          src={getImageUrl(tournament.banner_image)}
-          alt={tournament.title}
-          className="h-full w-full object-cover object-center contrast-110 brightness-110 saturate-110 transition-transform duration-700 group-hover:scale-[1.03]"
-          loading="lazy"
-          decoding="async"
-        />
+          {/* Centered Image */}
+          <img
+            src={getImageUrl(tournament.banner_image)}
+            alt={tournament.title}
+            className="relative h-full w-full object-contain p-2 transition duration-500 hover:scale-105"
+            loading="lazy"
+            decoding="async"
+          />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
-        <div className="absolute inset-0 bg-blue-600/0 transition duration-500 group-hover:bg-blue-600/5" />
-
-        <span
-          className={`absolute right-4 top-4 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide backdrop-blur sm:px-4 sm:py-2 sm:text-xs ${
-            tournament.status === "Ongoing"
-              ? "border-green-500/40 bg-green-500/10 text-green-400"
-              : tournament.status === "Upcoming"
-              ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-              : "border-zinc-500/40 bg-zinc-500/10 text-gray-300"
-          }`}
-        >
-          {tournament.status}
-        </span>
-
-        <div className="absolute bottom-5 left-5 right-5">
-          <h3 className="line-clamp-2 text-2xl font-black leading-tight text-white drop-shadow-lg sm:text-3xl">
-            {tournament.title}
-          </h3>
-
-          <p className="mt-2 line-clamp-1 text-xs font-semibold text-blue-300 sm:text-sm">
-            {tournament.subtitle}
-          </p>
-        </div>
-      </div>
-
-      <div className="relative p-5 sm:p-6">
-        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-800 bg-black/70 p-4 transition hover:border-blue-500/40">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500 sm:text-xs">
-              Game
-            </p>
-
-            <p className="mt-2 truncate text-sm font-black text-white sm:text-base">
-              🎮 {tournament.game_name || "MLBB"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-black/70 p-4 transition hover:border-blue-500/40">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500 sm:text-xs">
-              Prize Pool
-            </p>
-
-            <p className="mt-2 text-sm font-black text-blue-400 sm:text-base">
-              Rs. {Number(tournament.prize_pool || 0).toLocaleString()}
-            </p>
-          </div>
+          {/* Gradient Overlay for Mobile */}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent lg:hidden" />
         </div>
 
-        {countdownDate ? (
-          <div className="mt-4 rounded-2xl border border-blue-500/25 bg-blue-500/5 p-3 shadow-lg shadow-blue-600/5 sm:mt-5 sm:p-5">
-            <Countdown
-              targetDate={countdownDate}
-              title={countdownTitle}
-              endedText={endedText}
-            />
+        {/* CARD DETAILS CONTENT */}
+        <div className="flex flex-1 flex-col justify-between p-6 sm:p-8">
+          <div>
+            <div className="mb-4 flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <span
+                className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                  tournament.status === "Ongoing"
+                    ? "border-green-500/40 bg-green-500/10 text-green-400"
+                    : tournament.status === "Upcoming"
+                    ? "border-blue-500/40 bg-blue-500/10 text-blue-300"
+                    : "border-zinc-500/40 bg-zinc-500/10 text-gray-300"
+                }`}
+              >
+                {tournament.status}
+              </span>
+
+              <span className="rounded-full border border-zinc-700 bg-black px-3 py-1 text-xs font-bold text-gray-300">
+                🎮 {tournament.game_name || "MLBB"}
+              </span>
+
+              <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-400">
+                💰 Rs. {Number(tournament.prize_pool || 0).toLocaleString()}
+              </span>
+            </div>
+
+            <h2 className="text-2xl font-black text-white sm:text-3xl">
+              {tournament.title}
+            </h2>
+
+            {tournament.subtitle && (
+              <p className="mt-2 text-sm font-semibold text-blue-300">
+                {tournament.subtitle}
+              </p>
+            )}
+
+            {countdownDate ? (
+              <div className="mt-5 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 shadow-lg shadow-blue-600/5">
+                <Countdown
+                  targetDate={countdownDate}
+                  title={countdownTitle}
+                  endedText={endedText}
+                />
+              </div>
+            ) : null}
           </div>
-        ) : null}
 
-        <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2">
-          <Link
-            to={`/tournament/${tournament.id}`}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:bg-blue-500 hover:shadow-blue-600/40 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
-          >
-            View Tournament
-          </Link>
-
-          {registrationOpen ? (
+          {/* ACTION BUTTONS */}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
-              to={`/register/${tournament.id}`}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-blue-500/40 bg-black px-5 py-3 text-sm font-black text-white transition-all duration-300 hover:border-blue-400 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-600/10 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-base"
+              to={`/tournament/${tournament.id}`}
+              className={`inline-flex min-h-[48px] items-center justify-center rounded-xl bg-white px-6 py-3 text-center font-bold text-black transition hover:bg-blue-100 ${
+                registrationOpen ? "w-full sm:flex-1" : "w-full"
+              }`}
             >
-              Register Team
+              View Tournament →
             </Link>
-          ) : null}
+
+            {registrationOpen ? (
+              <Link
+                to={`/register/${tournament.id}`}
+                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-center font-bold text-white transition hover:bg-blue-500 sm:flex-1"
+              >
+                Register Team
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
-    </article>
+    </div>
   );
 }

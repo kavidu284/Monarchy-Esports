@@ -35,25 +35,42 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const loadTournaments = async () => {
       try {
-        const response =
-          await api.get("/tournaments");
+        const response = await api.get("/tournaments");
 
-        setTournaments(response.data);
+        if (mounted) {
+          // FILTER OUT COMPLETED TOURNAMENTS
+          // Only keep ongoing and upcoming events
+          const activeTournaments = (response.data || []).filter((t) => {
+            const status = t.status?.toLowerCase();
+            return status === "ongoing" || status === "upcoming" || status === "open";
+          });
+
+          setTournaments(activeTournaments);
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Error loading tournaments:", error);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     void loadTournaments();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) {
     return <LoadingScreen />;
   }
+
+  // Grab the first active tournament (if any exist)
+  const featuredTournament = tournaments.length > 0 ? tournaments[0] : null;
 
   return (
     <>
@@ -84,15 +101,13 @@ export default function Home() {
             </p>
           </div>
 
-          {tournaments.length > 0 ? (
+          {featuredTournament ? (
             <motion.div
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.3 }}
               className="rounded-3xl border border-zinc-800/70 bg-zinc-950/70 p-3 shadow-xl shadow-blue-600/10 backdrop-blur md:p-4"
             >
-              <TournamentCard
-                tournament={tournaments[0]}
-              />
+              <TournamentCard tournament={featuredTournament} />
             </motion.div>
           ) : (
             <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center shadow-xl shadow-black/30">
@@ -101,11 +116,11 @@ export default function Home() {
               </div>
 
               <h3 className="text-2xl font-black text-white">
-                No tournaments available
+                No active tournaments available
               </h3>
 
               <p className="mt-3 text-gray-400">
-                Featured tournaments will appear here soon.
+                Check back soon! New upcoming and ongoing tournaments will appear here.
               </p>
             </div>
           )}

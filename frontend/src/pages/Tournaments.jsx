@@ -71,48 +71,47 @@ export default function Tournaments() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HERO */}
-      <section className="relative overflow-hidden border-b border-zinc-900 py-24 text-center">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.22),transparent_35%),radial-gradient(circle_at_bottom,rgba(59,130,246,0.08),transparent_35%)]" />
-
+      {/* HERO SECTION */}
+      <section className="relative overflow-hidden border-b border-zinc-900 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.22),transparent_35%),radial-gradient(circle_at_bottom,rgba(59,130,246,0.08),transparent_35%)] py-16 text-center md:py-24">
         <div className="relative mx-auto max-w-5xl px-6">
-          <p className="text-sm font-bold uppercase tracking-[0.35em] text-blue-400">
+          <p className="text-xs font-bold uppercase tracking-[0.35em] text-blue-400 sm:text-sm">
             Monarchy Esports
           </p>
 
-          <h1 className="mt-4 text-5xl font-black leading-tight md:text-7xl">
+          <h1 className="mt-4 text-4xl font-black leading-tight text-white sm:text-6xl md:text-7xl">
             Tournaments
           </h1>
 
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-400 md:text-xl">
+          <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-gray-400 sm:text-lg sm:leading-8 md:text-xl">
             Explore current, upcoming, and completed Monarchy Esports
             tournaments.
           </p>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5">
+          {/* STATS OVERVIEW */}
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5 shadow-lg shadow-blue-600/5 transition hover:border-blue-500/50">
               <p className="text-3xl font-black text-blue-400">
                 {current.length}
               </p>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-gray-400 sm:text-sm">
                 Current
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-lg transition hover:border-zinc-700">
               <p className="text-3xl font-black text-white">
                 {upcoming.length}
               </p>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-gray-400 sm:text-sm">
                 Upcoming
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-lg transition hover:border-zinc-700">
               <p className="text-3xl font-black text-white">
                 {completed.length}
               </p>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-gray-400 sm:text-sm">
                 Completed
               </p>
             </div>
@@ -120,101 +119,93 @@ export default function Tournaments() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        {/* RULES BOX */}
-        <div className="mb-16 overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/30">
-          <div className="border-b border-zinc-800 bg-blue-500/5 p-8 md:p-10">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+        {/* OFFICIAL GUIDELINES CARD */}
+        <div className="mb-14 overflow-hidden rounded-3xl border border-zinc-800/90 bg-zinc-950 shadow-2xl shadow-black/30 sm:mb-16">
+          <div className="border-b border-zinc-800 bg-blue-500/5 p-6 sm:p-8 md:p-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
               Official Guidelines
             </p>
 
-            <h2 className="mt-3 text-4xl font-black">
+            <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">
               Tournament Rules
             </h2>
 
-            <p className="mt-4 max-w-3xl leading-7 text-gray-400">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
               All participants must read and agree to the official
               Monarchy Esports tournament rules before registering.
             </p>
           </div>
 
-          <div className="grid gap-5 p-8 md:grid-cols-2 md:p-10">
-            <div className="rounded-2xl border border-zinc-800 bg-black p-6 transition hover:border-blue-500/50">
-              <div className="mb-4 text-3xl">📝</div>
-
-              <h3 className="text-xl font-black">
+          <div className="grid gap-4 p-6 sm:gap-5 sm:p-8 md:grid-cols-2 md:p-10">
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5 transition hover:border-blue-500/50 sm:p-6">
+              <div className="mb-3 text-3xl">📝</div>
+              <h3 className="text-lg font-black text-white sm:text-xl">
                 Eligibility & Registration
               </h3>
-
-              <p className="mt-3 leading-7 text-gray-400">
+              <p className="mt-2 text-sm leading-6 text-gray-400 sm:leading-7">
                 Accurate information required. One team per player.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-black p-6 transition hover:border-blue-500/50">
-              <div className="mb-4 text-3xl">👥</div>
-
-              <h3 className="text-xl font-black">
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5 transition hover:border-blue-500/50 sm:p-6">
+              <div className="mb-3 text-3xl">👥</div>
+              <h3 className="text-lg font-black text-white sm:text-xl">
                 Team Requirements
               </h3>
-
-              <p className="mt-3 leading-7 text-gray-400">
+              <p className="mt-2 text-sm leading-6 text-gray-400 sm:leading-7">
                 5 Main Players + up to 2 Substitutes.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-black p-6 transition hover:border-blue-500/50">
-              <div className="mb-4 text-3xl">⚔️</div>
-
-              <h3 className="text-xl font-black">
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5 transition hover:border-blue-500/50 sm:p-6">
+              <div className="mb-3 text-3xl">⚔️</div>
+              <h3 className="text-lg font-black text-white sm:text-xl">
                 Match Rules
               </h3>
-
-              <p className="mt-3 leading-7 text-gray-400">
+              <p className="mt-2 text-sm leading-6 text-gray-400 sm:leading-7">
                 Be ready on time. Walkovers apply.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-black p-6 transition hover:border-blue-500/50">
-              <div className="mb-4 text-3xl">🛡️</div>
-
-              <h3 className="text-xl font-black">
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5 transition hover:border-blue-500/50 sm:p-6">
+              <div className="mb-3 text-3xl">🛡️</div>
+              <h3 className="text-lg font-black text-white sm:text-xl">
                 Fair Play
               </h3>
-
-              <p className="mt-3 leading-7 text-gray-400">
+              <p className="mt-2 text-sm leading-6 text-gray-400 sm:leading-7">
                 No cheating, hacks, exploits or account sharing.
               </p>
             </div>
           </div>
 
-          <div className="flex justify-center border-t border-zinc-800 p-8">
+          <div className="flex justify-center border-t border-zinc-800 p-6 sm:p-8">
             <Link
               to="/rules"
-              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-7 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700"
+              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-500 sm:text-base"
             >
               View Full Tournament Rules
             </Link>
           </div>
         </div>
 
-        {/* TOURNAMENT LIST */}
+        {/* TOURNAMENT LIST SECTIONS */}
         {tournaments.length === 0 ? (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center shadow-xl shadow-black/30">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-4xl">
+          <div className="rounded-3xl border border-zinc-800/90 bg-zinc-950 p-10 text-center shadow-xl shadow-black/30 sm:p-14">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-3xl sm:h-20 sm:w-20 sm:text-4xl">
               🏆
             </div>
 
-            <h3 className="text-3xl font-black text-white">
+            <h3 className="text-2xl font-black text-white sm:text-3xl">
               No Tournaments Found
             </h3>
 
-            <p className="mt-3 text-gray-500">
+            <p className="mt-2 text-sm text-gray-400 sm:text-base">
               Admin has not created any tournaments yet.
             </p>
           </div>
         ) : (
-          <div className="space-y-16">
+          <div className="space-y-12 sm:space-y-16">
             <TournamentSection
               title="🔥 Current Tournament"
               tournaments={current}

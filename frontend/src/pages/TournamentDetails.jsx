@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
+import getImageUrl from "../utils/getImageUrl";
 import Countdown from "../components/Countdown";
 
 export default function TournamentDetails() {
@@ -25,8 +26,11 @@ export default function TournamentDetails() {
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-black py-20 text-center text-white">
-        Loading...
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-8 py-7 text-center shadow-xl shadow-blue-600/10 sm:px-10 sm:py-8">
+          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
+          <p className="font-semibold text-gray-300">Loading tournament...</p>
+        </div>
       </div>
     );
   }
@@ -37,7 +41,8 @@ export default function TournamentDetails() {
   const isOngoing = tournament.status === "Ongoing";
   const isCompleted = tournament.status === "Completed";
 
-  const canViewTournament = isOngoing || isCompleted;
+  // Allow viewing views/brackets only when ongoing
+  const canViewTournament = isOngoing;
 
   const showRegistration =
     tournament.show_registration === true ||
@@ -62,7 +67,9 @@ export default function TournamentDetails() {
   const registrationEnded =
     registrationEnd && now > registrationEnd;
 
+  // Registration can only be open if the tournament is not completed
   const registrationOpen =
+    !isCompleted &&
     showRegistration &&
     (!registrationStart || now >= registrationStart) &&
     (!registrationEnd || now <= registrationEnd);
@@ -71,7 +78,11 @@ export default function TournamentDetails() {
   let countdownDate = tournament.tournament_start;
   let endedText = "Tournament Started";
 
-  if (registrationNotStarted) {
+  if (isCompleted) {
+    countdownTitle = "Tournament Status";
+    countdownDate = null;
+    endedText = "Tournament Completed";
+  } else if (registrationNotStarted) {
     countdownTitle = "Registration Opens In";
     countdownDate = tournament.registration_start;
     endedText = "Registration Open";
@@ -85,7 +96,9 @@ export default function TournamentDetails() {
     endedText = "Tournament Started";
   }
 
-  const registrationButtonText = registrationNotStarted
+  const registrationButtonText = isCompleted
+    ? "Tournament Ended"
+    : registrationNotStarted
     ? "Registration Soon"
     : registrationEnded
     ? "Registration Closed"
@@ -95,52 +108,99 @@ export default function TournamentDetails() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* HERO */}
-        <div className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950">
-          <img
-            src={
-              tournament.banner_image ||
-              "https://placehold.co/1200x500"
-            }
-            alt={tournament.title}
-            className="h-96 w-full object-cover"
-          />
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-
-          <div className="absolute bottom-8 left-8 right-8">
+      {/* HEADER SECTION */}
+      <section className="relative overflow-hidden border-b border-zinc-900 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.2),transparent_35%)]">
+        <div className="mx-auto w-full max-w-6xl px-6 py-10 md:py-14">
+          <span
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${
+              tournament.status === "Ongoing"
+                ? "border-green-500/40 bg-green-500/10 text-green-400"
+                : tournament.status === "Upcoming"
+                ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                : "border-zinc-500/40 bg-zinc-500/10 text-gray-300"
+            }`}
+          >
             <span
-              className={`mb-4 inline-flex rounded-full border px-4 py-1 text-sm font-bold ${
+              className={`h-2 w-2 rounded-full ${
                 tournament.status === "Ongoing"
-                  ? "border-green-500/40 bg-green-500/10 text-green-400"
+                  ? "bg-green-400 animate-pulse"
                   : tournament.status === "Upcoming"
-                  ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                  : "border-zinc-500/40 bg-zinc-500/10 text-gray-300"
+                  ? "bg-blue-400"
+                  : "bg-gray-400"
               }`}
-            >
-              {tournament.status}
-            </span>
+            />
+            {tournament.status}
+          </span>
 
-            <h1 className="text-5xl font-bold">
-              {tournament.title}
-            </h1>
+          <h1 className="mt-4 text-3xl font-black leading-tight text-white md:text-5xl lg:text-6xl">
+            {tournament.title}
+          </h1>
 
-            <p className="mt-2 text-xl text-blue-300">
+          {tournament.subtitle && (
+            <p className="mt-3 text-sm leading-6 text-blue-300 sm:text-lg sm:leading-8">
               {tournament.subtitle}
             </p>
+          )}
+        </div>
+      </section>
+
+      {/* SEPARATE PHOTO DISPLAY SECTION */}
+      <section className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10">
+        <div className="relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-zinc-950 shadow-2xl shadow-blue-950/20">
+          <div className="relative aspect-[16/9] w-full overflow-hidden bg-black sm:aspect-[21/9]">
+            {/* Ambient Blurred Background Image */}
+            <img
+              src={
+                tournament.banner_image
+                  ? getImageUrl(tournament.banner_image)
+                  : "https://placehold.co/1200x500"
+              }
+              alt=""
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-40 blur-2xl"
+            />
+
+            {/* Sharp Main Banner Image */}
+            <img
+              src={
+                tournament.banner_image
+                  ? getImageUrl(tournament.banner_image)
+                  : "https://placehold.co/1200x500"
+              }
+              alt={tournament.title}
+              className="relative h-full w-full object-contain object-center"
+              loading="eager"
+              decoding="async"
+            />
+
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-black/40" />
+
+            {/* Top Glass Badge */}
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+              <span className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-black/60 px-3 py-1.5 text-xs font-semibold text-gray-300 backdrop-blur-md sm:px-4 sm:py-2">
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                Tournament Banner
+              </span>
+            </div>
           </div>
         </div>
+      </section>
 
+      {/* DETAILS CONTENT CONTAINER */}
+      <div className="mx-auto max-w-6xl px-6 py-10 md:py-12">
         {/* ACTION PANEL */}
-        <div className="mt-10 rounded-3xl border border-blue-500/20 bg-zinc-950 p-6">
+        <div className="rounded-3xl border border-blue-500/20 bg-zinc-950 p-6 shadow-xl">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
               <p className="mb-4 text-sm font-bold uppercase tracking-widest text-blue-400">
                 {countdownTitle}
               </p>
 
-              {countdownDate ? (
+              {isCompleted ? (
+                <p className="text-2xl font-bold text-gray-400">
+                  Tournament Completed
+                </p>
+              ) : countdownDate ? (
                 <Countdown
                   targetDate={countdownDate}
                   endedText={endedText}
@@ -153,6 +213,7 @@ export default function TournamentDetails() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
+              {/* REGISTRATION BUTTON */}
               {registrationOpen ? (
                 <Link
                   to={`/register/${tournament.id}`}
@@ -169,6 +230,7 @@ export default function TournamentDetails() {
                 </button>
               )}
 
+              {/* VIEW TOURNAMENT BUTTON */}
               {canViewTournament ? (
                 <Link
                   to={`/tournament/${tournament.id}/view`}
@@ -181,10 +243,11 @@ export default function TournamentDetails() {
                   disabled
                   className="inline-flex cursor-not-allowed items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 px-6 py-4 font-bold text-gray-500"
                 >
-                  Tournament Coming Soon
+                  {isCompleted ? "Tournament Ended" : "Tournament Coming Soon"}
                 </button>
               )}
 
+              {/* RULES BUTTON */}
               <Link
                 to="/rules"
                 className="inline-flex items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-4 font-bold text-white transition hover:border-blue-500 hover:bg-zinc-800"
@@ -192,7 +255,15 @@ export default function TournamentDetails() {
                 View Rules
               </Link>
 
-              {canViewTournament ? (
+              {/* SCHEDULE / BRACKET OR RESULTS BUTTON */}
+              {isCompleted ? (
+                <Link
+                  to={`/tournament/${tournament.id}/results`}
+                  className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-6 py-4 font-bold text-black transition hover:bg-amber-400"
+                >
+                  🏆 View Results
+                </Link>
+              ) : canViewTournament ? (
                 <Link
                   to={`/tournament/${tournament.id}/view`}
                   className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-4 font-bold text-black transition hover:bg-blue-100"
@@ -211,7 +282,7 @@ export default function TournamentDetails() {
           </div>
         </div>
 
-        {/* INFO */}
+        {/* INFO CARDS */}
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
             <p className="text-gray-500">Game</p>
@@ -236,7 +307,7 @@ export default function TournamentDetails() {
           </div>
         </div>
 
-        {/* RULES */}
+        {/* RULES SECTION */}
         <div className="mt-10 rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
           <h2 className="text-3xl font-bold">
             Tournament Rules
@@ -255,13 +326,13 @@ export default function TournamentDetails() {
           </Link>
         </div>
 
-        {/* ABOUT */}
+        {/* ABOUT SECTION */}
         <div className="mt-10 rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
           <h2 className="text-3xl font-bold">
             About Tournament
           </h2>
 
-          <p className="mt-4 whitespace-pre-line leading-8 text-gray-300">
+          <p className="mt-4 leading-8 text-gray-300 whitespace-pre-line">
             {tournament.description}
           </p>
         </div>

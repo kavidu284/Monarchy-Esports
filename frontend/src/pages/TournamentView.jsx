@@ -632,10 +632,7 @@ export default function TournamentView() {
       <div className="flex min-h-screen items-center justify-center bg-black px-4 text-white">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-8 py-7 text-center shadow-xl shadow-blue-600/10 sm:px-10 sm:py-8">
           <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
-
-          <p className="font-semibold text-gray-300">
-            Loading tournament...
-          </p>
+          <p className="font-semibold text-gray-300">Loading tournament...</p>
         </div>
       </div>
     );
@@ -643,50 +640,74 @@ export default function TournamentView() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* BANNER */}
-      <div className="relative h-[320px] overflow-hidden border-b border-zinc-900 bg-zinc-950 sm:h-[420px]">
-        {tournament.banner_image && (
-          <img
-            src={`http://127.0.0.1:8000/${tournament.banner_image}`}
-            alt={tournament.title}
-            className="h-full w-full object-cover opacity-45"
-          />
-        )}
+      {/* HEADER SECTION */}
+      <section className="relative overflow-hidden border-b border-zinc-900 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.2),transparent_35%)]">
+        <div className="mx-auto w-full max-w-6xl px-6 py-10 md:py-14">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-400 sm:text-sm sm:tracking-[0.35em]">
+            Tournament View
+          </p>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
+          <h1 className="mt-3 text-3xl font-black leading-tight text-white md:text-5xl lg:text-6xl">
+            {tournament.title}
+          </h1>
 
-        <div className="absolute bottom-6 left-0 right-0 sm:bottom-10">
-          <div className="mx-auto max-w-[1600px] px-4 sm:px-6">
-            <div className="max-w-5xl">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-400 sm:text-sm sm:tracking-[0.35em]">
-                Tournament View
-              </p>
+          {tournament.subtitle && (
+            <p className="mt-3 text-sm leading-6 text-gray-300 sm:text-lg sm:leading-8">
+              {tournament.subtitle}
+            </p>
+          )}
 
-              <h1 className="mt-3 line-clamp-2 text-3xl font-black leading-tight sm:mt-4 sm:text-5xl md:text-7xl">
-                {tournament.title}
-              </h1>
+          <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
+            <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[10px] font-bold text-blue-300 sm:px-4 sm:py-2 sm:text-sm">
+              Format: {tournamentFormat}
+            </span>
 
-              <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-gray-300 sm:mt-4 sm:text-lg sm:leading-8">
-                {tournament.subtitle}
-              </p>
+            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold text-emerald-400 sm:px-4 sm:py-2 sm:text-sm">
+              {teams.length} Teams
+            </span>
 
-              <div className="mt-4 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
-                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[10px] font-bold text-blue-300 sm:px-4 sm:py-2 sm:text-sm">
-                  Format: {tournamentFormat}
-                </span>
+            <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-[10px] font-bold text-gray-300 sm:px-4 sm:py-2 sm:text-sm">
+              {matches.length} Matches
+            </span>
+          </div>
+        </div>
+      </section>
 
-                <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-[10px] font-bold text-green-400 sm:px-4 sm:py-2 sm:text-sm">
-                  {teams.length} Teams
-                </span>
+      {/* SEPARATE PHOTO DISPLAY SECTION */}
+      {tournament.banner_image ? (
+        <section className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10">
+          <div className="relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-zinc-950 shadow-2xl shadow-blue-950/20">
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-black sm:aspect-[21/9]">
+              {/* Blurred Ambient Image Background */}
+              <img
+                src={getImageUrl(tournament.banner_image)}
+                alt=""
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-40 blur-2xl"
+              />
 
-                <span className="rounded-full border border-zinc-700 bg-black/70 px-3 py-1.5 text-[10px] font-bold text-gray-300 sm:px-4 sm:py-2 sm:text-sm">
-                  {matches.length} Matches
+              {/* Sharp Main Banner Image */}
+              <img
+                src={getImageUrl(tournament.banner_image)}
+                alt={tournament.title}
+                className="relative h-full w-full object-contain object-center"
+                loading="eager"
+                decoding="async"
+              />
+
+              {/* Overlay Gradients */}
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-black/40" />
+
+              {/* Top Glass Badge */}
+              <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+                <span className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-black/60 px-3 py-1.5 text-xs font-semibold text-gray-300 backdrop-blur-md sm:px-4 sm:py-2">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  Tournament Banner
                 </span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      ) : null}
 
       <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 sm:py-10">
         {/* TABS */}

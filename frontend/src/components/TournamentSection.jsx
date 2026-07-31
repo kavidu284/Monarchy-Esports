@@ -1,9 +1,6 @@
 import TournamentCard from "./TournamentCard";
 
-export default function TournamentSection({
-  title,
-  tournaments,
-}) {
+export default function TournamentSection({ title, tournaments }) {
   return (
     <section className="mb-20">
       <div className="mb-8 flex items-center gap-5">
@@ -15,7 +12,8 @@ export default function TournamentSection({
       </div>
 
       {tournaments.length > 0 ? (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+        /* FIXED: Changed md:grid-cols-2 xl:grid-cols-3 to grid-cols-1 items-start */
+        <div className="grid grid-cols-1 gap-8 items-start">
           {tournaments.map((tournament) => (
             <TournamentCard
               key={tournament.id}
