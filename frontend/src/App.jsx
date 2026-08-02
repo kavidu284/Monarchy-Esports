@@ -30,7 +30,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import TournamentView from "./pages/TournamentView";
 import TournamentMatchesAdmin from "./admin/TournamentMatchesAdmin.jsx";
 import RoundRobinAdmin from "./admin/RoundRobinAdmin.jsx";
-
+import MatchResultAdmin from "./admin/matchresultadmin.jsx";
+import MatchResult from "./pages/matchresult.jsx";
 
 
 
@@ -57,6 +58,7 @@ function App() {
         <Route path="/admin" element={<AdminLanding />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/tournament/:id/view" element={<TournamentView />} />
+       <Route path="/tournament/:id/results" element={<MatchResult />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/admin/*" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="dashboard" element={ <ProtectedRoute> <Dashboard /> </ProtectedRoute> } />
@@ -72,6 +74,7 @@ function App() {
           <Route path="registrationsteam/:tournamentId" element={<ProtectedRoute><Registrationsteam /></ProtectedRoute>} />
           <Route path="tournament/:tournamentId/matches" element={<ProtectedRoute><TournamentMatchesAdmin /></ProtectedRoute>} />
           <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute><RoundRobinAdmin /></ProtectedRoute>} />
+          <Route path="tournaments/champions/:id" element={<ProtectedRoute><MatchResultAdmin /></ProtectedRoute>} />
         </Route>
       </Routes>
        {!isAdmin && <Footer />}

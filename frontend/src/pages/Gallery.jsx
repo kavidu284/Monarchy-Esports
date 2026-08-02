@@ -138,6 +138,21 @@ export default function Gallery() {
   const selectedImage = selectedIndex !== null ? images[selectedIndex] : null;
   const selectedImageUrl = selectedImage ? getImageUrl(selectedImage.image_url) : null;
 
+  // --- ORIGINAL SPINNER LOADING CARD ---
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 px-10 py-8 text-center shadow-xl shadow-blue-600/10">
+          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-500" />
+
+          <p className="font-semibold text-gray-300">
+            Loading gallery...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* HERO SECTION */}
@@ -159,22 +174,7 @@ export default function Gallery() {
 
       {/* MASONRY GRID */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {loading ? (
-          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="mb-6 break-inside-avoid overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-3"
-              >
-                <div
-                  className={`animate-pulse rounded-2xl bg-zinc-900 ${
-                    i % 2 === 0 ? "h-64" : "h-80"
-                  }`}
-                />
-              </div>
-            ))}
-          </div>
-        ) : images.length > 0 ? (
+        {images.length > 0 ? (
           <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
             {images.map((image, index) => (
               <GalleryCard

@@ -252,4 +252,11 @@ CREATE TABLE round_robin_group_teams (
         REFERENCES registrations(id)
         ON DELETE SET NULL
 );
-
+ALTER TABLE tournaments
+ADD COLUMN champion_team VARCHAR(255) DEFAULT NULL,
+ADD COLUMN runner_up_team VARCHAR(255) DEFAULT NULL,
+ADD COLUMN third_place_team VARCHAR(255) DEFAULT NULL,
+ADD COLUMN champion_photo VARCHAR(500) DEFAULT NULL,
+ADD COLUMN champion_logo VARCHAR(500) DEFAULT NULL,
+ADD COLUMN runner_up_logo VARCHAR(500) DEFAULT NULL,
+ADD COLUMN third_place_logo VARCHAR(500) DEFAULT NULL;

@@ -7,6 +7,10 @@ export default function TournamentCard({ tournament }) {
 
   const now = new Date();
 
+  const isCompleted =
+    String(tournament.status).toLowerCase() === "completed" ||
+    String(tournament.status).toLowerCase() === "finished";
+
   const showRegistration =
     tournament.show_registration === true ||
     tournament.show_registration === 1 ||
@@ -123,13 +127,20 @@ export default function TournamentCard({ tournament }) {
             <Link
               to={`/tournament/${tournament.id}`}
               className={`inline-flex min-h-[48px] items-center justify-center rounded-xl bg-white px-6 py-3 text-center font-bold text-black transition hover:bg-blue-100 ${
-                registrationOpen ? "w-full sm:flex-1" : "w-full"
+                registrationOpen || isCompleted ? "w-full sm:flex-1" : "w-full"
               }`}
             >
               View Tournament →
             </Link>
 
-            {registrationOpen ? (
+            {isCompleted ? (
+              <Link
+                to={`/tournament/${tournament.id}/result`}
+                className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-center font-bold text-black transition hover:bg-amber-400 sm:flex-1"
+              >
+                🏆 View Results
+              </Link>
+            ) : registrationOpen ? (
               <Link
                 to={`/register/${tournament.id}`}
                 className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-center font-bold text-white transition hover:bg-blue-500 sm:flex-1"

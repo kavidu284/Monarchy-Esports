@@ -15,6 +15,7 @@ from app.routes.adminlogin import router as admin_login_router
 from app.routes.AdminDashboard import router as admin_dashboard_router
 from app.routes.matches import router as matches_router
 from app.routes.round_robin import router as round_robin_router
+from app.routes.result import router as result_router
 
 
 app = FastAPI()
@@ -42,6 +43,7 @@ app.include_router(admin_login_router)
 app.include_router(admin_dashboard_router)
 app.include_router(matches_router)
 app.include_router(round_robin_router)
+app.include_router(result_router)
 
 
 @app.get("/")

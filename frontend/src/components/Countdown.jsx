@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 
 function calculateTimeLeft(targetDate) {
-  if (!targetDate) {
-    return null;
-  }
+  if (!targetDate) return null;
 
   const fixedDate =
     typeof targetDate === "string"
@@ -12,15 +10,11 @@ function calculateTimeLeft(targetDate) {
 
   const target = new Date(fixedDate).getTime();
 
-  if (Number.isNaN(target)) {
-    return null;
-  }
+  if (Number.isNaN(target)) return null;
 
   const difference = target - Date.now();
 
-  if (difference <= 0) {
-    return null;
-  }
+  if (difference <= 0) return null;
 
   return {
     days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -32,7 +26,7 @@ function calculateTimeLeft(targetDate) {
 
 export default function Countdown({
   targetDate,
-  title = "Starts In",
+  title = null, // Set default to null so it doesn't force "Starts In"
   endedText = "Started",
 }) {
   const [timeLeft, setTimeLeft] = useState(null);
@@ -45,15 +39,12 @@ export default function Countdown({
     };
 
     updateCountdown();
-
     const timer = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(timer);
   }, [targetDate]);
 
-  if (!ready) {
-    return null;
-  }
+  if (!ready) return null;
 
   if (!timeLeft) {
     return (
@@ -74,9 +65,12 @@ export default function Countdown({
 
   return (
     <div className="w-full">
-      <p className="mb-2 text-center text-[9px] font-black uppercase tracking-widest text-blue-300 sm:text-xs">
-        {title}
-      </p>
+      {/* ONLY RENDER TITLE IF PASSED */}
+      {title && (
+        <p className="mb-2 text-center text-[9px] font-black uppercase tracking-widest text-blue-300 sm:text-xs">
+          {title}
+        </p>
+      )}
 
       <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
         {items.map((item) => (
