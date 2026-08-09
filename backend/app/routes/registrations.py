@@ -1,6 +1,6 @@
 
 
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.database import get_connection
 from fastapi import Depends
 from app.dependencies.auth import get_current_admin
@@ -73,6 +73,42 @@ async def register_team(
 
     connection = get_connection()
     cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT max_teams
+        FROM tournaments
+        WHERE id=%s
+        """,
+        (tournament_id,)
+    )
+
+    tournament = cursor.fetchone()
+
+    if not tournament:
+        cursor.close()
+        connection.close()
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM registrations
+        WHERE tournament_id=%s
+        AND status='Approved'
+        """,
+        (tournament_id,)
+    )
+
+    approved_teams = cursor.fetchone()[0]
+
+    if approved_teams >= tournament[0]:
+        cursor.close()
+        connection.close()
+        raise HTTPException(
+            status_code=400,
+            detail="Registration is full for this tournament"
+        )
 
     team_logo_path = upload_image(team_logo)
     lobby_path = upload_image(lobby_screenshot)

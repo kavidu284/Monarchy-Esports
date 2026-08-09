@@ -33,12 +33,30 @@ def get_tournaments():
     cursor = connection.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT *
-        FROM tournaments
-        ORDER BY created_at DESC
+        SELECT
+            t.*,
+            COALESCE(rc.approved_team_count, 0) AS approved_team_count
+        FROM tournaments t
+        LEFT JOIN (
+            SELECT tournament_id, COUNT(*) AS approved_team_count
+            FROM registrations
+            WHERE status = 'Approved'
+            GROUP BY tournament_id
+        ) rc ON rc.tournament_id = t.id
+        ORDER BY t.created_at DESC
     """)
 
     tournaments = cursor.fetchall()
+
+    for tournament in tournaments:
+        tournament["approved_team_count"] = int(
+            tournament.get("approved_team_count", 0) or 0
+        )
+        tournament["registration_count"] = tournament["approved_team_count"]
+        tournament["is_registration_full"] = (
+            tournament["max_teams"] is not None
+            and tournament["approved_team_count"] >= int(tournament["max_teams"] or 0)
+        )
 
     cursor.close()
     connection.close()
@@ -53,14 +71,32 @@ def get_tournament(tournament_id: int):
 
     cursor.execute(
         """
-        SELECT *
-        FROM tournaments
-        WHERE id = %s
+        SELECT
+            t.*,
+            COALESCE(rc.approved_team_count, 0) AS approved_team_count
+        FROM tournaments t
+        LEFT JOIN (
+            SELECT tournament_id, COUNT(*) AS approved_team_count
+            FROM registrations
+            WHERE status = 'Approved'
+            GROUP BY tournament_id
+        ) rc ON rc.tournament_id = t.id
+        WHERE t.id = %s
         """,
         (tournament_id,)
     )
 
     tournament = cursor.fetchone()
+
+    if tournament:
+        tournament["approved_team_count"] = int(
+            tournament.get("approved_team_count", 0) or 0
+        )
+        tournament["registration_count"] = tournament["approved_team_count"]
+        tournament["is_registration_full"] = (
+            tournament["max_teams"] is not None
+            and tournament["approved_team_count"] >= int(tournament["max_teams"] or 0)
+        )
 
     cursor.close()
     connection.close()

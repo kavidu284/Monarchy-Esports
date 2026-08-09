@@ -28,10 +28,18 @@ export default function TournamentCard({ tournament }) {
     ? new Date(String(tournament.tournament_start).replace(" ", "T"))
     : null;
 
+  const registrationClosed =
+    tournament.is_registration_full ||
+    (tournament.max_teams &&
+      Number(
+        tournament.approved_team_count ?? tournament.registration_count ?? 0
+      ) >= Number(tournament.max_teams));
+
   const registrationOpen =
     showRegistration &&
     (!registrationStart || now >= registrationStart) &&
-    (!registrationEnd || now <= registrationEnd);
+    (!registrationEnd || now <= registrationEnd) &&
+    !registrationClosed;
 
   let countdownTitle = "Tournament Starts In";
   let countdownDate = tournament.tournament_start;

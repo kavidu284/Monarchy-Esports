@@ -62,6 +62,13 @@ export default function TournamentDetails() {
     ? new Date(String(tournament.tournament_start).replace(" ", "T"))
     : null;
 
+  const registrationClosed =
+    tournament.is_registration_full ||
+    (tournament.max_teams &&
+      Number(
+        tournament.approved_team_count ?? tournament.registration_count ?? 0
+      ) >= Number(tournament.max_teams));
+
   const registrationNotStarted = registrationStart && now < registrationStart;
   const registrationEnded = registrationEnd && now > registrationEnd;
 
@@ -100,6 +107,8 @@ export default function TournamentDetails() {
     ? "Registration Soon"
     : registrationEnded
     ? "Registration Closed"
+    : registrationClosed
+    ? "Registration Full"
     : isUpcoming
     ? "Registration Soon"
     : "Registration Closed";
@@ -211,7 +220,7 @@ export default function TournamentDetails() {
             <div className="flex flex-col justify-center gap-4 sm:flex-row sm:items-center lg:justify-end">
               
               {/* REGISTRATION BUTTON (WHEN REGISTRATION IS OPEN) */}
-              {registrationOpen && (
+              {registrationOpen && !registrationClosed && (
                 <Link
                   to={`/register/${tournament.id}`}
                   className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-4 font-bold text-white transition hover:bg-blue-700 sm:w-auto"
@@ -221,7 +230,7 @@ export default function TournamentDetails() {
               )}
 
               {/* DISABLED REGISTRATION STATUS BUTTON (WHEN NOT OPEN AND NOT COMPLETED) */}
-              {!registrationOpen && !isCompleted && !isOngoing && (
+              {(!registrationOpen || registrationClosed) && !isCompleted && !isOngoing && (
                 <button
                   disabled
                   className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-zinc-800 px-6 py-4 font-bold text-gray-500 sm:w-auto"

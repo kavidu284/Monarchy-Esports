@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import PlayerSection from "../components/PlayerSection";
 import api from "../services/api";
@@ -8,6 +8,8 @@ export default function RegisterTeam() {
 
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [tournament, setTournament] = useState(null);
+  const [loadingTournament, setLoadingTournament] = useState(true);
 
   const inputClass =
     "w-full rounded-2xl border border-zinc-700 bg-black px-4 py-4 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
@@ -18,11 +20,40 @@ export default function RegisterTeam() {
   const sectionClass =
     "rounded-3xl border border-zinc-800 bg-zinc-950/95 p-8 shadow-2xl shadow-black/40 transition hover:border-blue-500/40";
 
+  useEffect(() => {
+    const fetchTournament = async () => {
+      try {
+        const response = await api.get(`/tournaments/${id}`);
+        setTournament(response.data);
+      } catch (error) {
+        console.error("Error loading tournament:", error);
+      } finally {
+        setLoadingTournament(false);
+      }
+    };
+
+    if (id) {
+      void fetchTournament();
+    }
+  }, [id]);
+
+  const registrationClosed =
+    tournament?.is_registration_full ||
+    (tournament?.max_teams &&
+      Number(
+        tournament?.approved_team_count ?? tournament?.registration_count ?? 0
+      ) >= Number(tournament.max_teams));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!agree) {
       alert("Please agree to the tournament rules");
+      return;
+    }
+
+    if (registrationClosed) {
+      alert("Registration is full for this tournament.");
       return;
     }
 
@@ -87,6 +118,12 @@ export default function RegisterTeam() {
           </p>
 
           <div className="mx-auto mt-8 h-[2px] w-40 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
+
+          {loadingTournament ? null : registrationClosed ? (
+            <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-amber-300">
+              Registration is full for this tournament. No more teams can be added.
+            </div>
+          ) : null}
         </div>
 
         <form
@@ -366,15 +403,24 @@ export default function RegisterTeam() {
           <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl shadow-black/40">
             <button
               type="submit"
-              disabled={!agree || submitting}
+              disabled={!agree || submitting || registrationClosed}
               className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-12 py-4 text-xl font-black text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? "Submitting..." : "Submit Registration"}
+              {registrationClosed
+                ? "Registration Full"
+                : submitting
+                ? "Submitting..."
+                : "Submit Registration"}
             </button>
 
             <p className="mt-4 text-sm text-gray-500">
               Please double-check all player details before submitting.
             </p>
+            {registrationClosed ? (
+              <p className="mt-3 text-sm text-amber-300">
+                Registration has reached the maximum team limit.
+              </p>
+            ) : null}
           </div>
         </form>
       </div>
