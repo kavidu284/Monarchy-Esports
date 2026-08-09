@@ -11,7 +11,13 @@ def get_current_admin(
             detail="Not authenticated"
         )
 
-    token = authorization.split(" ")[1]
+    scheme, _, token = authorization.partition(" ")
+
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
 
     payload = verify_token(token)
 

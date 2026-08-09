@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import logo from "../assets/footer.png";
+import { setAdminSession } from "../utils/auth";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -21,10 +22,7 @@ export default function AdminLogin() {
       });
 
       if (response.data.success) {
-        localStorage.setItem(
-          "token",
-          response.data.access_token
-        );
+        setAdminSession(response.data.access_token);
 
         navigate("/admin/dashboard");
       } else {
@@ -33,9 +31,9 @@ export default function AdminLogin() {
     } catch (error) {
       console.error(error);
       alert("Login Failed");
-    }finally {
-    setLoading(false);
-  }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

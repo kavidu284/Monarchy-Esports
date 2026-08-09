@@ -1,15 +1,43 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../assets/footer.png";
+import {
+  ADMIN_SESSION_EXPIRES_AT_KEY,
+  clearAdminSession,
+} from "../utils/auth";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/admin/login");
-  };
+const handleLogout = useCallback(() => {
+  clearAdminSession();
+  navigate("/admin/login");
+}, [navigate]);
+
+  useEffect(() => {
+    const expiresAt = Number(
+      localStorage.getItem(ADMIN_SESSION_EXPIRES_AT_KEY)
+    );
+
+    if (!expiresAt) {
+      handleLogout();
+      return undefined;
+    }
+
+    const remainingTime = expiresAt - Date.now();
+
+    if (remainingTime <= 0) {
+      handleLogout();
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      handleLogout();
+    }, remainingTime);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [handleLogout]);
 
   const closeMenu = () => {
     setMenuOpen(false);
