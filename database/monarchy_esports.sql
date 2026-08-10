@@ -4,12 +4,36 @@ USE monarchy_esports;
 -- =========================================================
 -- ADMINS
 -- =========================================================
+-- =========================================================
+-- ADMINS
+-- =========================================================
 
 CREATE TABLE admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(150) UNIQUE,
+
     password_hash VARCHAR(255) NOT NULL,
+
+    role VARCHAR(50) NOT NULL DEFAULT 'full_access_staff',
+
+    is_super_admin BOOLEAN NOT NULL DEFAULT FALSE,
+
+    can_delete_tournaments BOOLEAN NOT NULL DEFAULT FALSE,
+    can_edit_tournaments BOOLEAN NOT NULL DEFAULT FALSE,
+    can_create_tournaments BOOLEAN NOT NULL DEFAULT FALSE,
+    can_publish_results BOOLEAN NOT NULL DEFAULT FALSE,
+
+    can_manage_gallery BOOLEAN NOT NULL DEFAULT FALSE,
+    can_manage_matches BOOLEAN NOT NULL DEFAULT FALSE,
+    can_manage_users BOOLEAN NOT NULL DEFAULT FALSE,
+
+    can_view_dashboard BOOLEAN NOT NULL DEFAULT TRUE,
+    can_view_tournaments BOOLEAN NOT NULL DEFAULT TRUE,
+
+    last_login DATETIME NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -260,3 +284,12 @@ ADD COLUMN champion_photo VARCHAR(500) DEFAULT NULL,
 ADD COLUMN champion_logo VARCHAR(500) DEFAULT NULL,
 ADD COLUMN runner_up_logo VARCHAR(500) DEFAULT NULL,
 ADD COLUMN third_place_logo VARCHAR(500) DEFAULT NULL;
+
+CREATE TABLE IF NOT EXISTS admin_security_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT,
+    username VARCHAR(100),
+    event_type VARCHAR(100),
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

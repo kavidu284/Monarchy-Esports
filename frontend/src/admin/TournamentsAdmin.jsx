@@ -5,6 +5,10 @@ import api from "../services/api";
 export default function TournamentsAdmin() {
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reauthModalOpen, setReauthModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [reauthForm, setReauthForm] = useState({ username: "", password: "" });
+  const [reauthError, setReauthError] = useState("");
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -26,12 +30,31 @@ export default function TournamentsAdmin() {
     const confirmed = window.confirm("Delete this tournament?");
     if (!confirmed) return;
 
+    setPendingDeleteId(id);
+    setReauthForm({ username: "", password: "" });
+    setReauthError("");
+    setReauthModalOpen(true);
+  };
+
+  const confirmDeleteReauth = async () => {
+    if (!pendingDeleteId) return;
+
     try {
-      await api.delete(`/tournaments/${id}`);
-      setTournaments(tournaments.filter((t) => t.id !== id));
+      const response = await api.post("/administration/verify-credentials", {
+        username: reauthForm.username,
+        password: reauthForm.password,
+      });
+
+      if (response.data.success) {
+        await api.delete(`/tournaments/${pendingDeleteId}`);
+        setTournaments((current) => current.filter((t) => t.id !== pendingDeleteId));
+        setReauthModalOpen(false);
+        setPendingDeleteId(null);
+        setReauthForm({ username: "", password: "" });
+      }
     } catch (error) {
       console.error(error);
-      alert("Failed to delete tournament");
+      setReauthError(error?.response?.data?.detail || "Re-authentication failed");
     }
   };
 
@@ -251,6 +274,54 @@ export default function TournamentsAdmin() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {reauthModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/40">
+            <h3 className="text-2xl font-bold text-white">Re-authentication Required</h3>
+            <p className="mt-2 text-sm text-gray-400">
+              Enter your admin credentials to authorize tournament deletion.
+            </p>
+
+            <div className="mt-5 space-y-4">
+              <input
+                value={reauthForm.username}
+                onChange={(event) => setReauthForm({ ...reauthForm, username: event.target.value })}
+                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none"
+                placeholder="Username"
+              />
+              <input
+                type="password"
+                value={reauthForm.password}
+                onChange={(event) => setReauthForm({ ...reauthForm, password: event.target.value })}
+                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none"
+                placeholder="Password"
+              />
+            </div>
+
+            {reauthError && <p className="mt-4 text-sm text-red-400">{reauthError}</p>}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setReauthModalOpen(false);
+                  setPendingDeleteId(null);
+                  setReauthForm({ username: "", password: "" });
+                }}
+                className="rounded-xl border border-zinc-700 px-4 py-2 font-semibold text-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteReauth}
+                className="rounded-xl bg-red-600 px-4 py-2 font-semibold text-white"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

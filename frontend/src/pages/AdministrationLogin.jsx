@@ -4,7 +4,7 @@ import api from "../services/api";
 import logo from "../assets/footer.png";
 import { setAdminSession } from "../utils/auth";
 
-export default function AdminLogin() {
+export default function AdministrationLogin() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -12,8 +12,8 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
     setErrorMessage("");
 
     if (!username.trim() || !password) {
@@ -24,28 +24,31 @@ export default function AdminLogin() {
     try {
       setLoading(true);
 
-      const response = await api.post("/administration/login", {
+      const response = await api.post("/superAdmin/login", {
         username: username.trim(),
         password,
       });
 
-      if (response.data?.success && response.data?.access_token) {
-        // Save JWT token & staff session details
-        setAdminSession(response.data.access_token, response.data.admin);
+      if (response.data?.success && response.data?.admin?.is_super_admin) {
+        // Save JWT token along with super admin role and permissions
+        setAdminSession(
+          response.data.access_token || response.data.token,
+          response.data.admin
+        );
 
-        // Route staff members directly to their operational dashboard
-        navigate("/admin/dashboard");
+        // Redirect directly to super admin user rights console
+        navigate("/administration");
       } else {
         setErrorMessage(
-          response.data?.message || "Invalid staff credentials."
+          response.data?.message || "Only Super Admin accounts can log in here."
         );
       }
     } catch (error) {
-      console.error("Staff Login Error:", error);
+      console.error("Super Admin Login Error:", error);
       setErrorMessage(
         error?.response?.data?.detail ||
           error?.response?.data?.message ||
-          "Authentication failed. Please verify your staff credentials."
+          "Authentication failed. Super Admin credentials required."
       );
     } finally {
       setLoading(false);
@@ -53,8 +56,8 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black px-6 text-white selection:bg-blue-600 selection:text-white">
-      {/* AMBIENT BACKGROUND GLOW */}
+    <div className="flex min-h-screen items-center justify-center bg-black px-6 text-white font-sans selection:bg-blue-600 selection:text-white">
+      {/* GLOW BACKGROUND */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom,rgba(59,130,246,0.08),transparent_35%)] pointer-events-none" />
 
       <form
@@ -76,11 +79,11 @@ export default function AdminLogin() {
           </p>
 
           <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">
-            Staff Portal Login
+            Super Admin Console
           </h1>
 
           <p className="mt-3 text-sm text-gray-400">
-            Sign in with your staff account to manage tournaments, scores, and gallery assets.
+            Sign in with your Super Admin credentials to manage staff roles and user permissions.
           </p>
         </div>
 
@@ -94,16 +97,16 @@ export default function AdminLogin() {
         {/* USERNAME */}
         <div className="mb-5">
           <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-300">
-            Staff Username
+            Super Admin Username
           </label>
 
           <input
             type="text"
-            placeholder="Enter staff username"
             required
+            placeholder="Enter username"
             className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(event) => setUsername(event.target.value)}
           />
         </div>
 
@@ -115,25 +118,25 @@ export default function AdminLogin() {
 
           <input
             type="password"
-            placeholder="Enter password"
             required
+            placeholder="Enter password"
             className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
           />
         </div>
 
         {/* SUBMIT BUTTON */}
         <button
           type="submit"
-          className="w-full rounded-xl bg-blue-600 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:opacity-50 disabled:hover:translate-y-0"
           disabled={loading}
+          className="w-full rounded-xl bg-blue-600 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:opacity-50 disabled:hover:translate-y-0"
         >
-          {loading ? "Authenticating..." : "Sign In to Staff Dashboard"}
+          {loading ? "Authenticating..." : "Sign In to Super Admin Console"}
         </button>
 
         <p className="mt-6 text-center text-xs text-gray-500">
-          Tournament Operations & Control
+          Super Admin Rights & System Security Console
         </p>
       </form>
     </div>

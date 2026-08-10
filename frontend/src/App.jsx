@@ -13,13 +13,14 @@ import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Rules from "./pages/Rules";
 import AdminLanding from "./pages/AdminLanding";
-import AdminLogin from "./pages/AdminLogin";
+import AdminLogin from "./pages/AdminLogin.jsx";
+import AdministrationLogin from "./pages/AdministrationLogin";
 import Dashboard from "./admin/Dashboard";
 import Layout from "./admin/AdminLayout";
 import AdminTournaments from "./admin/TournamentsAdmin";
 import CreateTournament from "./admin/CreateTournament";
 import EditTournament from "./admin/EditTournament";
-import Registrationsteam from  "./admin/TournamentRegistrations.jsx";
+import Registrationsteam from "./admin/TournamentRegistrations.jsx";
 import RegistrationDetails from "./admin/RegistationTeams.jsx";
 import NewsAdmin from "./admin/NewsAdmin";
 import CreateNews from "./admin/CreateNews";
@@ -32,19 +33,19 @@ import TournamentMatchesAdmin from "./admin/TournamentMatchesAdmin.jsx";
 import RoundRobinAdmin from "./admin/RoundRobinAdmin.jsx";
 import MatchResultAdmin from "./admin/matchresultadmin.jsx";
 import MatchResult from "./pages/matchresult.jsx";
-
-
+import Administration from "./pages/Administration";
 
 function App() {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith("/admin");
+  const isPrivateArea =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/administration");
 
   return (
     <>
-      {!isAdmin && <Navbar />}
+      {!isPrivateArea && <Navbar />}
 
       <Routes>
-
         <Route path="/" element={<Home />} />
         <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/tournament/:id" element={<TournamentDetails />} />
@@ -57,27 +58,41 @@ function App() {
         <Route path="/rules" element={<Rules />} />
         <Route path="/admin" element={<AdminLanding />} />
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/administration/login" element={<AdministrationLogin />} />
         <Route path="/tournament/:id/view" element={<TournamentView />} />
-       <Route path="/tournament/:id/results" element={<MatchResult />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="/tournament/:id/results" element={<MatchResult />} />
+
+        {/* PROTECTED ADMIN PANEL WITH PERMISSION GATEKEYS */}
         <Route path="/admin/*" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="dashboard" element={ <ProtectedRoute> <Dashboard /> </ProtectedRoute> } />
-          <Route path="tournaments" element={<ProtectedRoute><AdminTournaments /></ProtectedRoute>} />
-          <Route path="tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
-          <Route path="tournaments/edit/:id" element={<ProtectedRoute><EditTournament /></ProtectedRoute>} />
-          <Route path="registrations/:id" element={<ProtectedRoute><RegistrationDetails /></ProtectedRoute>} />
-          <Route path="news" element={<ProtectedRoute><NewsAdmin /></ProtectedRoute>} />
-          <Route path="news/create" element={<ProtectedRoute><CreateNews /></ProtectedRoute>} />
-          <Route path="news/edit/:id" element={<ProtectedRoute><Editnews /></ProtectedRoute>} />
-          <Route path="messages" element={<ProtectedRoute><MessagesAdmin /></ProtectedRoute>} />
-          <Route path="gallery" element={<ProtectedRoute><GalleryAdmin /></ProtectedRoute>} />
-          <Route path="registrationsteam/:tournamentId" element={<ProtectedRoute><Registrationsteam /></ProtectedRoute>} />
-          <Route path="tournament/:tournamentId/matches" element={<ProtectedRoute><TournamentMatchesAdmin /></ProtectedRoute>} />
-          <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute><RoundRobinAdmin /></ProtectedRoute>} />
-          <Route path="tournaments/champions/:id" element={<ProtectedRoute><MatchResultAdmin /></ProtectedRoute>} />
+          <Route path="dashboard" element={<ProtectedRoute permissionKey="can_view_dashboard"><Dashboard /></ProtectedRoute>} />
+          <Route path="tournaments" element={<ProtectedRoute permissionKey="can_view_tournaments"><AdminTournaments /></ProtectedRoute>} />
+          <Route path="tournaments/create" element={<ProtectedRoute permissionKey="can_create_tournaments"><CreateTournament /></ProtectedRoute>} />
+          <Route path="tournaments/edit/:id" element={<ProtectedRoute permissionKey="can_edit_tournaments"><EditTournament /></ProtectedRoute>} />
+          <Route path="registrationsteam/:tournamentId" element={<ProtectedRoute permissionKey="can_view_tournaments"><Registrationsteam /></ProtectedRoute>} />
+          <Route path="registrations/:id" element={<ProtectedRoute permissionKey="can_view_tournaments"><RegistrationDetails /></ProtectedRoute>} />
+          <Route path="tournament/:tournamentId/matches" element={<ProtectedRoute permissionKey="can_manage_matches"><TournamentMatchesAdmin /></ProtectedRoute>} />
+          <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute permissionKey="can_manage_matches"><RoundRobinAdmin /></ProtectedRoute>} />
+          <Route path="tournaments/champions/:id" element={<ProtectedRoute permissionKey="can_publish_results"><MatchResultAdmin /></ProtectedRoute>} />
+          <Route path="news" element={<ProtectedRoute permissionKey="can_edit_tournaments"><NewsAdmin /></ProtectedRoute>} />
+          <Route path="news/create" element={<ProtectedRoute permissionKey="can_create_tournaments"><CreateNews /></ProtectedRoute>} />
+          <Route path="news/edit/:id" element={<ProtectedRoute permissionKey="can_edit_tournaments"><Editnews /></ProtectedRoute>} />
+          <Route path="messages" element={<ProtectedRoute permissionKey="can_manage_users"><MessagesAdmin /></ProtectedRoute>} />
+          <Route path="gallery" element={<ProtectedRoute permissionKey="can_manage_gallery"><GalleryAdmin /></ProtectedRoute>} />
         </Route>
+
+        <Route
+          path="/administration"
+          element={
+            <ProtectedRoute permissionKey="can_manage_users" redirectTo="/administration/login">
+              <Administration />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
-       {!isAdmin && <Footer />}
+
+      {!isPrivateArea && <Footer />}
     </>
   );
 }

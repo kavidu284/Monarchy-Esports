@@ -3,6 +3,7 @@ from app.database import get_connection
 from app.dependencies.auth import get_current_admin
 from typing import Optional
 from app.utils.cloudinary_upload import upload_image, upload_file
+from app.routes.administration import get_admin_record, log_security_event
 
 router = APIRouter()
 
@@ -205,8 +206,19 @@ def delete_tournament(
     current_admin: dict = Depends(get_current_admin)
 ):
     connection = get_connection()
-    cursor = connection.cursor()
+    admin_record = get_admin_record(connection, admin_id=current_admin.get("admin_id"))
 
+    if not admin_record:
+        connection.close()
+        raise HTTPException(status_code=404, detail="Admin not found")
+
+    permissions = admin_record.get("permissions", {})
+    if not bool(admin_record.get("is_super_admin")) and not bool(permissions.get("can_delete_tournaments")):
+        connection.close()
+        log_security_event(admin_record["id"], admin_record.get("username"), "tournament_delete_denied", f"Attempted to delete tournament {tournament_id}")
+        raise HTTPException(status_code=403, detail="You are not authorized to delete tournaments")
+
+    cursor = connection.cursor()
     cursor.execute(
         """
         DELETE FROM tournaments
@@ -219,6 +231,8 @@ def delete_tournament(
 
     cursor.close()
     connection.close()
+
+    log_security_event(admin_record["id"], admin_record.get("username"), "tournament_deleted", f"Deleted tournament {tournament_id}")
 
     return {
         "message": "Tournament Deleted"

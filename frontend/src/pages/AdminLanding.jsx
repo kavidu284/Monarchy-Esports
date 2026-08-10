@@ -42,6 +42,13 @@ export default function AdminLanding() {
           </Link>
 
           <Link
+            to="/administration/login"
+            className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-8 py-4 text-lg font-bold text-blue-200 transition hover:border-blue-400 hover:bg-blue-500/20"
+          >
+            Administration Console
+          </Link>
+
+          <Link
             to="/"
             className="rounded-xl border border-zinc-700 bg-black px-8 py-4 text-lg font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
           >
