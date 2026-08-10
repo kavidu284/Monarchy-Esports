@@ -68,25 +68,57 @@ export default function Contact() {
             </h2>
 
             <div className="space-y-4 text-gray-300">
-              <p className="rounded-xl border border-zinc-800 bg-black p-4">
-                📧 Email: monarchyesports@gmail.com
-              </p>
+              <a
+                href="mailto:monarchy.officialtm@gmail.com"
+                className="block rounded-xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500 hover:text-white"
+              >
+                📧 Email: monarchy.officialtm@gmail.com
+              </a>
 
-              <p className="rounded-xl border border-zinc-800 bg-black p-4">
-                🎮 Discord: Monarchy™
-              </p>
+              <a
+                href="https://wa.me/qr/JJPZQ4B7B4GJF1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500 hover:text-white"
+              >
+                💬 WhatsApp: Chat on WhatsApp
+              </a>
 
-              <p className="rounded-xl border border-zinc-800 bg-black p-4">
+              <a
+                href="https://www.facebook.com/share/1GJqetkyqq/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500 hover:text-white"
+              >
                 📘 Facebook: Monarchy Esports
-              </p>
+              </a>
 
-              <p className="rounded-xl border border-zinc-800 bg-black p-4">
-                📷 TikTok: monarchyesports
-              </p>
+              <a
+                href="https://www.instagram.com/monarchyesports_official?igsh=azNjb3RxdWJtenV0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500 hover:text-white"
+              >
+                📷 Instagram: @monarchyesports_official
+              </a>
 
-              <p className="rounded-xl border border-zinc-800 bg-black p-4">
-                📸 YouTube: monarhyesports
-              </p>
+              <a
+                href="https://www.tiktok.com/@monarchy_esports?_r=1&_t=ZS-98lrMM15j8x"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500 hover:text-white"
+              >
+                🎵 TikTok: @monarchy_esports
+              </a>
+
+              <a
+                href="https://youtube.com/@monarchysl?si=6wppazZAuoub-tBK"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-zinc-800 bg-black p-4 transition hover:border-blue-500 hover:text-white"
+              >
+                🎬 YouTube: @monarchysl
+              </a>
             </div>
           </div>
 

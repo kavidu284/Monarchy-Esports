@@ -14,7 +14,7 @@ import About from "./pages/About";
 import Rules from "./pages/Rules";
 import AdminLanding from "./pages/AdminLanding";
 import AdminLogin from "./pages/AdminLogin.jsx";
-import AdministrationLogin from "./pages/AdministrationLogin";
+import AdministrationLogin from "./Adminstrator/AdministrationLogin.jsx";
 import Dashboard from "./admin/Dashboard";
 import Layout from "./admin/AdminLayout";
 import AdminTournaments from "./admin/TournamentsAdmin";
@@ -33,8 +33,11 @@ import TournamentMatchesAdmin from "./admin/TournamentMatchesAdmin.jsx";
 import RoundRobinAdmin from "./admin/RoundRobinAdmin.jsx";
 import MatchResultAdmin from "./admin/matchresultadmin.jsx";
 import MatchResult from "./pages/matchresult.jsx";
-import Administration from "./pages/Administration";
-
+import Administration from "./Adminstrator/Administration.jsx";
+import AdministrationLayout from "./Adminstrator/AdministratorLayouut.jsx";
+import AdministratorUser from "./Adminstrator/AdministratorUser.jsx";
+import AccessDeniedView from "./components/AccessDeniedView.jsx";
+import { isSuperAdmin } from "./utils/auth";
 function App() {
   const location = useLocation();
   const isPrivateArea =
@@ -80,15 +83,21 @@ function App() {
           <Route path="gallery" element={<ProtectedRoute permissionKey="can_manage_gallery"><GalleryAdmin /></ProtectedRoute>} />
         </Route>
 
+        {/* SUPER ADMIN CONSOLE ROUTES */}
         <Route
           path="/administration"
           element={
             <ProtectedRoute permissionKey="can_manage_users" redirectTo="/administration/login">
-              <Administration />
+              <AdministrationLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Overview Dashboard */}
+          <Route index element={isSuperAdmin() ? <Administration /> : <AccessDeniedView />} />
 
+          {/* User Rights & Staff Accounts */}
+          <Route path="users" element={isSuperAdmin() ? <AdministratorUser /> : <AccessDeniedView />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
 

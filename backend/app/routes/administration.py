@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from passlib.context import CryptContext
 
@@ -140,6 +139,10 @@ def ensure_admin_schema(connection) -> None:
     if cursor.fetchone() is None:
         cursor.execute("ALTER TABLE admins ADD COLUMN role VARCHAR(50) DEFAULT 'full_access_staff'")
 
+    cursor.execute("SHOW COLUMNS FROM admins LIKE 'email'")
+    if cursor.fetchone() is None:
+        cursor.execute("ALTER TABLE admins ADD COLUMN email VARCHAR(255) DEFAULT NULL")
+
     for column_name, default_value in [
         ("is_super_admin", "0"),
         ("can_delete_tournaments", "0"),
@@ -239,12 +242,7 @@ def authenticate_admin(username: str, password: str) -> Optional[Dict[str, Any]]
     cursor.execute("SELECT * FROM admins WHERE username = %s", (username,))
     admin = cursor.fetchone()
 
-    if not admin:
-        cursor.close()
-        connection.close()
-        return None
-
-    if not pwd_context.verify(password, admin["password_hash"]):
+    if not admin or not pwd_context.verify(password, admin["password_hash"]):
         cursor.close()
         connection.close()
         return None
@@ -264,6 +262,7 @@ def authenticate_admin(username: str, password: str) -> Optional[Dict[str, Any]]
 
 
 def should_log_security_event(admin_record: Optional[Dict[str, Any]], event_type: str) -> bool:
+    """Helper function imported by adminlogin.py to determine logging sensitivity."""
     if event_type == "login":
         return bool(admin_record and admin_record.get("is_super_admin"))
     return True
@@ -286,6 +285,8 @@ def log_security_event(admin_id: Optional[int], username: Optional[str], event_t
     connection.close()
 
 
+# ==================== ENDPOINTS ====================
+
 @router.get("")
 def get_admin_settings(current_admin: dict = Depends(get_current_admin)):
     connection = get_connection()
@@ -297,9 +298,10 @@ def get_admin_settings(current_admin: dict = Depends(get_current_admin)):
         connection.close()
         raise HTTPException(status_code=401, detail="Admin session invalid")
 
-    if not bool(current_record.get("is_super_admin")) and not bool(current_record.get("permissions", {}).get("can_manage_users")):
+    can_manage = bool(current_record.get("is_super_admin")) or bool(current_record.get("permissions", {}).get("can_manage_users"))
+    if not can_manage:
         connection.close()
-        raise HTTPException(status_code=403, detail="Access restricted")
+        raise HTTPException(status_code=403, detail="Access restricted: User management permissions required")
 
     cursor = connection.cursor(dictionary=True)
     cursor.execute("SELECT * FROM admins ORDER BY created_at DESC")
@@ -308,9 +310,7 @@ def get_admin_settings(current_admin: dict = Depends(get_current_admin)):
         admin["permissions"] = parse_permission_flags(admin)
         admin["role_label"] = ROLE_DEFINITIONS[normalize_role(admin.get("role"))]["label"]
 
-    cursor.execute(
-        "SELECT * FROM admin_security_events ORDER BY created_at DESC LIMIT 50"
-    )
+    cursor.execute("SELECT * FROM admin_security_events ORDER BY created_at DESC LIMIT 50")
     events = cursor.fetchall()
 
     cursor.close()
@@ -330,6 +330,33 @@ def get_admin_settings(current_admin: dict = Depends(get_current_admin)):
     }
 
 
+@router.get("/staff")
+def get_all_staff(current_admin: dict = Depends(get_current_admin)):
+    connection = get_connection()
+    ensure_admin_schema(connection)
+
+    admin_id = current_admin.get("admin_id") or current_admin.get("id")
+    current_record = get_admin_record(connection, admin_id=admin_id)
+
+    can_manage = bool(current_record and (current_record.get("is_super_admin") or current_record.get("permissions", {}).get("can_manage_users")))
+    if not can_manage:
+        connection.close()
+        raise HTTPException(status_code=403, detail="Access restricted: User management rights required")
+
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM admins ORDER BY id ASC")
+    admins = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    for admin in admins:
+        admin["permissions"] = parse_permission_flags(admin)
+        admin["role_label"] = ROLE_DEFINITIONS[normalize_role(admin.get("role"))]["label"]
+        admin["is_super_admin"] = bool(admin.get("is_super_admin"))
+
+    return admins
+
+
 @router.post("/staff")
 def create_staff_account(payload: Dict[str, Any], current_admin: dict = Depends(get_current_admin)):
     connection = get_connection()
@@ -337,9 +364,11 @@ def create_staff_account(payload: Dict[str, Any], current_admin: dict = Depends(
 
     admin_id = current_admin.get("admin_id") or current_admin.get("id")
     current_record = get_admin_record(connection, admin_id=admin_id)
-    if not current_record or not bool(current_record.get("is_super_admin")):
+
+    can_manage = bool(current_record and (current_record.get("is_super_admin") or current_record.get("permissions", {}).get("can_manage_users")))
+    if not can_manage:
         connection.close()
-        raise HTTPException(status_code=403, detail="Only super admins can create staff accounts")
+        raise HTTPException(status_code=403, detail="You lack authorization to create staff accounts")
 
     username = (payload.get("username") or "").strip()
     password = payload.get("password") or ""
@@ -362,142 +391,90 @@ def create_staff_account(payload: Dict[str, Any], current_admin: dict = Depends(
     cursor.execute(
         """
         INSERT INTO admins (
-            username,
-            email,
-            password_hash,
-            role,
-            is_super_admin,
-            can_delete_tournaments,
-            can_edit_tournaments,
-            can_create_tournaments,
-            can_publish_results,
-            can_manage_gallery,
-            can_manage_matches,
-            can_manage_users,
-            can_view_dashboard,
-            can_view_tournaments,
-            last_login
+            username, email, password_hash, role, is_super_admin,
+            can_delete_tournaments, can_edit_tournaments, can_create_tournaments,
+            can_publish_results, can_manage_gallery, can_manage_matches,
+            can_manage_users, can_view_dashboard, can_view_tournaments, last_login
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
-            username,
-            email,
-            pwd_context.hash(password),
-            permission_columns["role"],
-            permission_columns["is_super_admin"],
-            permission_columns["can_delete_tournaments"],
-            permission_columns["can_edit_tournaments"],
-            permission_columns["can_create_tournaments"],
-            permission_columns["can_publish_results"],
-            permission_columns["can_manage_gallery"],
-            permission_columns["can_manage_matches"],
-            permission_columns["can_manage_users"],
-            permission_columns["can_view_dashboard"],
-            permission_columns["can_view_tournaments"],
-            None,
+            username, email, pwd_context.hash(password),
+            permission_columns["role"], permission_columns["is_super_admin"],
+            permission_columns["can_delete_tournaments"], permission_columns["can_edit_tournaments"],
+            permission_columns["can_create_tournaments"], permission_columns["can_publish_results"],
+            permission_columns["can_manage_gallery"], permission_columns["can_manage_matches"],
+            permission_columns["can_manage_users"], permission_columns["can_view_dashboard"],
+            permission_columns["can_view_tournaments"], None,
         ),
     )
     connection.commit()
     cursor.close()
     connection.close()
 
-    log_security_event(
-        current_record["id"],
-        current_record.get("username"),
-        "staff_created",
-        f"Created staff account {username}",
-    )
-
+    log_security_event(current_record["id"], current_record.get("username"), "staff_created", f"Created staff account {username}")
     return {"success": True, "message": "Staff account created"}
-@router.patch("/staff/{admin_id}/permissions")
-def update_staff_permissions(
-    admin_id: int,
-    payload: Dict[str, Any],
-    current_admin: dict = Depends(get_current_admin),
-):
+
+
+def update_staff_logic(admin_id: int, payload: Dict[str, Any], current_admin: dict) -> Dict[str, Any]:
     connection = get_connection()
     ensure_admin_schema(connection)
 
     curr_id = current_admin.get("admin_id") or current_admin.get("id")
     current_record = get_admin_record(connection, admin_id=curr_id)
 
-    if not current_record or not bool(current_record.get("is_super_admin")):
+    can_manage = bool(current_record and (current_record.get("is_super_admin") or current_record.get("permissions", {}).get("can_manage_users")))
+    if not can_manage:
         connection.close()
-        raise HTTPException(status_code=403, detail="Only super admins can modify user rights and passwords")
+        raise HTTPException(status_code=403, detail="You lack authorization to modify user rights and passwords")
 
     role_name = payload.get("role")
     permission_overrides = payload.get("permissions") or {}
     permission_columns = build_permission_columns(role_name, permission_overrides)
     new_password = (payload.get("password") or "").strip()
+    email = payload.get("email")
 
     cursor = connection.cursor()
 
-    # If a new password was provided, update password_hash as well
+    if email is not None:
+        cursor.execute("UPDATE admins SET email = %s WHERE id = %s", (email.strip() if email else None, admin_id))
+
     if new_password:
         hashed_password = pwd_context.hash(new_password)
         cursor.execute(
             """
             UPDATE admins SET
-                password_hash = %s,
-                role = %s,
-                is_super_admin = %s,
-                can_delete_tournaments = %s,
-                can_edit_tournaments = %s,
-                can_create_tournaments = %s,
-                can_publish_results = %s,
-                can_manage_gallery = %s,
-                can_manage_matches = %s,
-                can_manage_users = %s,
-                can_view_dashboard = %s,
-                can_view_tournaments = %s
+                password_hash = %s, role = %s, is_super_admin = %s,
+                can_delete_tournaments = %s, can_edit_tournaments = %s, can_create_tournaments = %s,
+                can_publish_results = %s, can_manage_gallery = %s, can_manage_matches = %s,
+                can_manage_users = %s, can_view_dashboard = %s, can_view_tournaments = %s
             WHERE id = %s
             """,
             (
-                hashed_password,
-                permission_columns["role"],
-                permission_columns["is_super_admin"],
-                permission_columns["can_delete_tournaments"],
-                permission_columns["can_edit_tournaments"],
-                permission_columns["can_create_tournaments"],
-                permission_columns["can_publish_results"],
-                permission_columns["can_manage_gallery"],
-                permission_columns["can_manage_matches"],
-                permission_columns["can_manage_users"],
-                permission_columns["can_view_dashboard"],
-                permission_columns["can_view_tournaments"],
-                admin_id,
+                hashed_password, permission_columns["role"], permission_columns["is_super_admin"],
+                permission_columns["can_delete_tournaments"], permission_columns["can_edit_tournaments"],
+                permission_columns["can_create_tournaments"], permission_columns["can_publish_results"],
+                permission_columns["can_manage_gallery"], permission_columns["can_manage_matches"],
+                permission_columns["can_manage_users"], permission_columns["can_view_dashboard"],
+                permission_columns["can_view_tournaments"], admin_id,
             ),
         )
     else:
         cursor.execute(
             """
             UPDATE admins SET
-                role = %s,
-                is_super_admin = %s,
-                can_delete_tournaments = %s,
-                can_edit_tournaments = %s,
-                can_create_tournaments = %s,
-                can_publish_results = %s,
-                can_manage_gallery = %s,
-                can_manage_matches = %s,
-                can_manage_users = %s,
-                can_view_dashboard = %s,
-                can_view_tournaments = %s
+                role = %s, is_super_admin = %s,
+                can_delete_tournaments = %s, can_edit_tournaments = %s, can_create_tournaments = %s,
+                can_publish_results = %s, can_manage_gallery = %s, can_manage_matches = %s,
+                can_manage_users = %s, can_view_dashboard = %s, can_view_tournaments = %s
             WHERE id = %s
             """,
             (
-                permission_columns["role"],
-                permission_columns["is_super_admin"],
-                permission_columns["can_delete_tournaments"],
-                permission_columns["can_edit_tournaments"],
-                permission_columns["can_create_tournaments"],
-                permission_columns["can_publish_results"],
-                permission_columns["can_manage_gallery"],
-                permission_columns["can_manage_matches"],
-                permission_columns["can_manage_users"],
-                permission_columns["can_view_dashboard"],
-                permission_columns["can_view_tournaments"],
-                admin_id,
+                permission_columns["role"], permission_columns["is_super_admin"],
+                permission_columns["can_delete_tournaments"], permission_columns["can_edit_tournaments"],
+                permission_columns["can_create_tournaments"], permission_columns["can_publish_results"],
+                permission_columns["can_manage_gallery"], permission_columns["can_manage_matches"],
+                permission_columns["can_manage_users"], permission_columns["can_view_dashboard"],
+                permission_columns["can_view_tournaments"], admin_id,
             ),
         )
 
@@ -509,14 +486,19 @@ def update_staff_permissions(
     if new_password:
         log_details += " (Password reset applied)"
 
-    log_security_event(
-        current_record["id"],
-        current_record.get("username"),
-        "staff_rights_updated",
-        log_details,
-    )
+    log_security_event(current_record["id"], current_record.get("username"), "staff_rights_updated", log_details)
+    return {"success": True, "message": "Staff rights and details updated successfully"}
 
-    return {"success": True, "message": "Staff rights and password updated successfully"}
+
+@router.patch("/staff/{admin_id}/permissions")
+def update_staff_permissions(admin_id: int, payload: Dict[str, Any], current_admin: dict = Depends(get_current_admin)):
+    return update_staff_logic(admin_id, payload, current_admin)
+
+
+@router.patch("/staff/{admin_id}")
+def update_staff_user(admin_id: int, payload: Dict[str, Any], current_admin: dict = Depends(get_current_admin)):
+    return update_staff_logic(admin_id, payload, current_admin)
+
 
 @router.delete("/staff/{admin_id}")
 def delete_staff_account(admin_id: int, current_admin: dict = Depends(get_current_admin)):
@@ -525,9 +507,15 @@ def delete_staff_account(admin_id: int, current_admin: dict = Depends(get_curren
 
     curr_id = current_admin.get("admin_id") or current_admin.get("id")
     current_record = get_admin_record(connection, admin_id=curr_id)
-    if not current_record or not bool(current_record.get("is_super_admin")):
+
+    can_manage = bool(current_record and (current_record.get("is_super_admin") or current_record.get("permissions", {}).get("can_manage_users")))
+    if not can_manage:
         connection.close()
-        raise HTTPException(status_code=403, detail="Only super admins can delete staff accounts")
+        raise HTTPException(status_code=403, detail="You lack authorization to delete staff accounts")
+
+    if curr_id == admin_id:
+        connection.close()
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
 
     cursor = connection.cursor()
     cursor.execute("DELETE FROM admins WHERE id = %s", (admin_id,))
@@ -535,13 +523,7 @@ def delete_staff_account(admin_id: int, current_admin: dict = Depends(get_curren
     cursor.close()
     connection.close()
 
-    log_security_event(
-        current_record["id"],
-        current_record.get("username"),
-        "staff_deleted",
-        f"Deleted admin account {admin_id}",
-    )
-
+    log_security_event(current_record["id"], current_record.get("username"), "staff_deleted", f"Deleted admin account {admin_id}")
     return {"success": True, "message": "Staff account deleted"}
 
 
@@ -549,14 +531,7 @@ def delete_staff_account(admin_id: int, current_admin: dict = Depends(get_curren
 def logout_admin(current_admin: dict = Depends(get_current_admin)):
     admin_id = current_admin.get("admin_id") or current_admin.get("id")
     username = current_admin.get("username")
-
-    log_security_event(
-        admin_id,
-        username,
-        "staff_logout",
-        f"Admin {username} logged out safely",
-    )
-
+    log_security_event(admin_id, username, "staff_logout", f"Admin {username} logged out safely")
     return {"success": True, "message": "Logged out successfully"}
 
 
