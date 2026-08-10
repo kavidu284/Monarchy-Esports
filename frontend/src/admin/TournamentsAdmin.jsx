@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 
@@ -10,26 +10,43 @@ export default function TournamentsAdmin() {
   const [reauthForm, setReauthForm] = useState({ username: "", password: "" });
   const [reauthError, setReauthError] = useState("");
 
+  // Toast State
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
+
+  const showToast = useCallback((type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  }, []);
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchTournaments = async () => {
       try {
         const response = await api.get("/tournaments");
-        console.log("API DATA:", response.data);
-        setTournaments(response.data);
+        if (!isMounted) return;
+        setTournaments(response.data || []);
       } catch (error) {
+        if (!isMounted) return;
         console.error(error);
+        showToast("error", "Load Failed", "Failed to fetch tournaments.");
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchTournaments();
-  }, []);
 
-  const deleteTournament = async (id) => {
-    const confirmed = window.confirm("Delete this tournament?");
-    if (!confirmed) return;
+    return () => {
+      isMounted = false;
+    };
+  }, [showToast]);
 
+  const deleteTournament = (id) => {
     setPendingDeleteId(id);
     setReauthForm({ username: "", password: "" });
     setReauthError("");
@@ -41,8 +58,8 @@ export default function TournamentsAdmin() {
 
     try {
       const response = await api.post("/administration/verify-credentials", {
-        username: reauthForm.username,
-        password: reauthForm.password,
+        username: reauthForm.username.trim(),
+        password: reauthForm.password.trim(),
       });
 
       if (response.data.success) {
@@ -51,6 +68,7 @@ export default function TournamentsAdmin() {
         setReauthModalOpen(false);
         setPendingDeleteId(null);
         setReauthForm({ username: "", password: "" });
+        showToast("success", "Tournament Deleted", "Tournament has been permanently removed.");
       }
     } catch (error) {
       console.error(error);
@@ -86,16 +104,44 @@ export default function TournamentsAdmin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <p className="text-gray-400">Loading tournaments...</p>
+      <div className="flex min-h-[60vh] items-center justify-center bg-black font-sans text-white">
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-6 py-4 shadow-xl">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+          <span className="font-semibold text-gray-300">Loading tournaments...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
+          <div
+            className={`flex items-start gap-4 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
+              toast.type === "success"
+                ? "border-emerald-500/40 bg-zinc-950/95 text-emerald-400"
+                : "border-red-500/40 bg-zinc-950/95 text-red-400"
+            }`}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-current/20 bg-current/10 text-xl font-bold">
+              {toast.type === "success" ? "✓" : "⚠️"}
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="text-sm font-bold text-white">{toast.title}</h4>
+              <p className="mt-0.5 text-xs text-gray-300">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 text-gray-400 hover:text-white text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
         <div>
@@ -278,47 +324,76 @@ export default function TournamentsAdmin() {
       )}
 
       {reauthModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/40">
-            <h3 className="text-2xl font-bold text-white">Re-authentication Required</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              Enter your admin credentials to authorize tournament deletion.
-            </p>
-
-            <div className="mt-5 space-y-4">
-              <input
-                value={reauthForm.username}
-                onChange={(event) => setReauthForm({ ...reauthForm, username: event.target.value })}
-                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none"
-                placeholder="Username"
-              />
-              <input
-                type="password"
-                value={reauthForm.password}
-                onChange={(event) => setReauthForm({ ...reauthForm, password: event.target.value })}
-                className="w-full rounded-xl border border-zinc-700 bg-black px-4 py-3 text-white outline-none"
-                placeholder="Password"
-              />
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-xl text-red-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Authorization Required</h3>
+                <p className="text-xs text-red-400 font-semibold truncate max-w-[220px]">
+                  Delete Tournament #{pendingDeleteId}
+                </p>
+              </div>
             </div>
 
-            {reauthError && <p className="mt-4 text-sm text-red-400">{reauthError}</p>}
+            <p className="text-xs text-gray-400 leading-relaxed">
+              You are about to delete this tournament. Please enter your credentials to verify authorization.
+            </p>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={reauthForm.username}
+                  onChange={(event) => setReauthForm({ ...reauthForm, username: event.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={reauthForm.password}
+                  onChange={(event) => setReauthForm({ ...reauthForm, password: event.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {reauthError && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {reauthError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
               <button
                 onClick={() => {
                   setReauthModalOpen(false);
                   setPendingDeleteId(null);
                   setReauthForm({ username: "", password: "" });
                 }}
-                className="rounded-xl border border-zinc-700 px-4 py-2 font-semibold text-gray-200"
+                className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteReauth}
-                className="rounded-xl bg-red-600 px-4 py-2 font-semibold text-white"
+                className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-500 transition"
               >
-                Confirm
+                Confirm Delete
               </button>
             </div>
           </div>

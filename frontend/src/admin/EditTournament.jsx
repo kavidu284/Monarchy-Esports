@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import api from "../services/api";
 
 export default function EditTournament() {
@@ -9,6 +13,16 @@ export default function EditTournament() {
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Toast / Popup Message State
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
+
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
 
   const toDateTimeLocal = (value) => {
     if (!value) return "";
@@ -68,7 +82,7 @@ export default function EditTournament() {
         });
       } catch (error) {
         console.error(error);
-        alert("Failed to load tournament");
+        showToast("error", "Load Failed", "Failed to load tournament");
       } finally {
         setLoading(false);
       }
@@ -133,12 +147,16 @@ export default function EditTournament() {
         },
       });
 
-      alert("Tournament Updated Successfully");
+      showToast("success", "Updated", "Tournament Updated Successfully");
 
-      navigate("/admin/tournaments");
+      setTimeout(() => {
+        navigate("/admin/tournaments");
+      }, 1200);
     } catch (error) {
       console.error(error);
-      alert(
+      showToast(
+        "error",
+        "Update Failed",
         error.response?.data?.detail ||
           "Failed To Update Tournament"
       );
@@ -158,18 +176,44 @@ export default function EditTournament() {
 
   if (loading || !form) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <p className="text-gray-400">
-            Loading tournament...
-          </p>
+      <div className="flex min-h-[60vh] items-center justify-center bg-black font-sans text-white">
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-6 py-4 shadow-xl">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+          <span className="font-semibold text-gray-300">Loading tournament...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
+          <div
+            className={`flex items-start gap-4 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
+              toast.type === "success"
+                ? "border-emerald-500/40 bg-zinc-950/95 text-emerald-400"
+                : "border-red-500/40 bg-zinc-950/95 text-red-400"
+            }`}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-current/20 bg-current/10 text-xl font-bold">
+              {toast.type === "success" ? "✓" : "⚠️"}
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="text-sm font-bold text-white">{toast.title}</h4>
+              <p className="mt-0.5 text-xs text-gray-300">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 text-gray-400 hover:text-white text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-6xl px-6 py-10">
         {/* HEADER */}
         <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">

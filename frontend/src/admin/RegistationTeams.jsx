@@ -22,6 +22,16 @@ export default function RegistrationDetails() {
   const [actionLoading, setActionLoading] =
     useState(false);
 
+  // Toast / Popup Message State
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
+
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
   const getFileUrl = (filePath) => {
     if (!filePath) return "";
 
@@ -40,7 +50,7 @@ export default function RegistrationDetails() {
     fileName
   ) => {
     if (!filePath) {
-      alert("Photo is not available");
+      showToast("error", "File Missing", "Photo is not available");
       return;
     }
 
@@ -134,7 +144,9 @@ export default function RegistrationDetails() {
       } catch (error) {
         console.error(error);
 
-        alert(
+        showToast(
+          "error",
+          "Load Failed",
           "Failed to load registration details"
         );
       } finally {
@@ -151,13 +163,6 @@ export default function RegistrationDetails() {
   }, [fetchRegistration]);
 
   const approveTeam = async () => {
-    const confirmed =
-      window.confirm(
-        "Approve this team?"
-      );
-
-    if (!confirmed) return;
-
     try {
       setActionLoading(true);
 
@@ -165,25 +170,18 @@ export default function RegistrationDetails() {
         `/registrations/${currentRegistrationId}/approve`
       );
 
-      alert("Team Approved");
+      showToast("success", "Approved", "Team Approved");
 
       fetchRegistration();
     } catch (error) {
       console.error(error);
-      alert("Approve Failed");
+      showToast("error", "Action Failed", "Approve Failed");
     } finally {
       setActionLoading(false);
     }
   };
 
   const rejectTeam = async () => {
-    const confirmed =
-      window.confirm(
-        "Reject this team?"
-      );
-
-    if (!confirmed) return;
-
     try {
       setActionLoading(true);
 
@@ -191,12 +189,12 @@ export default function RegistrationDetails() {
         `/registrations/${currentRegistrationId}/reject`
       );
 
-      alert("Team Rejected");
+      showToast("success", "Rejected", "Team Rejected");
 
       fetchRegistration();
     } catch (error) {
       console.error(error);
-      alert("Reject Failed");
+      showToast("error", "Action Failed", "Reject Failed");
     } finally {
       setActionLoading(false);
     }
@@ -229,13 +227,13 @@ export default function RegistrationDetails() {
   const backPath = tournamentId
       ? `/admin/tournaments/${tournamentId}/registrations`
       : "/admin/tournaments"
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <p className="text-gray-400">
-            Loading registration details...
-          </p>
+      <div className="flex min-h-[60vh] items-center justify-center bg-black font-sans text-white">
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-6 py-4 shadow-xl">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+          <span className="font-semibold text-gray-300">Loading registration details...</span>
         </div>
       </div>
     );
@@ -275,7 +273,34 @@ export default function RegistrationDetails() {
     );
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
+          <div
+            className={`flex items-start gap-4 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
+              toast.type === "success"
+                ? "border-emerald-500/40 bg-zinc-950/95 text-emerald-400"
+                : "border-red-500/40 bg-zinc-950/95 text-red-400"
+            }`}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-current/20 bg-current/10 text-xl font-bold">
+              {toast.type === "success" ? "✓" : "⚠️"}
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="text-sm font-bold text-white">{toast.title}</h4>
+              <p className="mt-0.5 text-xs text-gray-300">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 text-gray-400 hover:text-white text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
 
       <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">

@@ -12,9 +12,9 @@ import {
 const RAW_NAV_ITEMS = [
   { name: "Dashboard", path: "/admin/dashboard", icon: "📊", permission: "can_view_dashboard" },
   { name: "Tournaments", path: "/admin/tournaments", icon: "🏆", permission: "can_view_tournaments" },
-  { name: "News", path: "/admin/news", icon: "📰", permission: "can_edit_tournaments" },
+  { name: "News", path: "/admin/news", icon: "📰", permission: "can_manage_news" }, // UPDATED PERMISSION FLAG
   { name: "Gallery", path: "/admin/gallery", icon: "🖼️", permission: "can_manage_gallery" },
-  { name: "Contact Messages", path: "/admin/messages", icon: "✉️", permission: "can_manage_users" },
+  { name: "Contact Messages", path: "/admin/messages", icon: "✉️", permission: "can_view_contact_messages" }, // UPDATED PERMISSION FLAG
   { name: "Staff & User Rights", path: "/administration", icon: "⚙️", permission: "can_manage_users" },
 ];
 

@@ -38,6 +38,7 @@ import AdministrationLayout from "./Adminstrator/AdministratorLayouut.jsx";
 import AdministratorUser from "./Adminstrator/AdministratorUser.jsx";
 import AccessDeniedView from "./components/AccessDeniedView.jsx";
 import { isSuperAdmin } from "./utils/auth";
+
 function App() {
   const location = useLocation();
   const isPrivateArea =
@@ -76,10 +77,15 @@ function App() {
           <Route path="tournament/:tournamentId/matches" element={<ProtectedRoute permissionKey="can_manage_matches"><TournamentMatchesAdmin /></ProtectedRoute>} />
           <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute permissionKey="can_manage_matches"><RoundRobinAdmin /></ProtectedRoute>} />
           <Route path="tournaments/champions/:id" element={<ProtectedRoute permissionKey="can_publish_results"><MatchResultAdmin /></ProtectedRoute>} />
-          <Route path="news" element={<ProtectedRoute permissionKey="can_edit_tournaments"><NewsAdmin /></ProtectedRoute>} />
-          <Route path="news/create" element={<ProtectedRoute permissionKey="can_create_tournaments"><CreateNews /></ProtectedRoute>} />
-          <Route path="news/edit/:id" element={<ProtectedRoute permissionKey="can_edit_tournaments"><Editnews /></ProtectedRoute>} />
-          <Route path="messages" element={<ProtectedRoute permissionKey="can_manage_users"><MessagesAdmin /></ProtectedRoute>} />
+          
+          {/* NEWS MANAGEMENT (SEPARATE PERMISSION FLAG) */}
+          <Route path="news" element={<ProtectedRoute permissionKey="can_manage_news"><NewsAdmin /></ProtectedRoute>} />
+          <Route path="news/create" element={<ProtectedRoute permissionKey="can_manage_news"><CreateNews /></ProtectedRoute>} />
+          <Route path="news/edit/:id" element={<ProtectedRoute permissionKey="can_manage_news"><Editnews /></ProtectedRoute>} />
+          
+          {/* CONTACT MESSAGES MANAGEMENT (SEPARATE PERMISSION FLAG) */}
+          <Route path="messages" element={<ProtectedRoute permissionKey="can_view_contact_messages"><MessagesAdmin /></ProtectedRoute>} />
+          
           <Route path="gallery" element={<ProtectedRoute permissionKey="can_manage_gallery"><GalleryAdmin /></ProtectedRoute>} />
         </Route>
 
@@ -98,6 +104,7 @@ function App() {
           {/* User Rights & Staff Accounts */}
           <Route path="users" element={isSuperAdmin() ? <AdministratorUser /> : <AccessDeniedView />} />
         </Route>
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
 

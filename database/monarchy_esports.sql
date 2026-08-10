@@ -293,3 +293,12 @@ CREATE TABLE IF NOT EXISTS admin_security_events (
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+USE monarchy_esports;
+
+ALTER TABLE admins
+    ADD COLUMN can_manage_news BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN can_view_contact_messages BOOLEAN NOT NULL DEFAULT FALSE;
+USE monarchy_esports;
+
+ALTER TABLE contact_messages
+    ADD COLUMN status ENUM('unread', 'read', 'archived') NOT NULL DEFAULT 'unread';

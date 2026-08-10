@@ -23,6 +23,8 @@ export default function AdministratorUser() {
       can_create_tournaments: false,
       can_edit_tournaments: false,
       can_delete_tournaments: false,
+      can_manage_news: false,
+      can_view_contact_messages: false,
       can_manage_matches: false,
       can_publish_results: false,
       can_manage_gallery: false,
@@ -107,6 +109,8 @@ export default function AdministratorUser() {
       can_create_tournaments: user.can_create_tournaments ?? false,
       can_edit_tournaments: user.can_edit_tournaments ?? false,
       can_delete_tournaments: user.can_delete_tournaments ?? false,
+      can_manage_news: user.can_manage_news ?? false,
+      can_view_contact_messages: user.can_view_contact_messages ?? false,
       can_manage_matches: user.can_manage_matches ?? false,
       can_publish_results: user.can_publish_results ?? false,
       can_manage_gallery: user.can_manage_gallery ?? false,
@@ -284,6 +288,8 @@ export default function AdministratorUser() {
           can_create_tournaments: false,
           can_edit_tournaments: false,
           can_delete_tournaments: false,
+          can_manage_news: false,
+          can_view_contact_messages: false,
           can_manage_matches: false,
           can_publish_results: false,
           can_manage_gallery: false,
@@ -545,6 +551,7 @@ export default function AdministratorUser() {
                   >
                     <option value="full_access_staff">Full Access Staff</option>
                     <option value="tournament_editor">Tournament Editor</option>
+                    <option value="news_editor">News & Media Editor</option>
                     <option value="tournament_viewer">Tournament Viewer</option>
                     <option value="match_results_manager">Match Results Manager</option>
                     <option value="gallery_manager">Gallery Manager</option>
@@ -563,8 +570,10 @@ export default function AdministratorUser() {
                     { key: "can_view_dashboard", label: "View Dashboard Stats" },
                     { key: "can_view_tournaments", label: "View Tournaments" },
                     { key: "can_create_tournaments", label: "Create Tournaments" },
-                    { key: "can_edit_tournaments", label: "Edit Tournaments & News" },
+                    { key: "can_edit_tournaments", label: "Edit Tournament Details" },
                     { key: "can_delete_tournaments", label: "Delete Tournaments" },
+                    { key: "can_manage_news", label: "Manage News & Announcements" },
+                    { key: "can_view_contact_messages", label: "View Contact Messages" },
                     { key: "can_manage_matches", label: "Manage Match Fixtures" },
                     { key: "can_publish_results", label: "Publish Final Match Results" },
                     { key: "can_manage_gallery", label: "Upload / Delete Gallery" },
@@ -678,8 +687,10 @@ export default function AdministratorUser() {
                     { key: "can_view_dashboard", label: "View Dashboard Stats" },
                     { key: "can_view_tournaments", label: "View Tournaments" },
                     { key: "can_create_tournaments", label: "Create Tournaments" },
-                    { key: "can_edit_tournaments", label: "Edit Tournaments & News" },
+                    { key: "can_edit_tournaments", label: "Edit Tournament Details" },
                     { key: "can_delete_tournaments", label: "Delete Tournaments" },
+                    { key: "can_manage_news", label: "Manage News & Announcements" },
+                    { key: "can_view_contact_messages", label: "View Contact Messages" },
                     { key: "can_manage_matches", label: "Manage Match Fixtures" },
                     { key: "can_publish_results", label: "Publish Final Match Results" },
                     { key: "can_manage_gallery", label: "Upload / Delete Gallery" },

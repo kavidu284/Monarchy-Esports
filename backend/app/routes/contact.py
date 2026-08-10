@@ -1,112 +1,193 @@
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, EmailStr
+
 from app.database import get_connection
-from fastapi import Depends
-from app.dependencies.auth import get_current_admin
 
-router = APIRouter()
+router = APIRouter(tags=["messages"])
 
+
+# Input validation models
+class ContactInputSchema(BaseModel):
+    name: str
+    email: EmailStr
+    subject: Optional[str] = "No Subject"
+    message: str
+
+
+class StatusUpdateSchema(BaseModel):
+    status: str  # 'unread' | 'read' | 'archived'
+
+
+# =========================================================
+# PUBLIC: SUBMIT CONTACT FORM MESSAGE
+# =========================================================
 @router.post("/contact")
-def send_message(data: dict):
-
+def send_message(payload: ContactInputSchema):
     connection = get_connection()
     cursor = connection.cursor()
 
-    query = """
-    INSERT INTO contact_messages
-    (
-        name,
-        email,
-        subject,
-        message
-    )
-    VALUES
-    (%s,%s,%s,%s)
-    """
+    try:
+        query = """
+        INSERT INTO contact_messages (name, email, subject, message, status)
+        VALUES (%s, %s, %s, %s, 'unread')
+        """
+        values = (
+            payload.name.strip(),
+            payload.email.strip(),
+            payload.subject.strip() if payload.subject else "No Subject",
+            payload.message.strip(),
+        )
 
-    values = (
-        data["name"],
-        data["email"],
-        data["subject"],
-        data["message"]
-    )
+        cursor.execute(query, values)
+        connection.commit()
 
-    cursor.execute(query, values)
-
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-    return {
-        "message": "Message Sent Successfully"
-    }
+        return {"message": "Message Sent Successfully"}
+    except Exception as err:
+        connection.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to submit message: {str(err)}",
+        )
+    finally:
+        cursor.close()
+        connection.close()
 
 
-# GET ALL MESSAGES
+# =========================================================
+# OPEN: GET ALL MESSAGES (NO SECURITY)
+# =========================================================
 @router.get("/messages")
-def get_messages(current_admin: dict = Depends(get_current_admin)):
-
+def get_messages():
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT *
-        FROM contact_messages
-        ORDER BY created_at DESC
-    """)
+    try:
+        cursor.execute(
+            """
+            SELECT *
+            FROM contact_messages
+            ORDER BY created_at DESC
+            """
+        )
+        messages = cursor.fetchall()
+        return messages
+    finally:
+        cursor.close()
+        connection.close()
 
-    messages = cursor.fetchall()
 
-    cursor.close()
-    connection.close()
-
-    return messages
-
-
-# GET SINGLE MESSAGE
+# =========================================================
+# OPEN: GET SINGLE MESSAGE BY ID (NO SECURITY)
+# =========================================================
 @router.get("/messages/{message_id}")
-def get_message(message_id: int, current_admin: dict = Depends(get_current_admin)):
-
+def get_message(message_id: int):
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
-    cursor.execute(
-        """
-        SELECT *
-        FROM contact_messages
-        WHERE id = %s
-        """,
-        (message_id,)
-    )
+    try:
+        cursor.execute(
+            """
+            SELECT *
+            FROM contact_messages
+            WHERE id = %s
+            """,
+            (message_id,),
+        )
+        message = cursor.fetchone()
 
-    message = cursor.fetchone()
+        if not message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Message #{message_id} not found.",
+            )
 
-    cursor.close()
-    connection.close()
+        return message
+    finally:
+        cursor.close()
+        connection.close()
 
-    return message
 
-
-# DELETE MESSAGE
-@router.delete("/messages/{message_id}")
-def delete_message(message_id: int, current_admin: dict = Depends(get_current_admin)):
+# =========================================================
+# OPEN: UPDATE MESSAGE STATUS (NO SECURITY)
+# =========================================================
+@router.patch("/messages/{message_id}")
+def update_message_status(message_id: int, payload: StatusUpdateSchema):
+    if payload.status not in ["unread", "read", "archived"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid status value. Use 'unread', 'read', or 'archived'.",
+        )
 
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute(
-        """
-        DELETE FROM contact_messages
-        WHERE id = %s
-        """,
-        (message_id,)
-    )
+    try:
+        cursor.execute(
+            """
+            UPDATE contact_messages
+            SET status = %s
+            WHERE id = %s
+            """,
+            (payload.status, message_id),
+        )
+        connection.commit()
 
-    connection.commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Message #{message_id} not found.",
+            )
 
-    cursor.close()
-    connection.close()
+        return {"message": f"Message status updated to '{payload.status}'"}
+    except HTTPException as http_err:
+        connection.rollback()
+        raise http_err
+    except Exception as err:
+        connection.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update status: {str(err)}",
+        )
+    finally:
+        cursor.close()
+        connection.close()
 
-    return {
-        "message": "Message Deleted Successfully"
-    }
+
+# =========================================================
+# OPEN: DELETE MESSAGE (NO SECURITY)
+# =========================================================
+@router.delete("/messages/{message_id}")
+def delete_message(message_id: int):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            DELETE FROM contact_messages
+            WHERE id = %s
+            """,
+            (message_id,),
+        )
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Message #{message_id} not found.",
+            )
+
+        return {"message": "Message Deleted Successfully"}
+    except HTTPException as http_err:
+        connection.rollback()
+        raise http_err
+    except Exception as err:
+        connection.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete message: {str(err)}",
+        )
+    finally:
+        cursor.close()
+        connection.close()

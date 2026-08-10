@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../services/api";
 
@@ -22,6 +22,23 @@ export default function MatchAdmin() {
   const [roundRobinGroups, setRoundRobinGroups] = useState([]);
   const [qualifiedPerGroup, setQualifiedPerGroup] = useState(2);
 
+  // Toast State
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
+
+  // Security Re-Authentication Modal State for Deletion
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [targetMatchId, setTargetMatchId] = useState(null);
+  const [reauth, setReauth] = useState({ username: "", password: "" });
+  const [reauthMessage, setReauthMessage] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
+  const showToast = useCallback((type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  }, []);
+
   const bracketRoundOptions = [
     "Round 1",
     "Round 2",
@@ -39,7 +56,7 @@ export default function MatchAdmin() {
     "Lower Bracket Final",
   ];
 
-  const fetchRoundRobinGroups = async () => {
+  const fetchRoundRobinGroups = useCallback(async () => {
     try {
       const response = await api.get(
         `/tournaments/${tournamentId}/round-robin-groups`
@@ -50,9 +67,9 @@ export default function MatchAdmin() {
       console.error(error);
       setRoundRobinGroups([]);
     }
-  };
+  }, [tournamentId]);
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     try {
       const response = await api.get(
         `/tournaments/${tournamentId}/matches`
@@ -66,43 +83,82 @@ export default function MatchAdmin() {
     } catch (error) {
       console.error(error);
     }
+  }, [tournamentId]);
+
+  // Open Security Modal for Match Deletion
+  const triggerDeleteModal = (matchId) => {
+    setTargetMatchId(matchId);
+    setReauth({ username: "", password: "" });
+    setReauthMessage("");
+    setSecurityModalOpen(true);
   };
 
-  const handleDeleteMatch = async (matchId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this match?"
-    );
-
-    if (!confirmDelete) return;
-
+  // Execute actual match deletion
+  const executeDeleteMatch = async () => {
     try {
-      await api.delete(`/matches/${matchId}`);
+      await api.delete(`/matches/${targetMatchId}`);
 
-      alert("Match Deleted Successfully");
+      showToast("success", "Match Deleted", "Match Deleted Successfully");
+      setSecurityModalOpen(false);
+      setTargetMatchId(null);
 
       fetchMatches();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete match");
+      showToast("error", "Delete Failed", error.response?.data?.detail || "Failed to delete match");
+    }
+  };
+
+  // Handle Re-Authentication Submit
+  const handleConfirmReauth = async (e) => {
+    e.preventDefault();
+    if (!reauth.username.trim() || !reauth.password.trim()) {
+      setReauthMessage("Username and password are required.");
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      setReauthMessage("");
+      const response = await api.post("/administration/verify-credentials", {
+        username: reauth.username.trim(),
+        password: reauth.password.trim(),
+      });
+
+      if (response.data?.success && targetMatchId) {
+        await executeDeleteMatch();
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setReauthMessage(
+        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
+      );
+    } finally {
+      setVerifying(false);
     }
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadData = async () => {
       try {
         const tournamentResponse = await api.get(
           `/tournaments/${tournamentId}`
         );
+        if (!isMounted) return;
         setTournament(tournamentResponse.data);
 
         const teamsResponse = await api.get(
           `/tournaments/${tournamentId}/approved-teams`
         );
+        if (!isMounted) return;
         setTeams(teamsResponse.data);
 
         const matchesResponse = await api.get(
           `/tournaments/${tournamentId}/matches`
         );
+        if (!isMounted) return;
 
         const sortedMatches = [...matchesResponse.data].sort(
           (a, b) => Number(a.match_no || 0) - Number(b.match_no || 0)
@@ -113,13 +169,19 @@ export default function MatchAdmin() {
         const groupsResponse = await api.get(
           `/tournaments/${tournamentId}/round-robin-groups`
         );
+        if (!isMounted) return;
         setRoundRobinGroups(groupsResponse.data || []);
       } catch (error) {
+        if (!isMounted) return;
         console.error(error);
       }
     };
 
     loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [tournamentId]);
 
   const getGroupCode = (groupName) => {
@@ -169,7 +231,7 @@ export default function MatchAdmin() {
     });
   };
 
-  const resolveRoundRobinSeed = (participant) => {
+  const resolveRoundRobinSeed = useCallback((participant) => {
     if (!participant) return null;
 
     const text = String(participant).trim();
@@ -201,9 +263,10 @@ export default function MatchAdmin() {
     });
 
     return sortedTeams[rank - 1]?.team_name || null;
-  };
+  }, [roundRobinGroups]);
 
-  const resolveParticipant = (participant, depth = 0) => {
+  // Using a standard JavaScript function declaration ensures it is hoisted properly for recursion
+  function resolveParticipant(participant, depth = 0) {
     if (!participant) return "-";
 
     const text = String(participant).trim();
@@ -252,7 +315,7 @@ export default function MatchAdmin() {
     }
 
     return text;
-  };
+  }
 
   const getTeam1 = (match) => {
     return resolveParticipant(match.team1);
@@ -264,12 +327,12 @@ export default function MatchAdmin() {
 
   const handleCreateMatch = async () => {
     if (!matchNo || !team1 || !team2 || !matchDate || !matchTime) {
-      alert("Please fill all fields");
+      showToast("error", "Missing Fields", "Please fill all fields");
       return;
     }
 
     if (team1 === team2) {
-      alert("Teams cannot be the same");
+      showToast("error", "Invalid Match", "Teams cannot be the same");
       return;
     }
 
@@ -285,7 +348,7 @@ export default function MatchAdmin() {
         match_time: matchTime,
       });
 
-      alert("Match Created Successfully");
+      showToast("success", "Match Created", "Match Created Successfully");
 
       setMatchNo("");
       setTeam1("");
@@ -299,7 +362,7 @@ export default function MatchAdmin() {
       fetchRoundRobinGroups();
     } catch (error) {
       console.error(error);
-      alert("Failed to create match");
+      showToast("error", "Creation Failed", error.response?.data?.detail || "Failed to create match");
     }
   };
 
@@ -311,11 +374,12 @@ export default function MatchAdmin() {
         winner: winner,
       });
 
+      showToast("success", "Winner Updated", "Match winner successfully recorded");
       fetchMatches();
       fetchRoundRobinGroups();
     } catch (error) {
       console.error(error);
-      alert("Failed to update winner");
+      showToast("error", "Update Failed", error.response?.data?.detail || "Failed to update winner");
     }
   };
 
@@ -386,7 +450,110 @@ export default function MatchAdmin() {
     "whitespace-nowrap px-4 py-4 text-sm text-gray-300";
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
+          <div
+            className={`flex items-start gap-4 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
+              toast.type === "success"
+                ? "border-emerald-500/40 bg-zinc-950/95 text-emerald-400"
+                : "border-red-500/40 bg-zinc-950/95 text-red-400"
+            }`}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-current/20 bg-current/10 text-xl font-bold">
+              {toast.type === "success" ? "✓" : "⚠️"}
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="text-sm font-bold text-white">{toast.title}</h4>
+              <p className="mt-0.5 text-xs text-gray-300">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 text-gray-400 hover:text-white text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SECURITY AUTHENTICATION DELETE MODAL */}
+      {securityModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-xl text-red-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Authorization Required</h3>
+                <p className="text-xs text-red-400 font-semibold truncate max-w-[220px]">
+                  Delete Match #{targetMatchId}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              You are about to delete this match. Please enter your credentials to verify authorization.
+            </p>
+
+            <form onSubmit={handleConfirmReauth} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={reauth.username}
+                  onChange={(e) => setReauth({ ...reauth, username: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={reauth.password}
+                  onChange={(e) => setReauth({ ...reauth, password: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {reauthMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {reauthMessage}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setSecurityModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={verifying}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-500 transition disabled:opacity-50"
+                >
+                  {verifying ? "Verifying..." : "Confirm Delete"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="mb-10 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
@@ -436,12 +603,13 @@ export default function MatchAdmin() {
                 Manage Round Robin Groups
               </Link>
             )}
+
+            <Link to="/admin/tournaments">
+              <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
+                ← Back
+              </button>
+            </Link>
           </div>
-          <Link to="/admin/tournaments">
-          <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
-            ← Back
-          </button>
-        </Link>
         </div>
       </div>
 
@@ -849,7 +1017,7 @@ export default function MatchAdmin() {
 
                     <td className={tableCellClass}>
                       <button
-                        onClick={() => handleDeleteMatch(match.id)}
+                        onClick={() => triggerDeleteModal(match.id)}
                         className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
                       >
                         Delete

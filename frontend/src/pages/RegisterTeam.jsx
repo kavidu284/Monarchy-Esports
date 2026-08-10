@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PlayerSection from "../components/PlayerSection";
 import api from "../services/api";
 
 export default function RegisterTeam() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [tournament, setTournament] = useState(null);
   const [loadingTournament, setLoadingTournament] = useState(true);
+
+  // BEAUTIFUL OVERLAY MODAL STATE
+  const [modal, setModal] = useState(null); // { type: 'success' | 'error' | 'warning', title: string, message: string, onConfirm?: () => void }
 
   const inputClass =
     "w-full rounded-2xl border border-zinc-700 bg-black px-4 py-4 text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
@@ -48,12 +52,20 @@ export default function RegisterTeam() {
     e.preventDefault();
 
     if (!agree) {
-      alert("Please agree to the tournament rules");
+      setModal({
+        type: "warning",
+        title: "Agreement Required",
+        message: "Please agree to the Monarchy Esports tournament rules before submitting.",
+      });
       return;
     }
 
     if (registrationClosed) {
-      alert("Registration is full for this tournament.");
+      setModal({
+        type: "warning",
+        title: "Registration Closed",
+        message: "Registration is full for this tournament. No more teams can be added.",
+      });
       return;
     }
 
@@ -75,24 +87,105 @@ export default function RegisterTeam() {
         }
       );
 
-      alert(response.data.message || "Registration Submitted Successfully");
+      // SHOW BEAUTIFUL SUCCESS MODAL & REDIRECT
+      setModal({
+        type: "success",
+        title: "Registration Submitted!",
+        message:
+          response.data.message ||
+          "Your team registration has been submitted successfully and is pending admin approval.",
+        onConfirm: () => {
+          setModal(null);
+          navigate(`/tournaments/${id}`);
+        },
+      });
 
       form.reset();
       setAgree(false);
     } catch (error) {
       console.error(error);
 
-      alert(
-        error.response?.data?.detail ||
-          "Registration Failed. Please check your details and try again."
-      );
+      setModal({
+        type: "error",
+        title: "Registration Failed",
+        message:
+          error.response?.data?.detail ||
+          "Unable to process registration. Please verify all player details and try again.",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const closeModal = () => {
+    if (modal?.onConfirm) {
+      modal.onConfirm();
+    } else {
+      setModal(null);
+    }
+  };
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black text-white">
+    <div className="relative min-h-screen overflow-hidden bg-black text-white font-sans selection:bg-blue-600 selection:text-white">
+      {/* BEAUTIFUL REGISTRATION POPUP MODAL */}
+      {modal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl shadow-blue-600/10">
+            {/* GLOW BACKGROUND EFFECT */}
+            <div
+              className={`absolute -top-12 left-1/2 h-36 w-36 -translate-x-1/2 rounded-full blur-3xl pointer-events-none ${
+                modal.type === "success"
+                  ? "bg-emerald-500/20"
+                  : modal.type === "error"
+                  ? "bg-red-500/20"
+                  : "bg-amber-500/20"
+              }`}
+            />
+
+            {/* ICON CONTAINER */}
+            <div
+              className={`relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border text-3xl shadow-lg ${
+                modal.type === "success"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-emerald-500/20"
+                  : modal.type === "error"
+                  ? "border-red-500/30 bg-red-500/10 text-red-400 shadow-red-500/20"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-400 shadow-amber-500/20"
+              }`}
+            >
+              {modal.type === "success" ? "🏆" : modal.type === "error" ? "⚠️" : "📌"}
+            </div>
+
+            {/* TITLE */}
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
+              Monarchy Esports Portal
+            </p>
+            <h3 className="mt-2 text-2xl font-black text-white sm:text-3xl">
+              {modal.title}
+            </h3>
+
+            {/* MESSAGE */}
+            <p className="mt-3 text-sm text-gray-300 leading-relaxed">
+              {modal.message}
+            </p>
+
+            {/* ACTION BUTTON */}
+            <button
+              type="button"
+              onClick={closeModal}
+              className={`mt-8 w-full rounded-2xl py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${
+                modal.type === "success"
+                  ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30"
+                  : modal.type === "error"
+                  ? "bg-red-600 hover:bg-red-500 shadow-red-600/30"
+                  : "bg-blue-600 hover:bg-blue-500 shadow-blue-600/30"
+              }`}
+            >
+              {modal.type === "success" ? "View Tournament Details" : "Continue"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* BACKGROUND EFFECTS */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.25),transparent_35%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.1),transparent_35%)]" />
       <div className="absolute left-10 top-20 h-48 w-48 animate-pulse rounded-full bg-blue-600/10 blur-3xl" />
@@ -110,7 +203,7 @@ export default function RegisterTeam() {
           </p>
 
           <h1 className="mt-4 text-5xl font-black leading-tight md:text-6xl">
-            MLBB Tournament Registration
+            {tournament?.title ? `${tournament.title} Registration` : "MLBB Tournament Registration"}
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-gray-400">
@@ -120,7 +213,7 @@ export default function RegisterTeam() {
           <div className="mx-auto mt-8 h-[2px] w-40 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
 
           {loadingTournament ? null : registrationClosed ? (
-            <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-amber-300">
+            <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-amber-300 font-semibold">
               Registration is full for this tournament. No more teams can be added.
             </div>
           ) : null}
@@ -417,7 +510,7 @@ export default function RegisterTeam() {
               Please double-check all player details before submitting.
             </p>
             {registrationClosed ? (
-              <p className="mt-3 text-sm text-amber-300">
+              <p className="mt-3 text-sm text-amber-300 font-semibold">
                 Registration has reached the maximum team limit.
               </p>
             ) : null}

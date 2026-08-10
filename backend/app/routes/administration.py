@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 
 from app.database import get_connection
@@ -20,6 +21,8 @@ ROLE_DEFINITIONS = {
             "can_edit_tournaments": True,
             "can_create_tournaments": True,
             "can_delete_tournaments": True,
+            "can_manage_news": True,
+            "can_view_contact_messages": True,
             "can_publish_results": True,
             "can_manage_gallery": True,
             "can_view_tournaments": True,
@@ -35,6 +38,8 @@ ROLE_DEFINITIONS = {
             "can_edit_tournaments": True,
             "can_create_tournaments": True,
             "can_delete_tournaments": True,
+            "can_manage_news": True,
+            "can_view_contact_messages": True,
             "can_publish_results": True,
             "can_manage_gallery": True,
             "can_view_tournaments": True,
@@ -50,8 +55,27 @@ ROLE_DEFINITIONS = {
             "can_edit_tournaments": True,
             "can_create_tournaments": True,
             "can_delete_tournaments": False,
+            "can_manage_news": False,
+            "can_view_contact_messages": False,
             "can_publish_results": False,
             "can_manage_gallery": False,
+            "can_view_tournaments": True,
+            "can_manage_matches": False,
+        },
+    },
+    "editor_role_3": {
+        "label": "News & Media Editor",
+        "description": "Create and manage news articles and announcements",
+        "permissions": {
+            "can_view_dashboard": True,
+            "can_manage_users": False,
+            "can_edit_tournaments": False,
+            "can_create_tournaments": False,
+            "can_delete_tournaments": False,
+            "can_manage_news": True,
+            "can_view_contact_messages": True,
+            "can_publish_results": False,
+            "can_manage_gallery": True,
             "can_view_tournaments": True,
             "can_manage_matches": False,
         },
@@ -65,6 +89,8 @@ ROLE_DEFINITIONS = {
             "can_edit_tournaments": False,
             "can_create_tournaments": False,
             "can_delete_tournaments": False,
+            "can_manage_news": False,
+            "can_view_contact_messages": False,
             "can_publish_results": False,
             "can_manage_gallery": False,
             "can_view_tournaments": True,
@@ -80,27 +106,15 @@ ROLE_DEFINITIONS = {
             "can_edit_tournaments": False,
             "can_create_tournaments": False,
             "can_delete_tournaments": False,
+            "can_manage_news": False,
+            "can_view_contact_messages": False,
             "can_publish_results": True,
             "can_manage_gallery": False,
             "can_view_tournaments": True,
             "can_manage_matches": True,
         },
     },
-    "gallery_manager": {
-        "label": "Gallery Manager",
-        "description": "Manage gallery uploads and edits",
-        "permissions": {
-            "can_view_dashboard": True,
-            "can_manage_users": False,
-            "can_edit_tournaments": False,
-            "can_create_tournaments": False,
-            "can_delete_tournaments": False,
-            "can_publish_results": False,
-            "can_manage_gallery": True,
-            "can_view_tournaments": True,
-            "can_manage_matches": False,
-        },
-    },
+   
 }
 
 PERMISSION_FIELDS = list(ROLE_DEFINITIONS["super_admin"]["permissions"].keys())
@@ -148,6 +162,8 @@ def ensure_admin_schema(connection) -> None:
         ("can_delete_tournaments", "0"),
         ("can_edit_tournaments", "0"),
         ("can_create_tournaments", "0"),
+        ("can_manage_news", "0"),               # NEW
+        ("can_view_contact_messages", "0"),     # NEW
         ("can_publish_results", "0"),
         ("can_manage_gallery", "0"),
         ("can_manage_matches", "0"),
@@ -285,7 +301,7 @@ def log_security_event(admin_id: Optional[int], username: Optional[str], event_t
     connection.close()
 
 
-# ==================== ENDPOINTS ====================
+# ==================== SETTINGS & RBAC ====================
 
 @router.get("")
 def get_admin_settings(current_admin: dict = Depends(get_current_admin)):
@@ -393,15 +409,17 @@ def create_staff_account(payload: Dict[str, Any], current_admin: dict = Depends(
         INSERT INTO admins (
             username, email, password_hash, role, is_super_admin,
             can_delete_tournaments, can_edit_tournaments, can_create_tournaments,
+            can_manage_news, can_view_contact_messages,
             can_publish_results, can_manage_gallery, can_manage_matches,
             can_manage_users, can_view_dashboard, can_view_tournaments, last_login
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             username, email, pwd_context.hash(password),
             permission_columns["role"], permission_columns["is_super_admin"],
             permission_columns["can_delete_tournaments"], permission_columns["can_edit_tournaments"],
-            permission_columns["can_create_tournaments"], permission_columns["can_publish_results"],
+            permission_columns["can_create_tournaments"], permission_columns["can_manage_news"],
+            permission_columns["can_view_contact_messages"], permission_columns["can_publish_results"],
             permission_columns["can_manage_gallery"], permission_columns["can_manage_matches"],
             permission_columns["can_manage_users"], permission_columns["can_view_dashboard"],
             permission_columns["can_view_tournaments"], None,
@@ -445,6 +463,7 @@ def update_staff_logic(admin_id: int, payload: Dict[str, Any], current_admin: di
             UPDATE admins SET
                 password_hash = %s, role = %s, is_super_admin = %s,
                 can_delete_tournaments = %s, can_edit_tournaments = %s, can_create_tournaments = %s,
+                can_manage_news = %s, can_view_contact_messages = %s,
                 can_publish_results = %s, can_manage_gallery = %s, can_manage_matches = %s,
                 can_manage_users = %s, can_view_dashboard = %s, can_view_tournaments = %s
             WHERE id = %s
@@ -452,7 +471,8 @@ def update_staff_logic(admin_id: int, payload: Dict[str, Any], current_admin: di
             (
                 hashed_password, permission_columns["role"], permission_columns["is_super_admin"],
                 permission_columns["can_delete_tournaments"], permission_columns["can_edit_tournaments"],
-                permission_columns["can_create_tournaments"], permission_columns["can_publish_results"],
+                permission_columns["can_create_tournaments"], permission_columns["can_manage_news"],
+                permission_columns["can_view_contact_messages"], permission_columns["can_publish_results"],
                 permission_columns["can_manage_gallery"], permission_columns["can_manage_matches"],
                 permission_columns["can_manage_users"], permission_columns["can_view_dashboard"],
                 permission_columns["can_view_tournaments"], admin_id,
@@ -464,6 +484,7 @@ def update_staff_logic(admin_id: int, payload: Dict[str, Any], current_admin: di
             UPDATE admins SET
                 role = %s, is_super_admin = %s,
                 can_delete_tournaments = %s, can_edit_tournaments = %s, can_create_tournaments = %s,
+                can_manage_news = %s, can_view_contact_messages = %s,
                 can_publish_results = %s, can_manage_gallery = %s, can_manage_matches = %s,
                 can_manage_users = %s, can_view_dashboard = %s, can_view_tournaments = %s
             WHERE id = %s
@@ -471,7 +492,8 @@ def update_staff_logic(admin_id: int, payload: Dict[str, Any], current_admin: di
             (
                 permission_columns["role"], permission_columns["is_super_admin"],
                 permission_columns["can_delete_tournaments"], permission_columns["can_edit_tournaments"],
-                permission_columns["can_create_tournaments"], permission_columns["can_publish_results"],
+                permission_columns["can_create_tournaments"], permission_columns["can_manage_news"],
+                permission_columns["can_view_contact_messages"], permission_columns["can_publish_results"],
                 permission_columns["can_manage_gallery"], permission_columns["can_manage_matches"],
                 permission_columns["can_manage_users"], permission_columns["can_view_dashboard"],
                 permission_columns["can_view_tournaments"], admin_id,
@@ -586,3 +608,4 @@ def get_security_events(current_admin: dict = Depends(get_current_admin)):
     connection.close()
 
     return {"security_events": events}
+

@@ -13,12 +13,29 @@ export default function GalleryAdmin() {
   const [uploading, setUploading] = useState(false);
   const [fileKey, setFileKey] = useState(0);
 
+  // Toast State
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
+
+  // Security Re-Authentication Modal State for Deletion
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [targetImage, setTargetImage] = useState(null); // { id, caption }
+  const [reauth, setReauth] = useState({ username: "", password: "" });
+  const [reauthMessage, setReauthMessage] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
+  const showToast = useCallback((type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  }, []);
+
   const fetchGallery = useCallback(async () => {
     try {
       const response = await api.get("/gallery");
-      setImages(response.data);
+      setImages(response.data || []);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch gallery:", error);
     }
   }, []);
 
@@ -27,18 +44,20 @@ export default function GalleryAdmin() {
 
     const loadData = async () => {
       try {
-        const [galleryResponse, tournamentsResponse] =
-          await Promise.all([
-            api.get("/gallery"),
-            api.get("/tournaments"),
-          ]);
+        const [galleryResponse, tournamentsResponse] = await Promise.all([
+          api.get("/gallery"),
+          api.get("/tournaments"),
+        ]);
 
         if (isMounted) {
-          setImages(galleryResponse.data);
-          setTournaments(tournamentsResponse.data);
+          setImages(galleryResponse.data || []);
+          setTournaments(tournamentsResponse.data || []);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load initial data:", error);
+        if (isMounted) {
+          showToast("error", "Loading Failed", "Unable to load gallery and tournaments.");
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -51,13 +70,13 @@ export default function GalleryAdmin() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [showToast]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
 
     if (!image) {
-      alert("Select an image");
+      showToast("error", "Missing Image", "Please select an image file to upload.");
       return;
     }
 
@@ -77,7 +96,7 @@ export default function GalleryAdmin() {
         },
       });
 
-      alert("Image Uploaded");
+      showToast("success", "Upload Complete", "New gallery photo uploaded successfully!");
 
       setCaption("");
       setImage(null);
@@ -86,36 +105,71 @@ export default function GalleryAdmin() {
 
       fetchGallery();
     } catch (error) {
-      console.error(error);
-      alert("Upload Failed");
+      console.error("Upload failed:", error);
+      showToast("error", "Upload Failed", error?.response?.data?.detail || "Could not upload image.");
     } finally {
       setUploading(false);
     }
   };
 
-  const deleteImage = async (id) => {
-    if (!window.confirm("Delete this image?")) return;
+  // Open Security Modal for Deletion
+  const triggerDeleteModal = (id, captionText) => {
+    setTargetImage({ id, caption: captionText || `Image #${id}` });
+    setReauth({ username: "", password: "" });
+    setReauthMessage("");
+    setSecurityModalOpen(true);
+  };
 
+  // Perform actual API deletion call
+  const executeDelete = async (id) => {
     try {
       await api.delete(`/gallery/${id}`);
-      fetchGallery();
+      setImages((prev) => prev.filter((item) => item.id !== id));
+      showToast("success", "Image Deleted", "The photo has been permanently removed.");
+      setSecurityModalOpen(false);
+      setTargetImage(null);
     } catch (error) {
-      console.error(error);
-      alert("Delete Failed");
+      console.error("Delete error:", error);
+      showToast("error", "Delete Failed", error?.response?.data?.detail || "Could not delete image.");
+    }
+  };
+
+  // Handle Re-Authentication Submit
+  const handleConfirmReauth = async (e) => {
+    e.preventDefault();
+    if (!reauth.username.trim() || !reauth.password.trim()) {
+      setReauthMessage("Username and password are required.");
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      setReauthMessage("");
+      const response = await api.post("/administration/verify-credentials", {
+        username: reauth.username.trim(),
+        password: reauth.password.trim(),
+      });
+
+      if (response.data?.success && targetImage) {
+        await executeDelete(targetImage.id);
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setReauthMessage(
+        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
+      );
+    } finally {
+      setVerifying(false);
     }
   };
 
   const getImageUrl = (imageUrl) => {
     if (!imageUrl) return "";
-
     if (String(imageUrl).startsWith("http")) {
       return imageUrl;
     }
-
-    return `${api.defaults.baseURL}/${String(imageUrl).replace(
-      /^\/+/,
-      ""
-    )}`;
+    const baseURL = String(api.defaults.baseURL || "").replace(/\/+$/, "");
+    return `${baseURL}/${String(imageUrl).replace(/^\/+/, "")}`;
   };
 
   const inputClass =
@@ -123,16 +177,120 @@ export default function GalleryAdmin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <p className="text-gray-400">Loading gallery...</p>
+      <div className="flex min-h-[60vh] items-center justify-center bg-black font-sans text-white">
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-6 py-4 shadow-xl">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+          <span className="font-semibold text-gray-300">Loading gallery...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
+          <div
+            className={`flex items-start gap-4 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
+              toast.type === "success"
+                ? "border-emerald-500/40 bg-zinc-950/95 text-emerald-400"
+                : "border-red-500/40 bg-zinc-950/95 text-red-400"
+            }`}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-current/20 bg-current/10 text-xl font-bold">
+              {toast.type === "success" ? "✓" : "⚠️"}
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="text-sm font-bold text-white">{toast.title}</h4>
+              <p className="mt-0.5 text-xs text-gray-300">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 text-gray-400 hover:text-white text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SECURITY AUTHENTICATION DELETE MODAL */}
+      {securityModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-xl text-red-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Authorization Required</h3>
+                <p className="text-xs text-red-400 font-semibold truncate max-w-[220px]">
+                  Delete item: {targetImage?.caption}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              You are about to delete this gallery photo. Please enter your credentials to verify authorization.
+            </p>
+
+            <form onSubmit={handleConfirmReauth} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={reauth.username}
+                  onChange={(e) => setReauth({ ...reauth, username: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={reauth.password}
+                  onChange={(e) => setReauth({ ...reauth, password: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {reauthMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {reauthMessage}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setSecurityModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={verifying}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-500 transition disabled:opacity-50"
+                >
+                  {verifying ? "Verifying..." : "Confirm Delete"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30 md:flex-row md:items-center md:justify-between">
         <div>
@@ -145,8 +303,7 @@ export default function GalleryAdmin() {
           </h1>
 
           <p className="mt-2 max-w-2xl text-gray-400">
-            Upload and manage tournament gallery images for public
-            event memories.
+            Upload and manage tournament gallery images for public event memories.
           </p>
         </div>
 
@@ -269,8 +426,7 @@ export default function GalleryAdmin() {
           </h2>
 
           <p className="mt-3 text-gray-400">
-            Upload tournament images to show them on the public gallery
-            page.
+            Upload tournament images to show them on the public gallery page.
           </p>
         </div>
       ) : (
@@ -303,7 +459,7 @@ export default function GalleryAdmin() {
                   </p>
 
                   <button
-                    onClick={() => deleteImage(item.id)}
+                    onClick={() => triggerDeleteModal(item.id, item.caption)}
                     className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
                   >
                     Delete
