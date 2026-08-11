@@ -9,6 +9,13 @@ export default function RegistrationsAdmin() {
   // Toast State
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
 
+  // Security Re-Authentication Modal State for Team Rejection Action
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [pendingRejectId, setPendingRejectId] = useState(null);
+  const [reauth, setReauth] = useState({ username: "", password: "" });
+  const [reauthMessage, setReauthMessage] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
   const showToast = useCallback((type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => {
@@ -74,18 +81,58 @@ export default function RegistrationsAdmin() {
     }
   };
 
-  const rejectTeam = async (id) => {
+  // Trigger Security Modal for Team Rejection
+  const triggerRejectModal = (id) => {
+    setPendingRejectId(id);
+    setReauth({ username: "", password: "" });
+    setReauthMessage("");
+    setSecurityModalOpen(true);
+  };
+
+  // Execute authenticated team rejection action
+  const executeRejectTeam = async () => {
     try {
-      await api.put(`/registrations/${id}/reject`);
+      await api.put(`/registrations/${pendingRejectId}/reject`);
       showToast("success", "Team Rejected", "Team has been rejected.");
 
       const res = await api.get(
         `/registrations/tournament/${tournamentId}`
       );
       setRegistrations(res.data);
+      setSecurityModalOpen(false);
+      setPendingRejectId(null);
     } catch (err) {
       console.error(err);
       showToast("error", "Action Failed", err.response?.data?.detail || "Failed to reject team");
+    }
+  };
+
+  // Handle Re-Authentication Submit
+  const handleConfirmReauth = async (e) => {
+    e.preventDefault();
+    if (!reauth.username.trim() || !reauth.password.trim()) {
+      setReauthMessage("Username and password are required.");
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      setReauthMessage("");
+      const response = await api.post("/administration/verify-credentials", {
+        username: reauth.username.trim(),
+        password: reauth.password.trim(),
+      });
+
+      if (response.data?.success && pendingRejectId) {
+        await executeRejectTeam();
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setReauthMessage(
+        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
+      );
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -155,6 +202,82 @@ export default function RegistrationsAdmin() {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* SECURITY AUTHENTICATION REAUTH MODAL */}
+      {securityModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-xl text-red-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Authorization Required</h3>
+                <p className="text-xs text-red-400 font-semibold truncate max-w-[220px]">
+                  Reject Registration #{pendingRejectId}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              You are about to reject this team registration. Please enter your credentials to verify authorization.
+            </p>
+
+            <form onSubmit={handleConfirmReauth} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={reauth.username}
+                  onChange={(e) => setReauth({ ...reauth, username: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={reauth.password}
+                  onChange={(e) => setReauth({ ...reauth, password: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-red-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {reauthMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {reauthMessage}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setSecurityModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={verifying}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-500 transition disabled:opacity-50"
+                >
+                  {verifying ? "Verifying..." : "Confirm Reject"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -355,7 +478,7 @@ export default function RegistrationsAdmin() {
 
                           <button
                             onClick={() =>
-                              rejectTeam(team.id)
+                              triggerRejectModal(team.id)
                             }
                             className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
                           >

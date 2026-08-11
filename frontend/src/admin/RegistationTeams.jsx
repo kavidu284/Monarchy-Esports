@@ -19,18 +19,22 @@ export default function RegistrationDetails() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [actionLoading, setActionLoading] =
-    useState(false);
+  // Security Re-Authentication Modal State for Actions
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [pendingActionType, setPendingActionType] = useState(null); // 'approve' | 'reject'
+  const [reauth, setReauth] = useState({ username: "", password: "" });
+  const [reauthMessage, setReauthMessage] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   // Toast / Popup Message State
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
 
-  const showToast = (type, title, message) => {
+  const showToast = useCallback((type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => {
       setToast(null);
     }, 4000);
-  };
+  }, []);
 
   const getFileUrl = (filePath) => {
     if (!filePath) return "";
@@ -152,7 +156,7 @@ export default function RegistrationDetails() {
       } finally {
         setLoading(false);
       }
-    }, [currentRegistrationId]);
+    }, [currentRegistrationId, showToast]);
 
   useEffect(() => {
     const load = async () => {
@@ -162,41 +166,64 @@ export default function RegistrationDetails() {
     load();
   }, [fetchRegistration]);
 
-  const approveTeam = async () => {
+  // Trigger Security Modal for Team Approval or Rejection
+  const triggerActionModal = (type) => {
+    setPendingActionType(type);
+    setReauth({ username: "", password: "" });
+    setReauthMessage("");
+    setSecurityModalOpen(true);
+  };
+
+  // Execute actual API calls after re-authentication
+  const executeConfirmedAction = async () => {
     try {
-      setActionLoading(true);
+      if (pendingActionType === "approve") {
+        await api.put(
+          `/registrations/${currentRegistrationId}/approve`
+        );
+        showToast("success", "Approved", "Team Approved Successfully");
+      } else if (pendingActionType === "reject") {
+        await api.put(
+          `/registrations/${currentRegistrationId}/reject`
+        );
+        showToast("success", "Rejected", "Team Rejected Successfully");
+      }
 
-      await api.put(
-        `/registrations/${currentRegistrationId}/approve`
-      );
-
-      showToast("success", "Approved", "Team Approved");
-
+      setSecurityModalOpen(false);
+      setPendingActionType(null);
       fetchRegistration();
     } catch (error) {
       console.error(error);
-      showToast("error", "Action Failed", "Approve Failed");
-    } finally {
-      setActionLoading(false);
+      showToast("error", "Action Failed", error.response?.data?.detail || "Operation failed");
     }
   };
 
-  const rejectTeam = async () => {
+  // Handle Re-Authentication Submit
+  const handleConfirmReauth = async (e) => {
+    e.preventDefault();
+    if (!reauth.username.trim() || !reauth.password.trim()) {
+      setReauthMessage("Username and password are required.");
+      return;
+    }
+
     try {
-      setActionLoading(true);
+      setVerifying(true);
+      setReauthMessage("");
+      const response = await api.post("/administration/verify-credentials", {
+        username: reauth.username.trim(),
+        password: reauth.password.trim(),
+      });
 
-      await api.put(
-        `/registrations/${currentRegistrationId}/reject`
-      );
-
-      showToast("success", "Rejected", "Team Rejected");
-
-      fetchRegistration();
+      if (response.data?.success) {
+        await executeConfirmedAction();
+      }
     } catch (error) {
-      console.error(error);
-      showToast("error", "Action Failed", "Reject Failed");
+      console.error("Verification failed:", error);
+      setReauthMessage(
+        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
+      );
     } finally {
-      setActionLoading(false);
+      setVerifying(false);
     }
   };
 
@@ -297,6 +324,86 @@ export default function RegistrationDetails() {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* SECURITY RE-AUTHENTICATION MODAL */}
+      {securityModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 text-xl text-blue-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Authorization Required</h3>
+                <p className="text-xs text-blue-400 font-semibold truncate max-w-[220px]">
+                  {pendingActionType === "approve" ? "Approve" : "Reject"} Team: {registration.team_name}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Please enter your admin credentials to verify authorization before proceeding.
+            </p>
+
+            <form onSubmit={handleConfirmReauth} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={reauth.username}
+                  onChange={(e) => setReauth({ ...reauth, username: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={reauth.password}
+                  onChange={(e) => setReauth({ ...reauth, password: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {reauthMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {reauthMessage}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setSecurityModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={verifying}
+                  className={`rounded-xl px-5 py-2 text-xs font-bold text-white shadow-lg transition disabled:opacity-50 ${
+                    pendingActionType === "approve"
+                      ? "bg-green-600 hover:bg-green-500 shadow-green-600/20"
+                      : "bg-red-600 hover:bg-red-500 shadow-red-600/20"
+                  }`}
+                >
+                  {verifying ? "Verifying..." : `Confirm ${pendingActionType === "approve" ? "Approve" : "Reject"}`}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -455,23 +562,17 @@ export default function RegistrationDetails() {
 
           <div className="flex flex-wrap gap-3 lg:flex-col">
             <button
-              onClick={approveTeam}
-              disabled={actionLoading}
-              className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => triggerActionModal("approve")}
+              className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700"
             >
-              {actionLoading
-                ? "Processing..."
-                : "Approve"}
+              Approve
             </button>
 
             <button
-              onClick={rejectTeam}
-              disabled={actionLoading}
-              className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => triggerActionModal("reject")}
+              className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700"
             >
-              {actionLoading
-                ? "Processing..."
-                : "Reject"}
+              Reject
             </button>
           </div>
         </div>

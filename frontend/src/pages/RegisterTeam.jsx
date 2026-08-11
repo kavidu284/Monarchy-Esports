@@ -96,7 +96,7 @@ export default function RegisterTeam() {
           "Your team registration has been submitted successfully and is pending admin approval.",
         onConfirm: () => {
           setModal(null);
-          navigate(`/tournaments/${id}`);
+          navigate({ pathname: `/tournament/${tournament.id}` });
         },
       });
 
