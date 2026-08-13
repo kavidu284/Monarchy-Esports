@@ -444,3 +444,62 @@ def get_approved_teams(tournament_id: int):
     connection.close()
 
     return teams
+@router.get("/registrations/tournament/{tournament_id}/approved-teams-details")
+def get_approved_teams_details(
+    tournament_id: int,
+    current_admin: dict = Depends(get_current_admin)
+):
+    connection = get_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Get approved teams
+        cursor.execute(
+            """
+            SELECT
+                r.id AS team_id,
+                r.team_name,
+                r.captain_name,
+                r.captain_phone,
+                r.created_at
+            FROM registrations r
+            WHERE r.tournament_id = %s
+              AND r.status = 'Approved'
+            ORDER BY r.created_at ASC, r.team_name ASC
+            """,
+            (tournament_id,)
+        )
+
+        teams = cursor.fetchall()
+
+        # Get players for every approved team
+        for team in teams:
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    real_name,
+                    ign,
+                    mlbb_id,
+                    server_id,
+                    is_substitute
+                FROM players
+                WHERE registration_id = %s
+                ORDER BY
+                    is_substitute ASC,
+                    id ASC
+                """,
+                (team["team_id"],)
+            )
+
+            team["players"] = cursor.fetchall()
+
+        return {
+            "tournament_id": tournament_id,
+            "teams": teams,
+            "total_teams": len(teams)
+        }
+
+    finally:
+        cursor.close()
+        connection.close()

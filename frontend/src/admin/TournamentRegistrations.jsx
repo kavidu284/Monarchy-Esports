@@ -316,13 +316,18 @@ export default function RegistrationsAdmin() {
               </span>
             </div>
           </div>
-
+          <button
+            onClick={() => navigate(`/admin/registrations/${tournamentId}/approved`)}
+            className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
+          >
+             Approved Teams
+          </button>
           <button
             onClick={() => navigate("/admin/tournaments")}
             className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
           >
             ← Back
-          </button>
+          </button>       
         </div>
       </div>
 

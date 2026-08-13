@@ -27,6 +27,7 @@ import CreateNews from "./admin/CreateNews";
 import Editnews from "./admin/editNews";
 import MessagesAdmin from "./admin/MessageAdmin";
 import GalleryAdmin from "./admin/GalleryAdmin";
+import ApproveTeam from "./admin/approvedTeam.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TournamentView from "./pages/TournamentView";
 import TournamentMatchesAdmin from "./admin/TournamentMatchesAdmin.jsx";
@@ -77,6 +78,7 @@ function App() {
           <Route path="tournament/:tournamentId/matches" element={<ProtectedRoute permissionKey="can_manage_matches"><TournamentMatchesAdmin /></ProtectedRoute>} />
           <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute permissionKey="can_manage_matches"><RoundRobinAdmin /></ProtectedRoute>} />
           <Route path="tournaments/champions/:id" element={<ProtectedRoute permissionKey="can_publish_results"><MatchResultAdmin /></ProtectedRoute>} />
+          <Route path="registrations/:tournamentId/approved" element={<ProtectedRoute permissionKey="can_view_tournaments"><ApproveTeam /></ProtectedRoute>} />
           
           {/* NEWS MANAGEMENT (SEPARATE PERMISSION FLAG) */}
           <Route path="news" element={<ProtectedRoute permissionKey="can_manage_news"><NewsAdmin /></ProtectedRoute>} />
