@@ -147,8 +147,19 @@ export default function Administration() {
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">
-                    🕒 {event.created_at ? new Date(event.created_at).toLocaleString() : "Unknown"}
-                  </span>
+                      🕒{" "}
+                      {event.created_at
+                        ? new Date(event.created_at).toLocaleString("en-LK", {
+                            timeZone: "Asia/Colombo",
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })
+                        : "Unknown"}
+                    </span>
                 </div>
 
                 <div className="mt-3 text-sm text-gray-300">

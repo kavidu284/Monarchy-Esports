@@ -5,29 +5,66 @@ import Hero from "../components/Hero";
 import AboutSection from "../components/AboutSection";
 import TournamentCard from "../components/TournamentCard";
 import AnnouncementSection from "../components/AnnouncementSection";
+import logo from "../assets/footer.png";
 
 import api from "../services/api";
 
 function LoadingScreen() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black text-white">
-      <div className="text-center">
-        <div className="relative mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10">
-          <div className="absolute inset-0 animate-ping rounded-full bg-blue-500/20" />
-          <div className="absolute h-24 w-24 animate-spin rounded-full border-4 border-zinc-800 border-t-blue-500" />
-          <span className="relative text-4xl">GO</span>
-        </div>
 
-        <h1 className="text-4xl font-black text-blue-500">
-          MONARCHY ESPORTS
-        </h1>
+      <section className="relative flex min-h-[90vh] w-full items-center justify-center overflow-hidden bg-black px-4 text-white">
+        {/* Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.35),transparent_45%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.15),transparent_45%)]" />
 
-        <p className="mt-3 animate-pulse text-gray-400">
-          Loading gaming arena...
-        </p>
-      </div>
-    </div>
-  );
+        {/* Glow */}
+        <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/20 blur-3xl" />
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            scale: 0.9,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+          }}
+          className="relative z-10 flex flex-col items-center"
+        >
+          <motion.img
+            src={logo}
+            alt="Monarchy Esports Logo"
+            animate={{
+              y: [0, -10, 0],
+              scale: [1, 1.03, 1],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="mb-8 h-auto w-36 object-contain drop-shadow-[0_0_35px_rgba(37,99,235,0.8)] sm:w-48 md:w-60"
+          />
+
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-zinc-800">
+            <motion.div
+              animate={{
+                x: ["-100%", "100%"],
+              }}
+              transition={{
+                duration: 1.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="h-full w-full rounded-full bg-blue-500"
+            />
+          </div>
+
+          <p className="mt-4 text-xs font-bold uppercase tracking-[0.3em] text-zinc-500">
+            Loading Arena
+          </p>
+        </motion.div>
+      </section>
+    );
 }
 
 export default function Home() {
