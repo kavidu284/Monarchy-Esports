@@ -67,12 +67,6 @@ export default function TournamentView() {
     loadDataRef.current();
   }, []);
 
-  // Trigger Security Modal for Refreshing Groups
-  const triggerRefreshModal = () => {
-    setReauth({ username: "", password: "" });
-    setReauthMessage("");
-    setSecurityModalOpen(true);
-  };
 
   // Execute authenticated group refresh
   const executeRefreshGroups = async () => {
@@ -918,14 +912,7 @@ export default function TournamentView() {
             </div>
           </div>
 
-          <div>
-            <button
-              onClick={triggerRefreshModal}
-              className="rounded-xl border border-blue-500/40 bg-blue-600/10 px-6 py-3 font-bold text-blue-300 transition hover:bg-blue-600/20 shadow-lg shadow-blue-950/30"
-            >
-              🔄 Refresh Groups
-            </button>
-          </div>
+     
         </div>
       </section>
 
