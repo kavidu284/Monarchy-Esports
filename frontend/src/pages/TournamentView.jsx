@@ -1278,7 +1278,16 @@ export default function TournamentView() {
             )}
 
             {/* BRACKET SECTION */}
+            <div className={pageSectionClass}>
+              
             <div className="space-y-8 sm:space-y-12">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
+                Bracket
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+                  Tournament Bracket
+                </h2>
               {bracketMatches.length === 0 ? (
                 <div className="rounded-2xl border border-blue-900/40 bg-zinc-950 p-8 text-center sm:rounded-3xl sm:p-12 shadow-xl shadow-blue-950/20">
                   <p className="text-gray-400">
@@ -1336,6 +1345,7 @@ export default function TournamentView() {
                 </div>
               )}
             </div>
+          </div>
           </div>
         )}
       </div>
