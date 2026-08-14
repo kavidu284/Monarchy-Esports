@@ -268,7 +268,7 @@ export default function RegisterTeam() {
                 <input
                   type="text"
                   name="clan_name"
-                  placeholder="Enter clan name"
+                  placeholder="Enter clan name If You haven't Use N/A"
                   required
                   className={inputClass}
                 />
