@@ -638,16 +638,23 @@ export default function AdministratorUser() {
 
             <form onSubmit={handleSaveUserSubmit} className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
+       
                 <div>
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-300">
                     Role Title
                   </label>
-                  <input
-                    type="text"
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value)}
+                  <select
+                    value={editRole.role}
+                    onChange={(e) => setEditRole({ role: e.target.value })}
                     className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
-                  />
+                  >
+                    <option value="full_access_staff">Full Access Staff</option>
+                    <option value="tournament_editor">Tournament Editor</option>
+                    <option value="news_editor">News & Media Editor</option>
+                    <option value="tournament_viewer">Tournament Viewer</option>
+                    <option value="match_results_manager">Match Results Manager</option>
+                    <option value="gallery_manager">Gallery Manager</option>
+                  </select>
                 </div>
 
                 <div>
