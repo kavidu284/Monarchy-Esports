@@ -10,6 +10,9 @@ export default function RegistrationsAdmin() {
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
 
   // Security Re-Authentication Modal State for Team Rejection Action
+  // Security Re-Authentication Modal State for Re-Approve
+  const [reauthAction, setReauthAction] = useState(null);
+  const [pendingReapproveId, setPendingReapproveId] = useState(null);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
   const [pendingRejectId, setPendingRejectId] = useState(null);
   const [reauth, setReauth] = useState({ username: "", password: "" });
@@ -66,29 +69,47 @@ export default function RegistrationsAdmin() {
     };
   }, [tournamentId, showToast]);
 
-  const approveTeam = async (id) => {
-    try {
-      await api.put(`/registrations/${id}/approve`);
-      showToast("success", "Team Approved", "Team has been approved successfully.");
+ const approveTeam = async (id) => {
+  try {
+    await api.put(`/registrations/${id}/approve`);
 
-      const res = await api.get(
-        `/registrations/tournament/${tournamentId}`
-      );
-      setRegistrations(res.data);
-    } catch (err) {
-      console.error(err);
-      showToast("error", "Action Failed", err.response?.data?.detail || "Failed to approve team");
-    }
-  };
+    showToast(
+      "success",
+      "Team Approved",
+      "Team has been approved successfully."
+    );
+
+    const res = await api.get(
+      `/registrations/tournament/${tournamentId}`
+    );
+
+    setRegistrations(res.data);
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      "error",
+      "Action Failed",
+      err.response?.data?.detail || "Failed to approve team"
+    );
+  }
+};
 
   // Trigger Security Modal for Team Rejection
-  const triggerRejectModal = (id) => {
-    setPendingRejectId(id);
-    setReauth({ username: "", password: "" });
-    setReauthMessage("");
-    setSecurityModalOpen(true);
-  };
+const triggerRejectModal = (id) => {
+  setPendingRejectId(id);
+  setPendingReapproveId(null);
 
+  setReauthAction("reject");
+
+  setReauth({
+    username: "",
+    password: "",
+  });
+
+  setReauthMessage("");
+  setSecurityModalOpen(true);
+};
   // Execute authenticated team rejection action
   const executeRejectTeam = async () => {
     try {
@@ -106,35 +127,125 @@ export default function RegistrationsAdmin() {
       showToast("error", "Action Failed", err.response?.data?.detail || "Failed to reject team");
     }
   };
+  const triggerReapproveModal = (id) => {
+  setPendingReapproveId(id);
 
+  setReauth({
+    username: "",
+    password: "",
+  });
+
+  setReauthMessage("");
+
+  setReauthAction("reapprove");
+  setSecurityModalOpen(true);
+  };
+  
   // Handle Re-Authentication Submit
-  const handleConfirmReauth = async (e) => {
-    e.preventDefault();
-    if (!reauth.username.trim() || !reauth.password.trim()) {
-      setReauthMessage("Username and password are required.");
+const handleConfirmReauth = async (e) => {
+  e.preventDefault();
+
+  if (
+    !reauth.username.trim() ||
+    !reauth.password.trim()
+  ) {
+    setReauthMessage(
+      "Username and password are required."
+    );
+
+    return;
+  }
+
+  try {
+    setVerifying(true);
+    setReauthMessage("");
+
+    // Verify admin credentials
+    const response = await api.post(
+      "/administration/verify-credentials",
+      {
+        username: reauth.username.trim(),
+        password: reauth.password.trim(),
+      }
+    );
+
+    if (!response.data?.success) {
+      setReauthMessage(
+        "Invalid credentials or unauthorized action."
+      );
+
       return;
     }
 
-    try {
-      setVerifying(true);
-      setReauthMessage("");
-      const response = await api.post("/administration/verify-credentials", {
-        username: reauth.username.trim(),
-        password: reauth.password.trim(),
-      });
-
-      if (response.data?.success && pendingRejectId) {
-        await executeRejectTeam();
-      }
-    } catch (error) {
-      console.error("Verification failed:", error);
-      setReauthMessage(
-        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
-      );
-    } finally {
-      setVerifying(false);
+    // ================================
+    // REJECT
+    // ================================
+    if (
+      reauthAction === "reject" &&
+      pendingRejectId
+    ) {
+      await executeRejectTeam();
+      return;
     }
-  };
+
+    // ================================
+    // RE-APPROVE
+    // ================================
+    if (
+      reauthAction === "reapprove" &&
+      pendingReapproveId
+    ) {
+      await executeReapproveTeam();
+      return;
+    }
+
+  } catch (error) {
+    console.error(
+      "Verification failed:",
+      error
+    );
+
+    setReauthMessage(
+      error?.response?.data?.detail ||
+        "Invalid credentials or unauthorized action."
+    );
+  } finally {
+    setVerifying(false);
+  }
+};
+const executeReapproveTeam = async () => {
+  try {
+    await api.put(
+      `/registrations/${pendingReapproveId}/approve`
+    );
+
+    showToast(
+      "success",
+      "Team Re-Approved",
+      "The rejected team has been approved again."
+    );
+
+    const res = await api.get(
+      `/registrations/tournament/${tournamentId}`
+    );
+
+    setRegistrations(res.data);
+
+    setSecurityModalOpen(false);
+    setPendingReapproveId(null);
+    setReauthAction(null);
+
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      "error",
+      "Re-Approval Failed",
+      err.response?.data?.detail ||
+        "Failed to re-approve team."
+    );
+  }
+};
 
   const getTournamentStatusClass = (status) => {
     if (status === "Ongoing") {
@@ -215,9 +326,20 @@ export default function RegistrationsAdmin() {
                 🔒
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Authorization Required</h3>
-                <p className="text-xs text-red-400 font-semibold truncate max-w-[220px]">
-                  Reject Registration #{pendingRejectId}
+               <h3 className="text-lg font-bold text-white">
+                  Authorization Required
+                </h3>
+
+                <p
+                  className={`text-xs font-semibold ${
+                    reauthAction === "reapprove"
+                      ? "text-blue-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {reauthAction === "reapprove"
+                    ? `Re-Approve Registration #${pendingReapproveId}`
+                    : `Reject Registration #${pendingRejectId}`}
                 </p>
               </div>
             </div>
@@ -225,7 +347,11 @@ export default function RegistrationsAdmin() {
             <p className="text-xs text-gray-400 leading-relaxed">
               You are about to reject this team registration. Please enter your credentials to verify authorization.
             </p>
-
+            <p className="text-xs leading-relaxed text-gray-400">
+              {reauthAction === "reapprove"
+                ? "This team was previously rejected. Administrator authentication is required before re-approving this registration."
+                : "You are about to reject this team registration. Please enter your credentials to verify authorization."}
+            </p>
             <form onSubmit={handleConfirmReauth} className="space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
@@ -274,7 +400,7 @@ export default function RegistrationsAdmin() {
                   disabled={verifying}
                   className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-500 transition disabled:opacity-50"
                 >
-                  {verifying ? "Verifying..." : "Confirm Reject"}
+                  {verifying ? "Verifying..." : "Confirm "}
                 </button>
               </div>
             </form>
@@ -470,27 +596,65 @@ export default function RegistrationsAdmin() {
                         View
                       </button>
 
-                      {isOngoing && (
+                    {isOngoing && (
+                    <>
+                      {/* ================================
+                          PENDING
+                      ================================= */}
+                      {team.status === "Pending" && (
                         <>
+                          {/* Pending → Approve
+                              No re-authentication required
+                          */}
                           <button
-                            onClick={() =>
-                              approveTeam(team.id)
-                            }
+                            onClick={() => approveTeam(team.id)}
                             className="rounded-xl bg-green-600 px-5 py-3 font-bold text-white transition hover:bg-green-700"
                           >
-                            Approve
+                            ✓ Approve
                           </button>
 
+                          {/* Pending → Reject
+                              Authentication required
+                          */}
                           <button
-                            onClick={() =>
-                              triggerRejectModal(team.id)
-                            }
+                            onClick={() => triggerRejectModal(team.id)}
                             className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
                           >
                             Reject
                           </button>
                         </>
                       )}
+
+                      {/* ================================
+                          APPROVED
+                      ================================= */}
+                      {team.status === "Approved" && (
+                        <>
+                          {/* Approved → Reject
+                              Authentication required
+                          */}
+                          <button
+                            onClick={() => triggerRejectModal(team.id)}
+                            className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
+                          >
+                            🔐 Reject
+                          </button>
+                        </>
+                      )}
+
+                      {/* ================================
+                          REJECTED
+                      ================================= */}
+                      {team.status === "Rejected" && (
+                        <button
+                          onClick={() => triggerReapproveModal(team.id)}
+                          className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700"
+                        >
+                          🔐 Re-Approve
+                        </button>
+                      )}
+                    </>
+                  )}
                     </div>
                   </div>
                 </div>
