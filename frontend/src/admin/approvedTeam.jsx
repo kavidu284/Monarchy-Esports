@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import * as XLSX from "xlsx";
 import api from "../services/api";
 
 export default function ApprovedTeam() {
@@ -12,60 +13,64 @@ export default function ApprovedTeam() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-useEffect(() => {
-  if (!tournamentId) {
-    return;
-  }
-
-  let mounted = true;
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const [tournamentResponse, teamsResponse] =
-        await Promise.all([
-          api.get(`/tournaments/${tournamentId}`),
-          api.get(
-            `/registrations/tournament/${tournamentId}/approved-teams-details`
-          ),
-        ]);
-
-      if (!mounted) return;
-
-      setTournament(tournamentResponse.data);
-
-      const data = teamsResponse.data;
-
-      setTeams(
-        Array.isArray(data?.teams)
-          ? data.teams
-          : []
-      );
-    } catch (err) {
-      console.error("Approved teams error:", err);
-
-      if (!mounted) return;
-
-      setError(
-        err?.response?.data?.detail ||
-        err?.message ||
-        "Unable to load approved teams."
-      );
-    } finally {
-      if (mounted) {
-        setLoading(false);
-      }
+  useEffect(() => {
+    if (!tournamentId) {
+      return;
     }
-  };
 
-  loadData();
+    let mounted = true;
 
-  return () => {
-    mounted = false;
-  };
-}, [tournamentId]);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const [tournamentResponse, teamsResponse] =
+          await Promise.all([
+            api.get(`/tournaments/${tournamentId}`),
+            api.get(
+              `/registrations/tournament/${tournamentId}/approved-teams-details`
+            ),
+          ]);
+
+        if (!mounted) return;
+
+        setTournament(tournamentResponse.data);
+
+        const data = teamsResponse.data;
+
+        setTeams(
+          Array.isArray(data?.teams)
+            ? data.teams
+            : []
+        );
+      } catch (err) {
+        console.error("Approved teams error:", err);
+
+        if (!mounted) return;
+
+        setError(
+          err?.response?.data?.detail ||
+            err?.message ||
+            "Unable to load approved teams."
+        );
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [tournamentId]);
+
+  /* =========================================================
+     PLAYER HELPERS
+  ========================================================= */
 
   const mainPlayers = (players = []) =>
     players.filter(
@@ -89,9 +94,155 @@ useEffect(() => {
     return substitutePlayers(players)[index] || null;
   };
 
-  const printPage = () => {
-    window.print();
+  /* =========================================================
+     EXCEL EXPORT
+  ========================================================= */
+
+  const exportToExcel = () => {
+    if (!teams.length) {
+      alert("There are no approved teams to export.");
+      return;
+    }
+
+    const excelData = teams.map((team) => {
+      const players = Array.isArray(team.players)
+        ? team.players
+        : [];
+
+      const p1 = getPlayer(players, 0);
+      const p2 = getPlayer(players, 1);
+      const p3 = getPlayer(players, 2);
+      const p4 = getPlayer(players, 3);
+      const p5 = getPlayer(players, 4);
+
+      const sub1 = getSub(players, 0);
+      const sub2 = getSub(players, 1);
+
+      return {
+        "Team Name": team.team_name || "-",
+        "Captain Name": team.captain_name || "-",
+        "Captain Mobile": team.captain_phone || "-",
+
+        "P1 Name": p1?.real_name || "-",
+        "P1 MLBB ID": p1?.mlbb_id || "-",
+        "P1 IGN": p1?.ign || "-",
+
+        "P2 Name": p2?.real_name || "-",
+        "P2 MLBB ID": p2?.mlbb_id || "-",
+        "P2 IGN": p2?.ign || "-",
+
+        "P3 Name": p3?.real_name || "-",
+        "P3 MLBB ID": p3?.mlbb_id || "-",
+        "P3 IGN": p3?.ign || "-",
+
+        "P4 Name": p4?.real_name || "-",
+        "P4 MLBB ID": p4?.mlbb_id || "-",
+        "P4 IGN": p4?.ign || "-",
+
+        "P5 Name": p5?.real_name || "-",
+        "P5 MLBB ID": p5?.mlbb_id || "-",
+        "P5 IGN": p5?.ign || "-",
+
+        "Sub 1 Name": sub1?.real_name || "-",
+        "Sub 1 MLBB ID": sub1?.mlbb_id || "-",
+        "Sub 1 IGN": sub1?.ign || "-",
+
+        "Sub 2 Name": sub2?.real_name || "-",
+        "Sub 2 MLBB ID": sub2?.mlbb_id || "-",
+        "Sub 2 IGN": sub2?.ign || "-",
+
+        Date: team.created_at
+          ? new Date(team.created_at).toLocaleDateString()
+          : "-",
+
+        "Team ID": team.team_id
+          ? `#${team.team_id}`
+          : "-",
+      };
+    });
+
+    /* =======================================================
+       CREATE WORKSHEET
+    ======================================================= */
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    /* =======================================================
+       COLUMN WIDTHS
+    ======================================================= */
+
+    worksheet["!cols"] = [
+      { wch: 25 }, // Team
+      { wch: 25 }, // Captain
+      { wch: 18 }, // Mobile
+
+      { wch: 25 }, // P1 Name
+      { wch: 16 }, // P1 ID
+      { wch: 20 }, // P1 IGN
+
+      { wch: 25 }, // P2 Name
+      { wch: 16 }, // P2 ID
+      { wch: 20 }, // P2 IGN
+
+      { wch: 25 }, // P3 Name
+      { wch: 16 }, // P3 ID
+      { wch: 20 }, // P3 IGN
+
+      { wch: 25 }, // P4 Name
+      { wch: 16 }, // P4 ID
+      { wch: 20 }, // P4 IGN
+
+      { wch: 25 }, // P5 Name
+      { wch: 16 }, // P5 ID
+      { wch: 20 }, // P5 IGN
+
+      { wch: 25 }, // Sub 1 Name
+      { wch: 16 }, // Sub 1 ID
+      { wch: 20 }, // Sub 1 IGN
+
+      { wch: 25 }, // Sub 2 Name
+      { wch: 16 }, // Sub 2 ID
+      { wch: 20 }, // Sub 2 IGN
+
+      { wch: 15 }, // Date
+      { wch: 12 }, // Team ID
+    ];
+
+    /* =======================================================
+       CREATE WORKBOOK
+    ======================================================= */
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Approved Teams"
+    );
+
+    /* =======================================================
+       FILE NAME
+    ======================================================= */
+
+    const tournamentName =
+      tournament?.title
+        ?.replace(/[^a-zA-Z0-9-_ ]/g, "")
+        ?.trim()
+        ?.replace(/\s+/g, "_") ||
+      `Tournament_${tournamentId}`;
+
+    const fileName = `${tournamentName}_Approved_Teams.xlsx`;
+
+    /* =======================================================
+       DOWNLOAD
+    ======================================================= */
+
+    XLSX.writeFile(workbook, fileName);
   };
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
 
   if (loading) {
     return (
@@ -106,6 +257,10 @@ useEffect(() => {
       </div>
     );
   }
+
+  /* =========================================================
+     ERROR
+  ========================================================= */
 
   if (error) {
     return (
@@ -128,16 +283,20 @@ useEffect(() => {
 
             <button
               onClick={() =>
-                navigate(`/admin/tournaments/${tournamentId}`)
+                navigate(
+                  `/admin/tournaments/${tournamentId}`
+                )
               }
-              className="rounded-xl border border-zinc-700 px-5 py-3 font-bold hover:border-blue-500"
+              className="rounded-xl border border-zinc-700 px-5 py-3 font-bold transition hover:border-blue-500"
             >
               ← Back
             </button>
 
             <button
-              onClick={() => window.location.reload()}
-              className="rounded-xl bg-blue-600 px-5 py-3 font-bold hover:bg-blue-500"
+              onClick={() =>
+                window.location.reload()
+              }
+              className="rounded-xl bg-blue-600 px-5 py-3 font-bold transition hover:bg-blue-500"
             >
               Retry
             </button>
@@ -148,49 +307,20 @@ useEffect(() => {
     );
   }
 
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
   return (
     <div className="min-h-screen bg-black p-4 text-white sm:p-6">
 
-      <style>
-        {`
-          @media print {
-            body {
-              background: white !important;
-            }
-
-            .no-print {
-              display: none !important;
-            }
-
-            .print-table {
-              width: 100% !important;
-              min-width: 0 !important;
-              color: black !important;
-              background: white !important;
-              font-size: 8px !important;
-            }
-
-            .print-table th,
-            .print-table td {
-              color: black !important;
-              background: white !important;
-              border: 1px solid #777 !important;
-              padding: 4px !important;
-            }
-
-            @page {
-              size: landscape;
-              margin: 8mm;
-            }
-          }
-        `}
-      </style>
-
       <div className="mx-auto max-w-[2200px]">
 
-        {/* HEADER */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
-        <div className="no-print mb-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+        <div className="mb-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
 
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
@@ -222,22 +352,33 @@ useEffect(() => {
 
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
 
               <button
                 onClick={() =>
-                  navigate(`/admin/registrationsteam/${tournamentId}`)
+                  navigate(
+                    `/admin/registrationsteam/${tournamentId}`
+                  )
                 }
-                className="rounded-xl border border-zinc-700 px-5 py-3 font-bold hover:border-blue-500"
+                className="rounded-xl border border-zinc-700 px-5 py-3 font-bold transition hover:border-blue-500"
               >
                 ← Back
               </button>
 
+              {/* =================================================
+                  EXCEL BUTTON
+              ================================================= */}
+
               <button
-                onClick={printPage}
-                className="rounded-xl bg-blue-600 px-5 py-3 font-bold hover:bg-blue-500"
+                onClick={exportToExcel}
+                disabled={teams.length === 0}
+                className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-bold transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                📄 Print / PDF
+                <span className="text-lg">
+                  📊
+                </span>
+
+                Download Excel
               </button>
 
             </div>
@@ -245,7 +386,9 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* EMPTY */}
+        {/* =================================================
+            EMPTY
+        ================================================= */}
 
         {teams.length === 0 && (
           <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center">
@@ -259,18 +402,21 @@ useEffect(() => {
             </h2>
 
             <p className="mt-3 text-gray-400">
-              There are currently no approved teams for this tournament.
+              There are currently no approved teams
+              for this tournament.
             </p>
 
           </div>
         )}
 
-        {/* TABLE */}
+        {/* =================================================
+            TABLE
+        ================================================= */}
 
         {teams.length > 0 && (
           <div className="overflow-x-auto rounded-3xl border border-zinc-800 bg-zinc-950">
 
-            <table className="print-table min-w-[2400px] w-full border-collapse">
+            <table className="min-w-[2400px] w-full border-collapse">
 
               <thead>
 
@@ -300,13 +446,29 @@ useEffect(() => {
                   <Th>P5 ID</Th>
                   <Th>P5 IGN</Th>
 
-                  <Th sub>Sub 1 Name</Th>
-                  <Th sub>Sub 1 ID</Th>
-                  <Th sub>Sub 1 IGN</Th>
+                  <Th sub>
+                    Sub 1 Name
+                  </Th>
 
-                  <Th sub>Sub 2 Name</Th>
-                  <Th sub>Sub 2 ID</Th>
-                  <Th sub>Sub 2 IGN</Th>
+                  <Th sub>
+                    Sub 1 ID
+                  </Th>
+
+                  <Th sub>
+                    Sub 1 IGN
+                  </Th>
+
+                  <Th sub>
+                    Sub 2 Name
+                  </Th>
+
+                  <Th sub>
+                    Sub 2 ID
+                  </Th>
+
+                  <Th sub>
+                    Sub 2 IGN
+                  </Th>
 
                   <Th>Date</Th>
                   <Th>Team ID</Th>
@@ -319,7 +481,9 @@ useEffect(() => {
 
                 {teams.map((team) => {
 
-                  const players = Array.isArray(team.players)
+                  const players = Array.isArray(
+                    team.players
+                  )
                     ? team.players
                     : [];
 
@@ -335,7 +499,7 @@ useEffect(() => {
                   return (
                     <tr
                       key={team.team_id}
-                      className="border-t border-zinc-800 hover:bg-zinc-900"
+                      className="border-t border-zinc-800 transition hover:bg-zinc-900"
                     >
 
                       <Td bold>
@@ -420,9 +584,13 @@ function Th({ children, sub = false }) {
    NORMAL CELL
 ========================================================= */
 
-function Td({ children, bold = false }) {
+function Td({
+  children,
+  bold = false,
+}) {
   return (
     <td className="whitespace-nowrap border-r border-zinc-800 px-4 py-5">
+
       <span
         className={
           bold
@@ -432,6 +600,7 @@ function Td({ children, bold = false }) {
       >
         {children}
       </span>
+
     </td>
   );
 }
@@ -441,10 +610,16 @@ function Td({ children, bold = false }) {
    PLAYER
 ========================================================= */
 
-function Player({ player, sub = false }) {
+function Player({
+  player,
+  sub = false,
+}) {
   return (
     <>
+      {/* NAME */}
+
       <td className="whitespace-nowrap border-r border-zinc-800 px-4 py-5">
+
         <span
           className={
             sub
@@ -454,18 +629,27 @@ function Player({ player, sub = false }) {
         >
           {player?.real_name || "-"}
         </span>
+
       </td>
 
+      {/* MLBB ID */}
+
       <td className="whitespace-nowrap border-r border-zinc-800 px-4 py-5">
+
         <span className="font-mono text-sm text-gray-300">
           {player?.mlbb_id || "-"}
         </span>
+
       </td>
 
+      {/* IGN */}
+
       <td className="whitespace-nowrap border-r border-zinc-800 px-4 py-5">
+
         <span className="text-gray-300">
           {player?.ign || "-"}
         </span>
+
       </td>
     </>
   );
