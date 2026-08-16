@@ -5,6 +5,7 @@ from app.database import get_connection
 from fastapi import Depends
 from app.dependencies.auth import get_current_admin
 from app.utils.cloudinary_upload import upload_image
+from typing import Optional
 
 router = APIRouter()
 
@@ -500,6 +501,83 @@ def get_approved_teams_details(
             "total_teams": len(teams)
         }
 
+    finally:
+        cursor.close()
+        connection.close()
+        
+        
+@router.put("/registrations/{registration_id}/edit")
+async def edit_registration(
+    registration_id: int,
+    team_name: str = Form(...),
+    clan_name: Optional[str] = Form(None),
+    captain_name: str = Form(...),
+    captain_email: Optional[str] = Form(None),
+    captain_phone: Optional[str] = Form(None),
+    discord_username: Optional[str] = Form(None),
+    status: str = Form("Pending"),
+    team_logo: Optional[UploadFile] = File(None),
+    lobby_screenshot: Optional[UploadFile] = File(None),
+    current_admin: dict = Depends(get_current_admin)
+):
+    connection = get_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        cursor.execute("SELECT * FROM registrations WHERE id = %s", (registration_id,))
+        registration = cursor.fetchone()
+
+        if not registration:
+            raise HTTPException(status_code=404, detail="Registration not found")
+
+        team_logo_url = registration["team_logo"]
+        if team_logo:
+            team_logo_url = upload_image(team_logo)
+
+        lobby_url = registration["lobby_screenshot"]
+        if lobby_screenshot:
+            lobby_url = upload_image(lobby_screenshot)
+
+        # Update main registration details
+        cursor.execute(
+            """
+            UPDATE registrations
+            SET
+                team_name = %s,
+                clan_name = %s,
+                team_logo = %s,
+                captain_name = %s,
+                captain_email = %s,
+                captain_phone = %s,
+                discord_username = %s,
+                lobby_screenshot = %s,
+                status = %s
+            WHERE id = %s
+            """,
+            (
+                team_name,
+                clan_name,
+                team_logo_url,
+                captain_name,
+                captain_email,
+                captain_phone,
+                discord_username,
+                lobby_url,
+                status,
+                registration_id
+            )
+        )
+
+        connection.commit()
+        return {"message": "Registration updated successfully", "registration_id": registration_id}
+
+    except HTTPException:
+        connection.rollback()
+        raise
+    except Exception as e:
+        connection.rollback()
+        print("EDIT REGISTRATION ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         connection.close()

@@ -750,7 +750,12 @@ export default function RegistrationDetails() {
             screenshot, and player list.
           </p>
         </div>
-
+        <Link
+          to = {`/admin/registrations/edit/${registration.id}`}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+        >
+          Edit
+        </Link>
         <Link to={backPath}>
           <button
             type="button"
