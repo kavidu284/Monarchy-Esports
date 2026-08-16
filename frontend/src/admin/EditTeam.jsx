@@ -74,7 +74,7 @@ export default function EditRegistration() {
       setPlayers(
         Array.isArray(playersList)
           ? playersList.map((player) => ({
-              id: player.id,
+              id: player.id || null,
               real_name: player.real_name || "",
               ign: player.ign || "",
               mlbb_id: player.mlbb_id || "",
@@ -132,10 +132,64 @@ export default function EditRegistration() {
     setPlayerPhotos((prev) => ({ ...prev, [index]: file }));
   };
 
+  // Add Substitute Logic (Enforcing max 7 total roster members)
+  const handleAddSubstitute = () => {
+    if (players.length >= 7) {
+      showToast("error", "Limit Reached", "A team can have a maximum of 7 players (5 Main + 2 Substitutes).");
+      return;
+    }
+
+    setPlayers((prev) => [
+      ...prev,
+      {
+        id: null,
+        real_name: "",
+        ign: "",
+        mlbb_id: "",
+        server_id: "",
+        player_photo: "",
+        is_substitute: true,
+      },
+    ]);
+  };
+
+  // Remove Player Logic (Ensuring at least 5 main players remain)
+  const handleRemovePlayer = (index) => {
+    const playerToRemove = players[index];
+    const mainPlayersCount = players.filter((p) => !p.is_substitute).length;
+
+    if (!playerToRemove.is_substitute && mainPlayersCount <= 5) {
+      showToast("error", "Action Denied", "Teams must have exactly 5 mandatory main players.");
+      return;
+    }
+
+    setPlayers((prev) => prev.filter((_, i) => i !== index));
+    setPlayerPhotos((prev) => {
+      const updatedPhotos = { ...prev };
+      delete updatedPhotos[index];
+      return updatedPhotos;
+    });
+  };
+
   const executeSave = async () => {
     try {
       setSaving(true);
       setError("");
+
+      const mainPlayersCount = players.filter((p) => !p.is_substitute).length;
+      if (mainPlayersCount !== 5) {
+        showToast("error", "Validation Error", "There must be exactly 5 main players.");
+        setSaving(false);
+        setSecurityModalOpen(false);
+        return;
+      }
+
+      if (players.length > 7) {
+        showToast("error", "Validation Error", "Maximum roster size is 7 players.");
+        setSaving(false);
+        setSecurityModalOpen(false);
+        return;
+      }
 
       const formData = new FormData();
       formData.append("team_name", registration.team_name);
@@ -189,6 +243,12 @@ export default function EditRegistration() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const mainPlayersCount = players.filter((p) => !p.is_substitute).length;
+    if (mainPlayersCount !== 5) {
+      showToast("error", "Roster Error", "You must configure exactly 5 main players.");
+      return;
+    }
+
     setReauth({ username: "", password: "" });
     setReauthMessage("");
     setSecurityModalOpen(true);
@@ -241,6 +301,8 @@ export default function EditRegistration() {
       </div>
     );
   }
+
+  const currentSubsCount = players.filter((p) => p.is_substitute).length;
 
   return (
     <div className="relative min-h-screen bg-black px-4 py-8 font-sans text-white sm:px-6 lg:px-8 selection:bg-blue-600 selection:text-white">
@@ -340,7 +402,7 @@ export default function EditRegistration() {
           <div>
             <p className="text-sm font-bold uppercase tracking-widest text-blue-400">Admin Panel</p>
             <h1 className="mt-2 text-3xl font-black sm:text-4xl">Edit Team Registration</h1>
-            <p className="mt-2 text-gray-400">Modify team configurations, status, and edit player details.</p>
+            <p className="mt-2 text-gray-400">Modify team configurations, status, and manage roster members.</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -492,31 +554,64 @@ export default function EditRegistration() {
             </div>
           </div>
 
-          {/* Fully Editable Players Roster Section */}
+          {/* Roster Section with 5 Main Mandatory + Optional Substitutes (Max 7) */}
           <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black">Edit Roster Members</h2>
-              <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-400">
-                {players.length} Members
-              </span>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-black">Edit Roster Members</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Must have exactly 5 Main Players. Substitutes are optional (Up to 2 allowed).
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-400">
+                  {players.length} / 7 Total Members
+                </span>
+
+                {currentSubsCount < 2 && players.length < 7 && (
+                  <button
+                    type="button"
+                    onClick={handleAddSubstitute}
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-blue-500"
+                  >
+                    + Add Substitute
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
               {players.map((player, index) => (
-                <div key={player.id || index} className="rounded-2xl border border-zinc-800 bg-black p-5 space-y-4">
+                <div key={player.id || `new-${index}`} className="rounded-2xl border border-zinc-800 bg-black p-5 space-y-4 relative">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-sm text-blue-400">
                       {player.is_substitute ? `Substitute Member` : `Main Player ${index + 1}`}
                     </span>
-                    <label className="flex items-center gap-2 text-xs text-gray-400">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(player.is_substitute)}
-                        onChange={(e) => handleSubstituteChange(index, e.target.checked)}
-                        className="h-4 w-4 accent-blue-600"
-                      />
-                      Substitute
-                    </label>
+                    
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs text-gray-400">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(player.is_substitute)}
+                          onChange={(e) => handleSubstituteChange(index, e.target.checked)}
+                          className="h-4 w-4 accent-blue-600"
+                        />
+                        Substitute
+                      </label>
+
+                      {/* Allow removing substitutes or excess rows */}
+                      {player.is_substitute && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePlayer(index)}
+                          className="text-red-400 hover:text-red-300 text-xs font-bold px-2 py-1 rounded bg-red-500/10 border border-red-500/20"
+                          title="Remove substitute"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -558,7 +653,7 @@ export default function EditRegistration() {
                         type="text"
                         value={player.server_id}
                         onChange={(e) => handlePlayerChange(index, "server_id", e.target.value)}
-                        className="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-white"
+                        className="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-white"
                         required
                       />
                     </div>

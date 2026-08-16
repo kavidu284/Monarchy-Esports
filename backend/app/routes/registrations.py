@@ -1,5 +1,5 @@
 
-
+from fastapi import Request
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.database import get_connection
 from fastapi import Depends
@@ -504,10 +504,11 @@ def get_approved_teams_details(
     finally:
         cursor.close()
         connection.close()
-        
-        
+
+
 @router.put("/registrations/{registration_id}/edit")
 async def edit_registration(
+    request: Request,
     registration_id: int,
     team_name: str = Form(...),
     clan_name: Optional[str] = Form(None),
@@ -538,7 +539,7 @@ async def edit_registration(
         if lobby_screenshot:
             lobby_url = upload_image(lobby_screenshot)
 
-        # Update main registration details
+        # 1. Update main registration details
         cursor.execute(
             """
             UPDATE registrations
@@ -567,6 +568,41 @@ async def edit_registration(
                 registration_id
             )
         )
+
+        # 2. Update dynamic players from the raw form data payload
+        form = await request.form()
+        
+        cursor.execute(
+            "SELECT id, player_photo FROM players WHERE registration_id = %s ORDER BY is_substitute ASC, id ASC",
+            (registration_id,)
+        )
+        existing_players = cursor.fetchall()
+
+        player_count = int(form.get("player_count", 0))
+        for i in range(player_count):
+            p_id = form.get(f"player_{i}_id")
+            real_name = form.get(f"player_{i}_real_name", "")
+            ign = form.get(f"player_{i}_ign", "")
+            mlbb_id = form.get(f"player_{i}_mlbb_id", "")
+            server_id = form.get(f"player_{i}_server_id", "")
+            is_sub = 1 if str(form.get(f"player_{i}_is_substitute", "0")) == "1" else 0
+
+            existing_p = next((p for p in existing_players if str(p["id"]) == str(p_id)), None)
+            photo_url = existing_p["player_photo"] if existing_p else ""
+
+            p_photo_file = form.get(f"player_{i}_photo")
+            if hasattr(p_photo_file, "filename") and p_photo_file.filename:
+                photo_url = upload_image(p_photo_file)
+
+            if p_id:
+                cursor.execute(
+                    """
+                    UPDATE players
+                    SET real_name = %s, ign = %s, mlbb_id = %s, server_id = %s, player_photo = %s, is_substitute = %s
+                    WHERE id = %s AND registration_id = %s
+                    """,
+                    (real_name, ign, mlbb_id, server_id, photo_url, is_sub, p_id, registration_id)
+                )
 
         connection.commit()
         return {"message": "Registration updated successfully", "registration_id": registration_id}
