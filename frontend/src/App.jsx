@@ -38,6 +38,7 @@ import Administration from "./Adminstrator/Administration.jsx";
 import AdministrationLayout from "./Adminstrator/AdministratorLayouut.jsx";
 import AdministratorUser from "./Adminstrator/AdministratorUser.jsx";
 import AccessDeniedView from "./components/AccessDeniedView.jsx";
+import EditRegistration from "./admin/EditTeam.jsx";
 import { isSuperAdmin } from "./utils/auth";
 
 function App() {
@@ -79,6 +80,7 @@ function App() {
           <Route path="tournament/:tournamentId/matches/round-robin" element={<ProtectedRoute permissionKey="can_manage_matches"><RoundRobinAdmin /></ProtectedRoute>} />
           <Route path="tournaments/champions/:id" element={<ProtectedRoute permissionKey="can_publish_results"><MatchResultAdmin /></ProtectedRoute>} />
           <Route path="registrations/:tournamentId/approved" element={<ProtectedRoute permissionKey="can_view_tournaments"><ApproveTeam /></ProtectedRoute>} />
+          <Route path="registrations/edit/:id" element={<ProtectedRoute permissionKey="can_edit_tournaments"><EditRegistration/></ProtectedRoute>}/>
           
           {/* NEWS MANAGEMENT (SEPARATE PERMISSION FLAG) */}
           <Route path="news" element={<ProtectedRoute permissionKey="can_manage_news"><NewsAdmin /></ProtectedRoute>} />
