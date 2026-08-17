@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
 
 export default function MatchAdmin() {
@@ -32,6 +32,12 @@ export default function MatchAdmin() {
   const [reauthMessage, setReauthMessage] = useState("");
   const [verifying, setVerifying] = useState(false);
 
+  // Security Re-Authentication Modal State for Refresh / Verify Action
+  const [refreshModalOpen, setRefreshModalOpen] = useState(false);
+  const [refreshReauth, setRefreshReauth] = useState({ username: "", password: "" });
+  const [refreshReauthMessage, setRefreshReauthMessage] = useState("");
+  const [refreshVerifying, setRefreshVerifying] = useState(false);
+
   const showToast = useCallback((type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => {
@@ -63,11 +69,13 @@ export default function MatchAdmin() {
       );
 
       setRoundRobinGroups(response.data || []);
+      showToast("success", "Refreshed", "Round robin groups updated successfully");
     } catch (error) {
       console.error(error);
       setRoundRobinGroups([]);
+      showToast("error", "Refresh Failed", "Failed to load round robin groups");
     }
-  }, [tournamentId]);
+  }, [tournamentId, showToast]);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -84,6 +92,51 @@ export default function MatchAdmin() {
       console.error(error);
     }
   }, [tournamentId]);
+
+  // Execute actual refresh & verify after admin credentials authentication
+  const executeVerifiedRefresh = async () => {
+    try {
+      setRefreshVerifying(true);
+      await fetchMatches();
+      await fetchRoundRobinGroups();
+      showToast("success", "Verified & Refreshed", "Tournament state verified and updated successfully");
+      setRefreshModalOpen(false);
+      setRefreshReauth({ username: "", password: "" });
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Refresh Failed", "Could not verify tournament state");
+    } finally {
+      setRefreshVerifying(false);
+    }
+  };
+
+  // Handle Refresh Re-Authentication Submit
+  const handleConfirmRefreshReauth = async (e) => {
+    e.preventDefault();
+    if (!refreshReauth.username.trim() || !refreshReauth.password.trim()) {
+      setRefreshReauthMessage("Username and password are required.");
+      return;
+    }
+
+    try {
+      setRefreshVerifying(true);
+      setRefreshReauthMessage("");
+      const response = await api.post("/administration/verify-credentials", {
+        username: refreshReauth.username.trim(),
+        password: refreshReauth.password.trim(),
+      });
+
+      if (response.data?.success) {
+        await executeVerifiedRefresh();
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setRefreshReauthMessage(
+        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
+      );
+      setRefreshVerifying(false);
+    }
+  };
 
   // Open Security Modal for Match Deletion
   const triggerDeleteModal = (matchId) => {
@@ -265,7 +318,6 @@ export default function MatchAdmin() {
     return sortedTeams[rank - 1]?.team_name || null;
   }, [roundRobinGroups]);
 
-  // Using a standard JavaScript function declaration ensures it is hoisted properly for recursion
   function resolveParticipant(participant, depth = 0) {
     if (!participant) return "-";
 
@@ -450,7 +502,7 @@ export default function MatchAdmin() {
     "whitespace-nowrap px-4 py-4 text-sm text-gray-300";
 
   return (
-    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white p-4 md:p-8">
       {/* TOAST NOTIFICATION */}
       {toast && (
         <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
@@ -474,6 +526,82 @@ export default function MatchAdmin() {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* SECURITY AUTHENTICATION REFRESH MODAL */}
+      {refreshModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 text-xl text-blue-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Admin Authorization</h3>
+                <p className="text-xs text-blue-400 font-semibold truncate max-w-[220px]">
+                  Verify Refresh & State Sync
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Please enter your admin credentials to verify and refresh tournament data.
+            </p>
+
+            <form onSubmit={handleConfirmRefreshReauth} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={refreshReauth.username}
+                  onChange={(e) => setRefreshReauth({ ...refreshReauth, username: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={refreshReauth.password}
+                  onChange={(e) => setRefreshReauth({ ...refreshReauth, password: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {refreshReauthMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {refreshReauthMessage}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setRefreshModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={refreshVerifying}
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition disabled:opacity-50"
+                >
+                  {refreshVerifying ? "Verifying..." : "Verify & Refresh"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -567,8 +695,7 @@ export default function MatchAdmin() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-gray-400">
-              Create bracket matches, manage match schedule, and update
-              winners for this tournament.
+              Create bracket matches, manage match schedule, and update winners for this tournament.
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -586,28 +713,33 @@ export default function MatchAdmin() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={fetchRoundRobinGroups}
-              className="rounded-xl border border-blue-500/40 bg-black px-6 py-3 text-center font-bold text-blue-300 transition hover:bg-blue-500/10"
+              onClick={() => {
+                setRefreshReauth({ username: "", password: "" });
+                setRefreshReauthMessage("");
+                setRefreshModalOpen(true);
+              }}
+              className="rounded-xl border border-blue-500/40 bg-black px-5 py-3 font-bold text-blue-300 transition hover:bg-blue-500/10 shadow-lg shadow-blue-500/10"
             >
-              Refresh Groups
+              🔄 Refresh & Verify
             </button>
 
             {tournament?.tournament_format === "Round Robin + Bracket" && (
               <Link
                 to={`/admin/tournament/${tournamentId}/matches/round-robin`}
-                className="rounded-xl bg-blue-600 px-6 py-3 text-center font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-blue-700"
+                className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-blue-700"
               >
                 Manage Round Robin Groups
               </Link>
             )}
 
-            <Link to="/admin/tournaments">
-              <button className="rounded-xl border border-zinc-700 bg-black px-6 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10">
-                ← Back
-              </button>
+            <Link
+              to="/admin/tournaments"
+              className="rounded-xl border border-zinc-700 bg-black px-5 py-3 font-bold text-white transition hover:border-blue-500 hover:bg-blue-500/10"
+            >
+              ← Back
             </Link>
           </div>
         </div>
@@ -652,7 +784,7 @@ export default function MatchAdmin() {
           </p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4 mb-6">
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-300">
               Match No
@@ -675,7 +807,16 @@ export default function MatchAdmin() {
 
             <select
               value={stage}
-              onChange={(e) => setStage(e.target.value)}
+              onChange={(e) => {
+                const newStage = e.target.value;
+                setStage(newStage);
+                if (newStage === "Round Robin") {
+                  setQualifiedPerGroup(2);
+                  setBracketRound("Round Robin");
+                } else {
+                  setBracketRound("Round 1");
+                }
+              }}
               className={inputClass}
             >
               <option value="Bracket">Bracket</option>
@@ -693,6 +834,7 @@ export default function MatchAdmin() {
               onChange={(e) =>
                 setQualifiedPerGroup(Number(e.target.value))
               }
+              disabled={stage === "Round Robin"}
               className={inputClass}
             >
               <option value={1}>Top 1 from each group</option>
@@ -700,6 +842,11 @@ export default function MatchAdmin() {
               <option value={3}>Top 3 from each group</option>
               <option value={4}>Top 4 from each group</option>
             </select>
+            {stage === "Round Robin" && (
+              <p className="mt-1 text-xs text-yellow-400 font-medium">
+                🔒 Locked in Round Robin stage
+              </p>
+            )}
           </div>
 
           <div>
@@ -719,6 +866,11 @@ export default function MatchAdmin() {
                 </option>
               ))}
             </select>
+            {stage === "Round Robin" && (
+              <p className="mt-1 text-xs text-yellow-400 font-medium">
+                🔒 Locked in Round Robin stage
+              </p>
+            )}
           </div>
 
           <div>
@@ -774,17 +926,15 @@ export default function MatchAdmin() {
               className={inputClass}
             />
           </div>
-
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={handleCreateMatch}
-              className="w-full rounded-xl bg-green-600 px-6 py-3 font-bold text-white shadow-lg shadow-green-600/20 transition hover:bg-green-700"
-            >
-              Create Match
-            </button>
-          </div>
         </div>
+
+        <button
+          type="button"
+          onClick={handleCreateMatch}
+          className="rounded-xl bg-green-600 px-8 py-3 font-bold text-white shadow-lg shadow-green-600/20 transition hover:bg-green-700"
+        >
+          Create Match
+        </button>
 
         <datalist id="teamOptions">
           {teams.map((team) => (
@@ -909,7 +1059,7 @@ export default function MatchAdmin() {
                   <th className={tableHeadClass}>Bracket Round</th>
                   <th className={tableHeadClass}>Team 1</th>
                   <th className={tableHeadClass}>Team 2</th>
-                  <th className={tableHeadClass}>Date</th>
+                  <th className5={tableHeadClass}>Date</th>
                   <th className={tableHeadClass}>Time</th>
                   <th className={tableHeadClass}>Result</th>
                   <th className={tableHeadClass}>Select Winner</th>

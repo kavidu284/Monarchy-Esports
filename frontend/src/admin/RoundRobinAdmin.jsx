@@ -12,6 +12,13 @@ export default function RoundRobinAdmin() {
   const [groupName, setGroupName] = useState("");
   const [selectedTeams, setSelectedTeams] = useState({});
 
+  // Shuffle Modal State
+  const [shuffleModalOpen, setShuffleModalOpen] = useState(false);
+  const [numGroups, setNumGroups] = useState(4);
+  const [teamsPerGroup, setTeamsPerGroup] = useState(4);
+  const [shuffledGroups, setShuffledGroups] = useState({});
+  const [shuffling, setShuffling] = useState(false);
+
   // Toast State
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
 
@@ -81,6 +88,60 @@ export default function RoundRobinAdmin() {
     } catch (error) {
       console.error(error);
       showToast("error", "Creation Failed", error.response?.data?.detail || "Failed to create group");
+    }
+  };
+
+  // Automated Shuffle Execution
+  const handlePerformShuffle = () => {
+    const totalTeamsNeeded = numGroups * teamsPerGroup;
+    if (approvedTeams.length < totalTeamsNeeded) {
+      showToast(
+        "error",
+        "Insufficient Teams",
+        `Need ${totalTeamsNeeded} teams (${numGroups} groups × ${teamsPerGroup} teams), but only ${approvedTeams.length} approved.`
+      );
+      return;
+    }
+
+    let shuffled = [...approvedTeams];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const newGroups = {};
+    for (let i = 0; i < numGroups; i++) {
+      const groupLetter = String.fromCharCode(65 + i);
+      const groupNameKey = `Group ${groupLetter}`;
+      const sliceStart = i * teamsPerGroup;
+      const sliceEnd = sliceStart + teamsPerGroup;
+      newGroups[groupNameKey] = shuffled.slice(sliceStart, sliceEnd);
+    }
+
+    setShuffledGroups(newGroups);
+  };
+
+  const handleSaveShuffledGroups = async () => {
+    if (Object.keys(shuffledGroups).length === 0) {
+      showToast("error", "Shuffle Required", "Please shuffle teams first.");
+      return;
+    }
+
+    try {
+      setShuffling(true);
+      await api.post(`/team-shuffle/${tournamentId}/save`, {
+        groups: shuffledGroups,
+      });
+
+      showToast("success", "Groups Saved", "Shuffled groups successfully saved to database!");
+      setShuffleModalOpen(false);
+      setShuffledGroups({});
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Save Failed", error.response?.data?.detail || "Failed to save shuffled groups.");
+    } finally {
+      setShuffling(false);
     }
   };
 
@@ -211,10 +272,7 @@ export default function RoundRobinAdmin() {
 
   const getGroupCode = (groupName) => {
     const text = String(groupName || "").trim();
-
-    return text
-      .replace(/^group\s+/i, "")
-      .trim();
+    return text.replace(/^group\s+/i, "").trim();
   };
 
   const getSortedGroupTeams = (group) => {
@@ -229,7 +287,6 @@ export default function RoundRobinAdmin() {
 
   const getSlotCode = (group, index) => {
     const groupCode = getGroupCode(group.group_name);
-
     return `${groupCode}${index + 1}`;
   };
 
@@ -246,7 +303,7 @@ export default function RoundRobinAdmin() {
     "whitespace-nowrap px-4 py-4 text-sm text-gray-300";
 
   return (
-    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white">
+    <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white p-4 md:p-8">
       {/* TOAST NOTIFICATION */}
       {toast && (
         <div className="fixed top-6 right-6 z-[200] w-full max-w-md animate-slide-in">
@@ -274,6 +331,106 @@ export default function RoundRobinAdmin() {
         </div>
       )}
 
+      {/* AUTOMATED SHUFFLE MODAL */}
+      {shuffleModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md overflow-y-auto py-10">
+          <div className="w-full max-w-4xl rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-white">Automated Team Shuffle</h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Approved Teams Available: <span className="text-blue-400 font-bold">{approvedTeams.length}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setShuffleModalOpen(false)}
+                className="text-gray-400 hover:text-white text-sm font-bold bg-zinc-900 px-3 py-1.5 rounded-xl border border-zinc-800"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Inputs Config */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-black p-5 rounded-2xl border border-zinc-800">
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-300">Number of Groups</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={numGroups}
+                  onChange={(e) => setNumGroups(parseInt(e.target.value) || 1)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-300">Teams Per Group</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={teamsPerGroup}
+                  onChange={(e) => setTeamsPerGroup(parseInt(e.target.value) || 1)}
+                  className={inputClass}
+                />
+              </div>
+              <div className="sm:col-span-2 pt-2">
+                <button
+                  onClick={handlePerformShuffle}
+                  className="w-full rounded-xl bg-blue-600 px-6 py-3 font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition"
+                >
+                  🎲 Run Random Shuffle
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Results Grid */}
+            {Object.keys(shuffledGroups).length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-emerald-400">Preview Layout</h4>
+                  <button
+                    onClick={handlePerformShuffle}
+                    className="text-xs font-semibold text-gray-300 hover:text-white bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg"
+                  >
+                    Shuffle Again
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[350px] overflow-y-auto pr-1">
+                  {Object.entries(shuffledGroups).map(([gName, teamsList]) => (
+                    <div key={gName} className="rounded-2xl border border-zinc-800 bg-black p-4">
+                      <div className="font-bold text-blue-400 border-b border-zinc-800 pb-2 mb-3 flex justify-between items-center">
+                        <span>{gName}</span>
+                        <span className="text-xs bg-zinc-900 px-2 py-0.5 rounded text-gray-400">{teamsList.length}</span>
+                      </div>
+                      <ul className="space-y-1.5 text-xs">
+                        {teamsList.map((t, idx) => (
+                          <li key={t.id || idx} className="text-gray-300 truncate">
+                            <span className="text-gray-500 font-mono mr-1.5">#{idx + 1}</span>
+                            {t.team_name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                  <button
+                    onClick={handleSaveShuffledGroups}
+                    disabled={shuffling}
+                    className="rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition disabled:opacity-50"
+                  >
+                    {shuffling ? "Saving to Database..." : "💾 Save Shuffled Groups"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* SECURITY AUTHENTICATION DELETE MODAL */}
       {securityModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
@@ -296,9 +453,7 @@ export default function RoundRobinAdmin() {
 
             <form onSubmit={handleConfirmReauth} className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Username
-                </label>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">Username</label>
                 <input
                   type="text"
                   required
@@ -310,9 +465,7 @@ export default function RoundRobinAdmin() {
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Password
-                </label>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">Password</label>
                 <input
                   type="password"
                   required
@@ -370,8 +523,7 @@ export default function RoundRobinAdmin() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-gray-400">
-              Create groups, add approved teams, update standings, and
-              generate bracket slots like A1, A2, B1, B2.
+              Create groups, auto-shuffle approved teams, update standings, and generate bracket slots.
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -388,14 +540,27 @@ export default function RoundRobinAdmin() {
               </span>
             </div>
           </div>
+
+          {/* Quick Action: Open Shuffle Wizard */}
+          <div>
+            <button
+              onClick={() => {
+                setShuffleModalOpen(true);
+                setShuffledGroups({});
+              }}
+              className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 font-bold text-white shadow-xl shadow-blue-600/20 hover:from-blue-500 hover:to-indigo-500 transition"
+            >
+              🎲 Automated Team Shuffle
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* CREATE GROUP */}
+      {/* CREATE GROUP MANUALLY */}
       <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="mb-6">
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-            Group Setup
+            Manual Setup
           </p>
 
           <h2 className="mt-2 text-2xl font-bold">
@@ -403,7 +568,7 @@ export default function RoundRobinAdmin() {
           </h2>
 
           <p className="mt-2 text-gray-400">
-            Create round robin groups such as Group A, Group B, Group C.
+            Create round robin groups individually such as Group A, Group B, Group C.
           </p>
         </div>
 
@@ -424,7 +589,7 @@ export default function RoundRobinAdmin() {
         </div>
       </div>
 
-      {/* GROUPS */}
+      {/* GROUPS LIST & TABLES */}
       {groups.length === 0 ? (
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-12 text-center shadow-xl shadow-black/30">
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-4xl">
@@ -436,7 +601,7 @@ export default function RoundRobinAdmin() {
           </h2>
 
           <p className="mt-3 text-gray-400">
-            Create your first round robin group using the form above.
+            Create your first group manually or use the Automated Team Shuffle button above.
           </p>
         </div>
       ) : (
