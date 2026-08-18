@@ -979,62 +979,79 @@ export default function TournamentView() {
                   </thead>
 
                   <tbody>
-                    {matches.map((match, index) => (
-                      <tr
-                        key={match.id}
-                        className="border-b border-blue-900/20 transition hover:bg-blue-600/10"
-                      >
-                        <td className={smallTdClass}>
-                          #{match.match_no || index + 1}
-                        </td>
+                    {[...matches]
+                      .sort((a, b) => {
+                        const aFinished = Boolean(a.winner);
+                        const bFinished = Boolean(b.winner);
 
-                        <td className={smallTdBoldClass}>
-                          <div>
-                            {getTeam1(match)}
+                        // Upcoming/Pending matches come first, completed matches drop to the bottom
+                        if (aFinished !== bFinished) {
+                          return aFinished ? 1 : -1;
+                        }
 
-                            {isFutureParticipant(match.team1) &&
-                              getTeam1(match) !== match.team1 && (
-                                <p className="mt-1 text-[9px] font-normal text-blue-400 sm:text-xs">
-                                  Source: {match.team1}
-                                </p>
-                              )}
-                          </div>
-                        </td>
+                        // Order by match number ascending within each group
+                        return Number(a.match_no || 0) - Number(b.match_no || 0);
+                      })
+                      .map((match, index) => (
+                        <tr
+                          key={match.id}
+                          className="border-b border-blue-900/20 transition hover:bg-blue-600/10"
+                        >
+                          <td className={smallTdClass}>
+                            #{match.match_no || index + 1}
+                          </td>
 
-                        <td className={smallTdBoldClass}>
-                          <div>
-                            {getTeam2(match)}
+                          <td className={smallTdBoldClass}>
+                            <div>
+                              <span className={match.winner && match.winner === getTeam1(match) ? "text-emerald-400 font-black" : "text-white"}>
+                                {getTeam1(match)}
+                              </span>
 
-                            {isFutureParticipant(match.team2) &&
-                              getTeam2(match) !== match.team2 && (
-                                <p className="mt-1 text-[9px] font-normal text-blue-400 sm:text-xs">
-                                  Source: {match.team2}
-                                </p>
-                              )}
-                          </div>
-                        </td>
+                              {isFutureParticipant(match.team1) &&
+                                getTeam1(match) !== match.team1 && (
+                                  <p className="mt-1 text-[9px] font-normal text-blue-400 sm:text-xs">
+                                    Source: {match.team1}
+                                  </p>
+                                )}
+                            </div>
+                          </td>
 
-                        <td className={smallTdClass}>
-                          {formatDate(match.match_date)}
-                        </td>
+                          <td className={smallTdBoldClass}>
+                            <div>
+                              <span className={match.winner && match.winner === getTeam2(match) ? "text-emerald-400 font-black" : "text-white"}>
+                                {getTeam2(match)}
+                              </span>
 
-                        <td className={smallTdClass}>
-                          {formatTime(match.match_time)}
-                        </td>
+                              {isFutureParticipant(match.team2) &&
+                                getTeam2(match) !== match.team2 && (
+                                  <p className="mt-1 text-[9px] font-normal text-blue-400 sm:text-xs">
+                                    Source: {match.team2}
+                                  </p>
+                                )}
+                            </div>
+                          </td>
 
-                        <td className="px-2 py-2 text-[10px] sm:px-4 sm:py-4 sm:text-sm">
-                          {match.winner ? (
-                            <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-[9px] font-bold text-blue-300 sm:px-3 sm:text-xs shadow-sm shadow-blue-950">
-                              {match.winner}
-                            </span>
-                          ) : (
-                            <span className="rounded-full border border-blue-900/40 bg-zinc-900 px-2 py-1 text-[9px] font-bold text-gray-400 sm:px-3 sm:text-xs">
-                              Pending
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          <td className={smallTdClass}>
+                            {formatDate(match.match_date)}
+                          </td>
+
+                          <td className={smallTdClass}>
+                            {formatTime(match.match_time)}
+                          </td>
+
+                          <td className="px-2 py-2 text-[10px] sm:px-4 sm:py-4 sm:text-sm">
+                            {match.winner ? (
+                              <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[9px] font-bold text-emerald-400 sm:px-3 sm:text-xs shadow-sm shadow-emerald-950">
+                                ✓ {match.winner} Won
+                              </span>
+                            ) : (
+                              <span className="rounded-full border border-blue-900/40 bg-zinc-900 px-2 py-1 text-[9px] font-bold text-gray-400 sm:px-3 sm:text-xs">
+                                Pending
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
