@@ -37,6 +37,7 @@ export default function MatchAdmin() {
   const [refreshReauth, setRefreshReauth] = useState({ username: "", password: "" });
   const [refreshReauthMessage, setRefreshReauthMessage] = useState("");
   const [refreshVerifying, setRefreshVerifying] = useState(false);
+  const [roundRobinCompleted, setRoundRobinCompleted] = useState(false);
 
   const showToast = useCallback((type, title, message) => {
     setToast({ type, title, message });
@@ -434,7 +435,27 @@ export default function MatchAdmin() {
       showToast("error", "Update Failed", error.response?.data?.detail || "Failed to update winner");
     }
   };
-
+ const handleRoundRobinToggle = async (e) => {
+  const isChecked = e.target.checked;
+  setRoundRobinCompleted(isChecked);
+  
+  try {
+    await api.put(`/tournaments/${tournamentId}/round-robin-status`, { 
+      completed: isChecked 
+    });
+    
+    showToast(
+      "success",
+      isChecked ? "Round Robin Locked" : "Round Robin Unlocked",
+      isChecked ? "Bracket teams are now revealed publicly." : "Bracket teams reverted to slot codes."
+    );
+  } catch (error) {
+    console.error(error);
+    showToast("error", "Update Failed", "Could not update round-robin completion status.");
+    // Revert state on failure
+    setRoundRobinCompleted(!isChecked);
+  }
+};
   const formatDate = (date) => {
     if (!date) return "-";
     return String(date).slice(0, 10);
@@ -500,6 +521,9 @@ export default function MatchAdmin() {
 
   const tableCellClass =
     "whitespace-nowrap px-4 py-4 text-sm text-gray-300";
+  // Add this state declaration at the top of MatchAdmin component:
+
+
 
   return (
     <div className="relative min-h-screen bg-black font-sans text-white selection:bg-blue-600 selection:text-white p-4 md:p-8">
@@ -1014,7 +1038,24 @@ export default function MatchAdmin() {
           </div>
         </div>
       )}
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-blue-900/40 bg-black p-5">
+  <div>
+    <h3 className="text-lg font-bold text-white">Round Robin Stage Control</h3>
+    <p className="text-xs text-gray-400">Check this box when group matches are finished to finalize bracket slots.</p>
+  </div>
 
+  <label className="flex items-center gap-3 cursor-pointer select-none rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 transition hover:border-blue-500">
+    <input
+      type="checkbox"
+      checked={roundRobinCompleted}
+      onChange={handleRoundRobinToggle}
+      className="h-5 w-5 rounded border-zinc-700 bg-black text-blue-600 accent-blue-600 focus:ring-0"
+    />
+    <span className="text-sm font-bold text-blue-300">
+      {roundRobinCompleted ? "Round Robin Completed & Locked ✓" : "Mark Round Robin Completed"}
+    </span>
+  </label>
+</div>
       {/* MATCH SCHEDULE */}
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
