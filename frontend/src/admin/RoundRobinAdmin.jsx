@@ -422,7 +422,7 @@ export default function RoundRobinAdmin() {
                     disabled={shuffling}
                     className="rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition disabled:opacity-50"
                   >
-                    {shuffling ? "Saving to Database..." : "💾 Save Shuffled Groups"}
+                    {shuffling ? "Saving to groups" : "💾 Save Shuffled Groups"}
                   </button>
                 </div>
               </div>
