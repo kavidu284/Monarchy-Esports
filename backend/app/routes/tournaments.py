@@ -6,7 +6,7 @@ from app.utils.cloudinary_upload import upload_image, upload_file
 from app.routes.administration import get_admin_record, log_security_event
 from fastapi import HTTPException
 from pydantic import BaseModel
-from app.schemas.tournament import  RoundRobinStatusUpdate
+from app.schemas.tournament import  PublishStatusUpdate, RoundRobinStatusUpdate
 
 router = APIRouter()
 
@@ -380,6 +380,65 @@ def update_round_robin_status(
         )
         connection.commit()
         return {"message": "Round Robin status updated successfully", "completed": payload.completed}
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+        
+@router.put("/tournaments/{tournament_id}/publish-round-robin")
+def update_round_robin_publish_status(
+    tournament_id: int,
+    payload: PublishStatusUpdate,
+    current_admin: dict = Depends(get_current_admin)
+):
+    """
+    Endpoint to toggle whether the Round Robin groups are visible to the public.
+    Protected by admin authentication.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tournaments SET round_robin_published = %s WHERE id = %s",
+            (1 if payload.published else 0, tournament_id)
+        )
+        connection.commit()
+        return {
+            "message": "Round Robin publish status updated successfully",
+            "round_robin_published": payload.published
+        }
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@router.put("/tournaments/{tournament_id}/publish-bracket")
+def update_bracket_publish_status(
+    tournament_id: int,
+    payload: PublishStatusUpdate,
+    current_admin: dict = Depends(get_current_admin)
+):
+    """
+    Endpoint to toggle whether the Knockout Bracket is visible to the public.
+    Protected by admin authentication.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tournaments SET bracket_published = %s WHERE id = %s",
+            (1 if payload.published else 0, tournament_id)
+        )
+        connection.commit()
+        return {
+            "message": "Bracket publish status updated successfully",
+            "bracket_published": payload.published
+        }
     except Exception as e:
         connection.rollback()
         raise HTTPException(status_code=500, detail=str(e))

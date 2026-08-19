@@ -10,3 +10,10 @@ class TournamentCreate(BaseModel):
     max_teams: int
 class RoundRobinStatusUpdate(BaseModel):
     completed: bool
+
+class BracketStatusUpdate(BaseModel):
+    published: bool
+
+
+class PublishStatusUpdate(BaseModel):
+    published: bool

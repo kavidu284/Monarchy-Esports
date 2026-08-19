@@ -12,7 +12,7 @@ export default function TournamentView() {
   const [activeTab, setActiveTab] = useState("overview");
   const [roundRobinGroups, setRoundRobinGroups] = useState([]);
 
-  // Default to "swiss" (Round Robin) view first when inside the bracket tab if needed, or keep standard state
+  // Default to "swiss" (Round Robin) view first when inside the bracket tab
   const [bracketViewMode, setBracketViewMode] = useState("swiss");
 
   // Toast State
@@ -843,7 +843,7 @@ export default function TournamentView() {
     <div className={pageSectionClass}>
       <div className="space-y-8 sm:space-y-12">
         <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
-         Bracket Stage
+          Bracket Stage
         </p>
 
         <h2 className="mt-2 text-2xl font-black sm:text-3xl">
@@ -1243,10 +1243,10 @@ export default function TournamentView() {
           </div>
         )}
 
-        {/* BRACKET */}
+        {/* BRACKET TAB */}
         {activeTab === "bracket" && (
           <div className="space-y-8 sm:space-y-10">
-            {/* STAGE TOGGLE (Round Robin first, then Knock Out Stage) */}
+            {/* STAGE TOGGLE */}
             {hasSwissStage && (
               <div className="flex justify-center sm:justify-start">
                 <div className="inline-flex w-full max-w-md rounded-full border border-blue-900/40 bg-zinc-950 p-1.5 shadow-xl shadow-blue-950/20 sm:w-auto">
@@ -1277,14 +1277,44 @@ export default function TournamentView() {
               </div>
             )}
 
-            {/* ROUND ROBIN VIEW */}
-            {(!hasSwissStage || bracketViewMode === "swiss") && renderSwissStageSection()}
+            {/* ROUND ROBIN VIEW (Protected by publish status) */}
+            {(!hasSwissStage || bracketViewMode === "swiss") && (
+              tournament?.round_robin_published ? (
+                renderSwissStageSection()
+              ) : (
+                <div className={pageSectionClass}>
+                  <div className="py-12 text-center">
+                    <p className="text-gray-400 font-medium">Round Robin groups have not been published yet.</p>
+                  </div>
+                </div>
+              )
+            )}
 
-            {/* KNOCK OUT STAGE VIEW */}
-            {hasSwissStage && bracketViewMode === "knockout" && renderKnockoutStageSection()}
+            {/* KNOCK OUT STAGE VIEW (Protected by publish status) */}
+            {hasSwissStage && bracketViewMode === "knockout" && (
+              tournament?.bracket_published ? (
+                renderKnockoutStageSection()
+              ) : (
+                <div className={pageSectionClass}>
+                  <div className="py-12 text-center">
+                    <p className="text-gray-400 font-medium">Tournament bracket has not been published yet.</p>
+                  </div>
+                </div>
+              )
+            )}
 
             {/* Fallback for tournaments that don't have Swiss Stage */}
-            {!hasSwissStage && renderKnockoutStageSection()}
+            {!hasSwissStage && (
+              tournament?.bracket_published ? (
+                renderKnockoutStageSection()
+              ) : (
+                <div className={pageSectionClass}>
+                  <div className="py-12 text-center">
+                    <p className="text-gray-400 font-medium">Tournament bracket has not been published yet.</p>
+                  </div>
+                </div>
+              )
+            )}
           </div>
         )}
       </div>
