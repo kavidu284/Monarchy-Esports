@@ -644,8 +644,8 @@ export default function AdministratorUser() {
                     Role Title
                   </label>
                   <select
-                    value={editRole.role}
-                    onChange={(e) => setEditRole({ role: e.target.value })}
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
                     className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
                   >
                     <option value="full_access_staff">Full Access Staff</option>
