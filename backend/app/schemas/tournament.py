@@ -8,3 +8,12 @@ class TournamentCreate(BaseModel):
     start_date: str
     registration_open: bool
     max_teams: int
+class RoundRobinStatusUpdate(BaseModel):
+    completed: bool
+
+class BracketStatusUpdate(BaseModel):
+    published: bool
+
+
+class PublishStatusUpdate(BaseModel):
+    published: bool

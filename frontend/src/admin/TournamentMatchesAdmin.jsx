@@ -37,6 +37,19 @@ export default function MatchAdmin() {
   const [refreshReauth, setRefreshReauth] = useState({ username: "", password: "" });
   const [refreshReauthMessage, setRefreshReauthMessage] = useState("");
   const [refreshVerifying, setRefreshVerifying] = useState(false);
+  const [roundRobinCompleted, setRoundRobinCompleted] = useState(false);
+
+  // Security Re-Authentication Modal State for Publishing
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [publishTargetType, setPublishTargetType] = useState(null); // 'round_robin' or 'bracket'
+  const [pendingPublishValue, setPendingPublishValue] = useState(false);
+  const [publishReauth, setPublishReauth] = useState({ username: "", password: "" });
+  const [publishReauthMessage, setPublishReauthMessage] = useState("");
+  const [publishVerifying, setPublishVerifying] = useState(false);
+
+  // Public Visibility States
+  const [roundRobinPublished, setRoundRobinPublished] = useState(false);
+  const [bracketPublished, setBracketPublished] = useState(false);
 
   const showToast = useCallback((type, title, message) => {
     setToast({ type, title, message });
@@ -162,7 +175,7 @@ export default function MatchAdmin() {
     }
   };
 
-  // Handle Re-Authentication Submit
+  // Handle Re-Authentication Submit for Deletion
   const handleConfirmReauth = async (e) => {
     e.preventDefault();
     if (!reauth.username.trim() || !reauth.password.trim()) {
@@ -191,6 +204,87 @@ export default function MatchAdmin() {
     }
   };
 
+  // Trigger Publish Security Modal
+  const handlePublishRoundRobinToggle = (e) => {
+    const isChecked = e.target.checked;
+    setPublishTargetType("round_robin");
+    setPendingPublishValue(isChecked);
+    setPublishReauth({ username: "", password: "" });
+    setPublishReauthMessage("");
+    setPublishModalOpen(true);
+  };
+
+  const handlePublishBracketToggle = (e) => {
+    const isChecked = e.target.checked;
+    setPublishTargetType("bracket");
+    setPendingPublishValue(isChecked);
+    setPublishReauth({ username: "", password: "" });
+    setPublishReauthMessage("");
+    setPublishModalOpen(true);
+  };
+
+  // Execute actual publish change after credential verification
+  const executeVerifiedPublish = async () => {
+    try {
+      setPublishVerifying(true);
+      if (publishTargetType === "round_robin") {
+        await api.put(`/tournaments/${tournamentId}/publish-round-robin`, {
+          published: pendingPublishValue,
+        });
+        setRoundRobinPublished(pendingPublishValue);
+        showToast(
+          "success",
+          pendingPublishValue ? "Round Robin Published" : "Round Robin Unpublished",
+          pendingPublishValue ? "Round Robin groups are now visible publicly." : "Round Robin groups are now hidden."
+        );
+      } else if (publishTargetType === "bracket") {
+        await api.put(`/tournaments/${tournamentId}/publish-bracket`, {
+          published: pendingPublishValue,
+        });
+        setBracketPublished(pendingPublishValue);
+        showToast(
+          "success",
+          pendingPublishValue ? "Bracket Published" : "Bracket Unpublished",
+          pendingPublishValue ? "Tournament bracket is now visible publicly." : "Tournament bracket is now hidden."
+        );
+      }
+      setPublishModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Action Failed", "Could not update publish status.");
+    } finally {
+      setPublishVerifying(false);
+    }
+  };
+
+  // Handle Publish Re-Authentication Submit
+  const handleConfirmPublishReauth = async (e) => {
+    e.preventDefault();
+    if (!publishReauth.username.trim() || !publishReauth.password.trim()) {
+      setPublishReauthMessage("Username and password are required.");
+      return;
+    }
+
+    try {
+      setPublishVerifying(true);
+      setPublishReauthMessage("");
+      const response = await api.post("/administration/verify-credentials", {
+        username: publishReauth.username.trim(),
+        password: publishReauth.password.trim(),
+      });
+
+      if (response.data?.success) {
+        await executeVerifiedPublish();
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setPublishReauthMessage(
+        error?.response?.data?.detail || "Invalid credentials or unauthorized action."
+      );
+      setPublishVerifying(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -201,6 +295,13 @@ export default function MatchAdmin() {
         );
         if (!isMounted) return;
         setTournament(tournamentResponse.data);
+
+        if (tournamentResponse.data?.round_robin_published !== undefined) {
+          setRoundRobinPublished(Boolean(tournamentResponse.data.round_robin_published));
+        }
+        if (tournamentResponse.data?.bracket_published !== undefined) {
+          setBracketPublished(Boolean(tournamentResponse.data.bracket_published));
+        }
 
         const teamsResponse = await api.get(
           `/tournaments/${tournamentId}/approved-teams`
@@ -239,10 +340,7 @@ export default function MatchAdmin() {
 
   const getGroupCode = (groupName) => {
     const text = String(groupName || "").trim();
-
-    return text
-      .replace(/^group\s+/i, "")
-      .trim();
+    return text.replace(/^group\s+/i, "").trim();
   };
 
   const roundRobinSeedOptions = roundRobinGroups.flatMap((group) =>
@@ -265,18 +363,13 @@ export default function MatchAdmin() {
 
   const isRoundRobinSeedParticipant = (participant) => {
     if (!participant) return false;
-
     const text = String(participant).trim();
-
     const found = text.match(/^([A-Za-z0-9]+)(\d+)$/);
-
     if (!found) return false;
 
     const groupCode = found[1];
-
     return roundRobinGroups.some((group) => {
       const currentGroupCode = getGroupCode(group.group_name);
-
       return (
         String(currentGroupCode).toLowerCase() ===
         String(groupCode).toLowerCase()
@@ -286,11 +379,8 @@ export default function MatchAdmin() {
 
   const resolveRoundRobinSeed = useCallback((participant) => {
     if (!participant) return null;
-
     const text = String(participant).trim();
-
     const found = text.match(/^([A-Za-z0-9]+)(\d+)$/);
-
     if (!found) return null;
 
     const groupCode = found[1];
@@ -298,7 +388,6 @@ export default function MatchAdmin() {
 
     const group = roundRobinGroups.find((item) => {
       const currentGroupCode = getGroupCode(item.group_name);
-
       return (
         String(currentGroupCode).toLowerCase() ===
         String(groupCode).toLowerCase()
@@ -320,9 +409,7 @@ export default function MatchAdmin() {
 
   function resolveParticipant(participant, depth = 0) {
     if (!participant) return "-";
-
     const text = String(participant).trim();
-
     const roundRobinSeed = resolveRoundRobinSeed(text);
 
     if (roundRobinSeed) {
@@ -369,13 +456,8 @@ export default function MatchAdmin() {
     return text;
   }
 
-  const getTeam1 = (match) => {
-    return resolveParticipant(match.team1);
-  };
-
-  const getTeam2 = (match) => {
-    return resolveParticipant(match.team2);
-  };
+  const getTeam1 = (match) => resolveParticipant(match.team1);
+  const getTeam2 = (match) => resolveParticipant(match.team2);
 
   const handleCreateMatch = async () => {
     if (!matchNo || !team1 || !team2 || !matchDate || !matchTime) {
@@ -435,6 +517,27 @@ export default function MatchAdmin() {
     }
   };
 
+  const handleRoundRobinToggle = async (e) => {
+    const isChecked = e.target.checked;
+    setRoundRobinCompleted(isChecked);
+    
+    try {
+      await api.put(`/tournaments/${tournamentId}/round-robin-status`, { 
+        completed: isChecked 
+      });
+      
+      showToast(
+        "success",
+        isChecked ? "Round Robin Locked" : "Round Robin Unlocked",
+        isChecked ? "Bracket teams are now revealed publicly." : "Bracket teams reverted to slot codes."
+      );
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Update Failed", "Could not update round-robin completion status.");
+      setRoundRobinCompleted(!isChecked);
+    }
+  };
+
   const formatDate = (date) => {
     if (!date) return "-";
     return String(date).slice(0, 10);
@@ -442,12 +545,10 @@ export default function MatchAdmin() {
 
   const formatTime = (time) => {
     if (!time) return "-";
-
     const value = String(time);
 
     if (/^\d+$/.test(value)) {
       const totalSeconds = Number(value);
-
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
 
@@ -466,9 +567,7 @@ export default function MatchAdmin() {
 
   const isFutureParticipant = (participant) => {
     if (!participant) return false;
-
     const text = String(participant).trim();
-
     return (
       /^(Winner|Loser)\s+of\s+Match\s+(\d+)$/i.test(text) ||
       isRoundRobinSeedParticipant(text)
@@ -477,11 +576,9 @@ export default function MatchAdmin() {
 
   const isParticipantReady = (participant) => {
     const resolved = resolveParticipant(participant);
-
     if (!isFutureParticipant(participant)) {
       return true;
     }
-
     return resolved !== participant;
   };
 
@@ -682,6 +779,82 @@ export default function MatchAdmin() {
         </div>
       )}
 
+      {/* SECURITY AUTHENTICATION PUBLISH MODAL */}
+      {publishModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 text-xl text-blue-400">
+                🔒
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Admin Authorization</h3>
+                <p className="text-xs text-blue-400 font-semibold truncate max-w-[220px]">
+                  Confirm {publishTargetType === "round_robin" ? "Round Robin" : "Bracket"} Visibility Change
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Please enter your admin credentials to authorize changing the public visibility of this stage.
+            </p>
+
+            <form onSubmit={handleConfirmPublishReauth} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={publishReauth.username}
+                  onChange={(e) => setPublishReauth({ ...publishReauth, username: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="Username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={publishReauth.password}
+                  onChange={(e) => setPublishReauth({ ...publishReauth, password: e.target.value })}
+                  className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {publishReauthMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                  ⚠️ {publishReauthMessage}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setPublishModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={publishVerifying}
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition disabled:opacity-50"
+                >
+                  {publishVerifying ? "Verifying..." : "Authorize & Publish"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="mb-10 rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
@@ -754,6 +927,47 @@ export default function MatchAdmin() {
         <h2 className="mt-2 text-3xl font-black text-white">
           {tournament?.title || tournament?.tournament_name || "Loading..."}
         </h2>
+      </div>
+
+      {/* PUBLIC VISIBILITY CONTROLS (PUBLISH ROUND ROBIN & BRACKET WITH AUTH) */}
+      <div className="mb-8 grid gap-4 md:grid-cols-2">
+        {tournament?.tournament_format === "Round Robin + Bracket" && (
+          <div className="flex items-center justify-between rounded-2xl border border-blue-900/40 bg-black p-5">
+            <div>
+              <h3 className="text-base font-bold text-white">Publish Round Robin</h3>
+              <p className="text-xs text-gray-400">Make group tables visible on the public page.</p>
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer select-none rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 transition hover:border-blue-500">
+              <input
+                type="checkbox"
+                checked={roundRobinPublished}
+                onChange={handlePublishRoundRobinToggle}
+                className="h-4 w-4 rounded border-zinc-700 bg-black text-blue-600 accent-blue-600 focus:ring-0"
+              />
+              <span className="text-xs font-bold text-blue-300">
+                {roundRobinPublished ? "Published ✓" : "Publish"}
+              </span>
+            </label>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between rounded-2xl border border-blue-900/40 bg-black p-5">
+          <div>
+            <h3 className="text-base font-bold text-white">Publish Bracket</h3>
+            <p className="text-xs text-gray-400">Make the knockout bracket visible on the public page.</p>
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer select-none rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 transition hover:border-blue-500">
+            <input
+              type="checkbox"
+              checked={bracketPublished}
+              onChange={handlePublishBracketToggle}
+              className="h-4 w-4 rounded border-zinc-700 bg-black text-blue-600 accent-blue-600 focus:ring-0"
+            />
+            <span className="text-xs font-bold text-blue-300">
+              {bracketPublished ? "Published ✓" : "Publish"}
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* CREATE MATCH */}
@@ -1015,6 +1229,25 @@ export default function MatchAdmin() {
         </div>
       )}
 
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-blue-900/40 bg-black p-5">
+        <div>
+          <h3 className="text-lg font-bold text-white">Round Robin Stage Control</h3>
+          <p className="text-xs text-gray-400">Check this box when group matches are finished to finalize bracket slots.</p>
+        </div>
+
+        <label className="flex items-center gap-3 cursor-pointer select-none rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 transition hover:border-blue-500">
+          <input
+            type="checkbox"
+            checked={roundRobinCompleted}
+            onChange={handleRoundRobinToggle}
+            className="h-5 w-5 rounded border-zinc-700 bg-black text-blue-600 accent-blue-600 focus:ring-0"
+          />
+          <span className="text-sm font-bold text-blue-300">
+            {roundRobinCompleted ? "Round Robin Completed & Locked ✓" : "Mark Round Robin Completed"}
+          </span>
+        </label>
+      </div>
+
       {/* MATCH SCHEDULE */}
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -1059,7 +1292,7 @@ export default function MatchAdmin() {
                   <th className={tableHeadClass}>Bracket Round</th>
                   <th className={tableHeadClass}>Team 1</th>
                   <th className={tableHeadClass}>Team 2</th>
-                  <th className5={tableHeadClass}>Date</th>
+                  <th className={tableHeadClass}>Date</th>
                   <th className={tableHeadClass}>Time</th>
                   <th className={tableHeadClass}>Result</th>
                   <th className={tableHeadClass}>Select Winner</th>
