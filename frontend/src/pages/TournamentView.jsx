@@ -12,6 +12,9 @@ export default function TournamentView() {
   const [activeTab, setActiveTab] = useState("overview");
   const [roundRobinGroups, setRoundRobinGroups] = useState([]);
 
+  // Default to "swiss" (Round Robin) view first when inside the bracket tab if needed, or keep standard state
+  const [bracketViewMode, setBracketViewMode] = useState("swiss");
+
   // Toast State
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
 
@@ -243,6 +246,8 @@ export default function TournamentView() {
 
   const tournamentFormat =
     tournament?.tournament_format || "Bracket Only";
+
+  const hasSwissStage = tournamentFormat === "Round Robin + Bracket";
 
   const bracketMatches = matches.filter(
     (match) => (match.stage || "Bracket") === "Bracket"
@@ -724,6 +729,187 @@ export default function TournamentView() {
     );
   };
 
+  // Renders the Round Robin group tables block
+  const renderSwissStageSection = () => (
+    <div className={pageSectionClass}>
+      <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
+        Groups
+      </p>
+
+      <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+        Round Robin Groups
+      </h2>
+
+      {roundRobinGroups.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-blue-900/40 bg-black p-8 text-center sm:mt-8 sm:rounded-3xl sm:p-12">
+          <p className="text-gray-400">
+            Group tables not released yet.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-6 sm:mt-8 sm:space-y-10">
+          {roundRobinGroups.map((group) => {
+            const sortedTeams = getSortedGroupTeams(group);
+
+            return (
+              <div
+                key={group.id}
+                className="rounded-2xl border border-blue-900/40 bg-black p-4 shadow-lg shadow-blue-950/10 sm:rounded-3xl sm:p-6"
+              >
+                <h3 className="mb-4 text-xl font-black text-blue-400 sm:mb-5 sm:text-2xl">
+                  {group.group_name}
+                </h3>
+
+                {(group.teams || []).length === 0 ? (
+                  <p className="text-gray-400">
+                    No teams added to this group yet.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-blue-900/40 sm:rounded-2xl">
+                    <table className={roundRobinTableClass}>
+                      <thead className="bg-zinc-950">
+                        <tr className="border-b border-blue-900/40">
+                          <th className={smallThClass}>Rank</th>
+                          <th className={smallThClass}>Slot</th>
+                          <th className={smallThClass}>Team</th>
+                          <th className={smallThClass}>Full</th>
+                          <th className={smallThClass}>Play</th>
+                          <th className={smallThClass}>Won</th>
+                          <th className={smallThClass}>Lost</th>
+                          <th className={smallThClass}>BP</th>
+                          <th className={smallThClass}>Pts</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {sortedTeams.map((team, index) => (
+                          <tr
+                            key={team.id}
+                            className="border-b border-blue-900/20 transition hover:bg-blue-600/10"
+                          >
+                            <td className={smallTdClass}>
+                              #{index + 1}
+                            </td>
+
+                            <td className="px-2 py-2 sm:px-4 sm:py-4">
+                              <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-[9px] font-bold text-blue-300 sm:px-3 sm:text-xs">
+                                {getSlotCode(group, index)}
+                              </span>
+                            </td>
+
+                            <td className={smallTdBoldClass}>
+                              {team.team_name}
+                            </td>
+
+                            <td className="text-gray-300">
+                              {team.full_matches}
+                            </td>
+
+                            <td className="text-gray-300">
+                              {team.played}
+                            </td>
+
+                            <td className="px-2 py-2 text-[10px] font-bold text-blue-400 sm:px-4 sm:py-4 sm:text-sm">
+                              {team.won}
+                            </td>
+
+                            <td className="px-2 py-2 text-[10px] font-bold text-red-400 sm:px-4 sm:py-4 sm:text-sm">
+                              {team.lost}
+                            </td>
+
+                            <td className="px-2 py-2 text-[10px] font-bold text-blue-300 sm:px-4 sm:py-4 sm:text-sm">
+                              {team.bp}
+                            </td>
+
+                            <td className="px-2 py-2 text-[10px] font-black text-blue-400 sm:px-4 sm:py-4 sm:text-sm">
+                              {team.points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  // Renders the Knock Out / bracket board section
+  const renderKnockoutStageSection = () => (
+    <div className={pageSectionClass}>
+      <div className="space-y-8 sm:space-y-12">
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
+         Bracket Stage
+        </p>
+
+        <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+          Tournament Bracket
+        </h2>
+
+        {bracketMatches.length === 0 ? (
+          <div className="rounded-2xl border border-blue-900/40 bg-zinc-950 p-8 text-center sm:rounded-3xl sm:p-12 shadow-xl shadow-blue-950/20">
+            <p className="text-gray-400">
+              Bracket not released yet.
+            </p>
+          </div>
+        ) : hasExplicitUpperOrLower ? (
+          <div className="space-y-12 sm:space-y-16">
+            {upperRounds && upperRounds.length > 0 &&
+              renderConnectedBracketBoard(
+                "Upper Bracket",
+                "text-blue-400",
+                "text-blue-300",
+                upperRounds,
+                "upper"
+              )}
+
+            {lowerRounds && lowerRounds.length > 0 &&
+              renderConnectedBracketBoard(
+                "Lower Bracket",
+                "text-cyan-400",
+                "text-cyan-300",
+                lowerRounds,
+                "lower"
+              )}
+
+            {finalRounds && finalRounds.length > 0 &&
+              renderConnectedBracketBoard(
+                "Final Stage",
+                "text-amber-400",
+                "text-amber-300",
+                finalRounds,
+                "final"
+              )}
+          </div>
+        ) : (
+          <div className="space-y-12 sm:space-y-16">
+            {upperRounds && upperRounds.length > 0 &&
+              renderConnectedBracketBoard(
+                "Knockout Bracket",
+                "text-blue-400",
+                "text-blue-300",
+                upperRounds,
+                "upper"
+              )}
+
+            {finalRounds && finalRounds.length > 0 &&
+              renderConnectedBracketBoard(
+                "Final Stage",
+                "text-amber-400",
+                "text-amber-300",
+                finalRounds,
+                "final"
+              )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   if (!tournament) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black px-4 text-white">
@@ -984,12 +1170,10 @@ export default function TournamentView() {
                         const aFinished = Boolean(a.winner);
                         const bFinished = Boolean(b.winner);
 
-                        // Upcoming/Pending matches come first, completed matches drop to the bottom
                         if (aFinished !== bFinished) {
                           return aFinished ? 1 : -1;
                         }
 
-                        // Order by match number ascending within each group
                         return Number(a.match_no || 0) - Number(b.match_no || 0);
                       })
                       .map((match, index) => (
@@ -1062,184 +1246,45 @@ export default function TournamentView() {
         {/* BRACKET */}
         {activeTab === "bracket" && (
           <div className="space-y-8 sm:space-y-10">
-            {/* ROUND ROBIN GROUP TABLES */}
-            {tournamentFormat === "Round Robin + Bracket" && (
-              <div className={pageSectionClass}>
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
-                  Round Robin
-                </p>
+            {/* STAGE TOGGLE (Round Robin first, then Knock Out Stage) */}
+            {hasSwissStage && (
+              <div className="flex justify-center sm:justify-start">
+                <div className="inline-flex w-full max-w-md rounded-full border border-blue-900/40 bg-zinc-950 p-1.5 shadow-xl shadow-blue-950/20 sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setBracketViewMode("swiss")}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition sm:px-6 sm:text-sm ${
+                      bracketViewMode === "swiss"
+                        ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/40"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    🔲 Round Robin
+                  </button>
 
-                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
-                  Round Robin Groups
-                </h2>
-
-                {roundRobinGroups.length === 0 ? (
-                  <div className="mt-6 rounded-2xl border border-blue-900/40 bg-black p-8 text-center sm:mt-8 sm:rounded-3xl sm:p-12">
-                    <p className="text-gray-400">
-                      Group tables not released yet.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-6 space-y-6 sm:mt-8 sm:space-y-10">
-                    {roundRobinGroups.map((group) => {
-                      const sortedTeams = getSortedGroupTeams(group);
-
-                      return (
-                        <div
-                          key={group.id}
-                          className="rounded-2xl border border-blue-900/40 bg-black p-4 shadow-lg shadow-blue-950/10 sm:rounded-3xl sm:p-6"
-                        >
-                          <h3 className="mb-4 text-xl font-black text-blue-400 sm:mb-5 sm:text-2xl">
-                            {group.group_name}
-                          </h3>
-
-                          {(group.teams || []).length === 0 ? (
-                            <p className="text-gray-400">
-                              No teams added to this group yet.
-                            </p>
-                          ) : (
-                            <div className="overflow-x-auto rounded-xl border border-blue-900/40 sm:rounded-2xl">
-                              <table className={roundRobinTableClass}>
-                                <thead className="bg-zinc-950">
-                                  <tr className="border-b border-blue-900/40">
-                                    <th className={smallThClass}>Rank</th>
-                                    <th className={smallThClass}>Slot</th>
-                                    <th className={smallThClass}>Team</th>
-                                    <th className={smallThClass}>Full</th>
-                                    <th className={smallThClass}>Play</th>
-                                    <th className={smallThClass}>Won</th>
-                                    <th className={smallThClass}>Lost</th>
-                                    <th className={smallThClass}>BP</th>
-                                    <th className={smallThClass}>Pts</th>
-                                  </tr>
-                                </thead>
-
-                                <tbody>
-                                  {sortedTeams.map((team, index) => (
-                                    <tr
-                                      key={team.id}
-                                      className="border-b border-blue-900/20 transition hover:bg-blue-600/10"
-                                    >
-                                      <td className={smallTdClass}>
-                                        #{index + 1}
-                                      </td>
-
-                                      <td className="px-2 py-2 sm:px-4 sm:py-4">
-                                        <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-[9px] font-bold text-blue-300 sm:px-3 sm:text-xs">
-                                          {getSlotCode(group, index)}
-                                        </span>
-                                      </td>
-
-                                      <td className={smallTdBoldClass}>
-                                        {team.team_name}
-                                      </td>
-
-                                      <td className="text-gray-300">
-                                        {team.full_matches}
-                                      </td>
-
-                                      <td className="text-gray-300">
-                                        {team.played}
-                                      </td>
-
-                                      <td className="px-2 py-2 text-[10px] font-bold text-blue-400 sm:px-4 sm:py-4 sm:text-sm">
-                                        {team.won}
-                                      </td>
-
-                                      <td className="px-2 py-2 text-[10px] font-bold text-red-400 sm:px-4 sm:py-4 sm:text-sm">
-                                        {team.lost}
-                                      </td>
-
-                                      <td className="px-2 py-2 text-[10px] font-bold text-blue-300 sm:px-4 sm:py-4 sm:text-sm">
-                                        {team.bp}
-                                      </td>
-
-                                      <td className="px-2 py-2 text-[10px] font-black text-blue-400 sm:px-4 sm:py-4 sm:text-sm">
-                                        {team.points}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setBracketViewMode("knockout")}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition sm:px-6 sm:text-sm ${
+                      bracketViewMode === "knockout"
+                        ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/40"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    🏆 Bracket Stage
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* BRACKET SECTION */}
-            <div className={pageSectionClass}>
-              <div className="space-y-8 sm:space-y-12">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 sm:text-sm">
-                  Bracket
-                </p>
+            {/* ROUND ROBIN VIEW */}
+            {(!hasSwissStage || bracketViewMode === "swiss") && renderSwissStageSection()}
 
-                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
-                  Tournament Bracket
-                </h2>
+            {/* KNOCK OUT STAGE VIEW */}
+            {hasSwissStage && bracketViewMode === "knockout" && renderKnockoutStageSection()}
 
-                {bracketMatches.length === 0 ? (
-                  <div className="rounded-2xl border border-blue-900/40 bg-zinc-950 p-8 text-center sm:rounded-3xl sm:p-12 shadow-xl shadow-blue-950/20">
-                    <p className="text-gray-400">
-                      Bracket not released yet.
-                    </p>
-                  </div>
-                ) : hasExplicitUpperOrLower ? (
-                  <div className="space-y-12 sm:space-y-16">
-                    {upperRounds && upperRounds.length > 0 &&
-                      renderConnectedBracketBoard(
-                        "Upper Bracket",
-                        "text-blue-400",
-                        "text-blue-300",
-                        upperRounds,
-                        "upper"
-                      )}
-
-                    {lowerRounds && lowerRounds.length > 0 &&
-                      renderConnectedBracketBoard(
-                        "Lower Bracket",
-                        "text-cyan-400",
-                        "text-cyan-300",
-                        lowerRounds,
-                        "lower"
-                      )}
-
-                    {finalRounds && finalRounds.length > 0 &&
-                      renderConnectedBracketBoard(
-                        "Final Stage",
-                        "text-amber-400",
-                        "text-amber-300",
-                        finalRounds,
-                        "final"
-                      )}
-                  </div>
-                ) : (
-                  <div className="space-y-12 sm:space-y-16">
-                    {upperRounds && upperRounds.length > 0 &&
-                      renderConnectedBracketBoard(
-                        "Knockout Bracket",
-                        "text-blue-400",
-                        "text-blue-300",
-                        upperRounds,
-                        "upper"
-                      )}
-
-                    {finalRounds && finalRounds.length > 0 &&
-                      renderConnectedBracketBoard(
-                        "Final Stage",
-                        "text-amber-400",
-                        "text-amber-300",
-                        finalRounds,
-                        "final"
-                      )}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Fallback for tournaments that don't have Swiss Stage */}
+            {!hasSwissStage && renderKnockoutStageSection()}
           </div>
         )}
       </div>
