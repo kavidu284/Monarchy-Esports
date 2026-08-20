@@ -4,8 +4,7 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 frontend/.env.production
-venv/
-backend\venv
+
 # Environment files
 .env
 .env.local
@@ -15,7 +14,7 @@ backend/env/
 backend/.venv/
 backend/__pycache__/
 backend/**/__pycache__/
-backend/venv/
+
 __pycache__/
 backend/*.pyc
 *.pyc
