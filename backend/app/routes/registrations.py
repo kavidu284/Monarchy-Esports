@@ -568,7 +568,7 @@ async def edit_registration(
                 registration_id
             )
         )
-
+#kavi
         # 2. Update dynamic players from the raw form data payload
         form = await request.form()
         
