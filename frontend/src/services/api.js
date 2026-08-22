@@ -2,7 +2,7 @@ import axios from "axios";
 import { getValidAdminToken } from "../utils/auth";
 
 const api = axios.create({
-    baseURL: "https://esports-org.onrender.com",
+    baseURL: import.meta.env.VITE_API_URL,
  // baseURL: "http://localhost:8000",
 });
 
