@@ -132,3 +132,42 @@ def delete_match(
     connection.close()
 
     return {"message": "Match Deleted Successfully"}
+
+@router.put("/matches/{match_id}")
+def update_match(
+    match_id: int,
+    data: dict,
+    current_admin: dict = Depends(get_current_admin)
+):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        UPDATE matches
+        SET team1 = %s,
+            team2 = %s,
+            match_date = %s,
+            match_time = %s,
+            stage = %s,
+            bracket_round = %s,
+            match_no = %s
+        WHERE id = %s
+        """,
+        (
+            data["team1"],
+            data["team2"],
+            data["match_date"],
+            data["match_time"],
+            data.get("stage", "Bracket"),
+            data.get("bracket_round", "Round 1"),
+            data.get("match_no"),
+            match_id
+        )
+    )
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return {"message": "Match Updated Successfully"}
