@@ -504,8 +504,7 @@ def get_approved_teams_details(
     finally:
         cursor.close()
         connection.close()
-
-
+        
 @router.put("/registrations/{registration_id}/edit")
 async def edit_registration(
     request: Request,
@@ -568,10 +567,10 @@ async def edit_registration(
                 registration_id
             )
         )
-#kavi
-        # 2. Update dynamic players from the raw form data payload
+
+        # 2. Update / insert dynamic players from the raw form data payload
         form = await request.form()
-        
+
         cursor.execute(
             "SELECT id, player_photo FROM players WHERE registration_id = %s ORDER BY is_substitute ASC, id ASC",
             (registration_id,)
@@ -579,6 +578,8 @@ async def edit_registration(
         existing_players = cursor.fetchall()
 
         player_count = int(form.get("player_count", 0))
+        submitted_ids = set()
+
         for i in range(player_count):
             p_id = form.get(f"player_{i}_id")
             real_name = form.get(f"player_{i}_real_name", "")
@@ -595,6 +596,7 @@ async def edit_registration(
                 photo_url = upload_image(p_photo_file)
 
             if p_id:
+                # Existing player -> update
                 cursor.execute(
                     """
                     UPDATE players
@@ -602,6 +604,25 @@ async def edit_registration(
                     WHERE id = %s AND registration_id = %s
                     """,
                     (real_name, ign, mlbb_id, server_id, photo_url, is_sub, p_id, registration_id)
+                )
+                submitted_ids.add(str(p_id))
+            else:
+                # New player (added in edit mode) -> insert
+                cursor.execute(
+                    """
+                    INSERT INTO players
+                    (registration_id, real_name, ign, mlbb_id, server_id, player_photo, is_substitute)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (registration_id, real_name, ign, mlbb_id, server_id, photo_url, is_sub)
+                )
+
+        # 3. Delete players that existed before but were removed in this edit
+        for existing in existing_players:
+            if str(existing["id"]) not in submitted_ids:
+                cursor.execute(
+                    "DELETE FROM players WHERE id = %s AND registration_id = %s",
+                    (existing["id"], registration_id)
                 )
 
         connection.commit()
