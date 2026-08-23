@@ -22,6 +22,10 @@ export default function MatchAdmin() {
   const [roundRobinGroups, setRoundRobinGroups] = useState([]);
   const [qualifiedPerGroup, setQualifiedPerGroup] = useState(2);
 
+  // Edit Match States
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingMatch, setEditingMatch] = useState(null);
+
   // Toast State
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', title, message }
 
@@ -175,7 +179,7 @@ export default function MatchAdmin() {
     }
   };
 
-  // Handle Re-Authentication Submit for Deletion
+  // Handle Re-Authentication Submit
   const handleConfirmReauth = async (e) => {
     e.preventDefault();
     if (!reauth.username.trim() || !reauth.password.trim()) {
@@ -582,6 +586,42 @@ export default function MatchAdmin() {
     return resolved !== participant;
   };
 
+  const handleOpenEditModal = (match) => {
+    setEditingMatch({
+      id: match.id,
+      match_no: match.match_no || "",
+      stage: match.stage || "Bracket",
+      bracket_round: match.bracket_round || "Round 1",
+      team1: match.team1 || "",
+      team2: match.team2 || "",
+      match_date: formatDate(match.match_date),
+      match_time: formatTime(match.match_time),
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateMatch = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/matches/${editingMatch.id}`, {
+        match_no: Number(editingMatch.match_no),
+        stage: editingMatch.stage,
+        bracket_round: editingMatch.stage === "Bracket" ? editingMatch.bracket_round : "Round Robin",
+        team1: editingMatch.team1,
+        team2: editingMatch.team2,
+        match_date: editingMatch.match_date,
+        match_time: editingMatch.match_time,
+      });
+
+      showToast("success", "Match Updated", "Match details successfully updated");
+      setEditModalOpen(false);
+      fetchMatches();
+    } catch (error) {
+      console.error(error);
+      showToast("error", "Update Failed", error.response?.data?.detail || "Failed to update match");
+    }
+  };
+
   const canUpdateWinner = (match) => {
     return (
       isParticipantReady(match.team1) &&
@@ -627,7 +667,7 @@ export default function MatchAdmin() {
         </div>
       )}
 
-      {/* SECURITY AUTHENTICATION REFRESH MODAL */}
+      {/* REFRESH MODAL */}
       {refreshModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
@@ -703,7 +743,7 @@ export default function MatchAdmin() {
         </div>
       )}
 
-      {/* SECURITY AUTHENTICATION DELETE MODAL */}
+      {/* DELETE MODAL */}
       {securityModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
@@ -779,7 +819,7 @@ export default function MatchAdmin() {
         </div>
       )}
 
-      {/* SECURITY AUTHENTICATION PUBLISH MODAL */}
+      {/* PUBLISH MODAL */}
       {publishModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
@@ -848,6 +888,112 @@ export default function MatchAdmin() {
                   className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition disabled:opacity-50"
                 >
                   {publishVerifying ? "Verifying..." : "Authorize & Publish"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MATCH MODAL */}
+      {editModalOpen && editingMatch && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+          <div className="w-full max-w-lg rounded-3xl border border-blue-500/30 bg-zinc-950 p-6 sm:p-8 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 text-xl text-blue-400">
+                ✏️
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Edit Match #{editingMatch.match_no}</h3>
+                <p className="text-xs text-blue-400 font-semibold">Modify schedule or teams</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdateMatch} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase text-gray-300">Match No</label>
+                  <input
+                    type="number"
+                    value={editingMatch.match_no}
+                    onChange={(e) => setEditingMatch({ ...editingMatch, match_no: e.target.value })}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase text-gray-300">Stage</label>
+                  <select
+                    value={editingMatch.stage}
+                    onChange={(e) => setEditingMatch({ ...editingMatch, stage: e.target.value })}
+                    className={inputClass}
+                  >
+                    <option value="Bracket">Bracket</option>
+                    <option value="Round Robin">Round Robin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase text-gray-300">Team 1</label>
+                <input
+                  type="text"
+                  list="teamOptions"
+                  value={editingMatch.team1}
+                  onChange={(e) => setEditingMatch({ ...editingMatch, team1: e.target.value })}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase text-gray-300">Team 2</label>
+                <input
+                  type="text"
+                  list="teamOptions"
+                  value={editingMatch.team2}
+                  onChange={(e) => setEditingMatch({ ...editingMatch, team2: e.target.value })}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase text-gray-300">Date</label>
+                  <input
+                    type="date"
+                    value={editingMatch.match_date}
+                    onChange={(e) => setEditingMatch({ ...editingMatch, match_date: e.target.value })}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase text-gray-300">Time</label>
+                  <input
+                    type="time"
+                    value={editingMatch.match_time}
+                    onChange={(e) => setEditingMatch({ ...editingMatch, match_time: e.target.value })}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-lg hover:bg-blue-500 transition"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -929,7 +1075,7 @@ export default function MatchAdmin() {
         </h2>
       </div>
 
-      {/* PUBLIC VISIBILITY CONTROLS (PUBLISH ROUND ROBIN & BRACKET WITH AUTH) */}
+      {/* PUBLIC VISIBILITY CONTROLS */}
       <div className="mb-8 grid gap-4 md:grid-cols-2">
         {tournament?.tournament_format === "Round Robin + Bracket" && (
           <div className="flex items-center justify-between rounded-2xl border border-blue-900/40 bg-black p-5">
@@ -1229,6 +1375,7 @@ export default function MatchAdmin() {
         </div>
       )}
 
+      {/* ROUND ROBIN LOCK CONTROL */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-blue-900/40 bg-black p-5">
         <div>
           <h3 className="text-lg font-bold text-white">Round Robin Stage Control</h3>
@@ -1248,7 +1395,7 @@ export default function MatchAdmin() {
         </label>
       </div>
 
-      {/* MATCH SCHEDULE */}
+      {/* MATCH SCHEDULE TABLE */}
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-xl shadow-black/30">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -1399,12 +1546,22 @@ export default function MatchAdmin() {
                     </td>
 
                     <td className={tableCellClass}>
-                      <button
-                        onClick={() => triggerDeleteModal(match.id)}
-                        className="rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(match)}
+                          className="rounded-xl bg-blue-600 px-4 py-2 font-bold text-white transition hover:bg-blue-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => triggerDeleteModal(match.id)}
+                          className="rounded-xl bg-red-600 px-4 py-2 font-bold text-white transition hover:bg-red-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
