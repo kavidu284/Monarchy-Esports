@@ -1,4 +1,4 @@
-import RulebookPDF from '../assets/monarchy_Rules_260609_141738.pdf';
+import RulebookPDF from '../assets/Eternal_Rivals_S1_Tournament_Rules.pdf';
 
 export default function Rules() {
   return (
